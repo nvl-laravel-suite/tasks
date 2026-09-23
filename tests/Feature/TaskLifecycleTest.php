@@ -6,6 +6,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -203,6 +204,43 @@ it('lets a host authorization adapter scope task table rows to its actor', funct
 
     expect($page->total())->toBe(1)
         ->and($page->items()[0]->title)->toBe('Owner task');
+});
+
+it('keeps authorized task list queries constant and pages bounded as rows grow', function (): void {
+    $actor = TaskActorData::system();
+    $list = app(ListTasksAction::class);
+    $connection = DB::connection();
+
+    app(CreateTaskAction::class)->execute(new CreateTaskData('Task 1'), $actor);
+    $list->execute($actor, perPage: 4);
+
+    $connection->enableQueryLog();
+
+    try {
+        $connection->flushQueryLog();
+        $one = $list->execute($actor, perPage: 4);
+        $oneQueries = count($connection->getQueryLog());
+
+        foreach (range(2, 5) as $number) {
+            app(CreateTaskAction::class)->execute(new CreateTaskData("Task {$number}"), $actor);
+        }
+
+        $connection->flushQueryLog();
+        $many = $list->execute($actor, perPage: 4);
+        $manyQueries = count($connection->getQueryLog());
+    } finally {
+        $connection->disableQueryLog();
+        $connection->flushQueryLog();
+    }
+
+    expect($one->total())->toBe(1)
+        ->and($many->total())->toBe(5)
+        ->and($many->count())->toBe(4)
+        ->and($manyQueries)->toBe($oneQueries)
+        ->toBeLessThanOrEqual(4);
+
+    expect(fn () => $list->execute($actor, perPage: 101))
+        ->toThrow(InvalidArgumentException::class);
 });
 
 it('creates, updates, assigns and lists tasks without assuming the host user model', function (): void {

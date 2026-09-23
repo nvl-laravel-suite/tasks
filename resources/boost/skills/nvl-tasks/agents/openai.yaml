@@ -1,0 +1,4 @@
+interface:
+  display_name: "NVL Tasks"
+  short_description: "Build tenant-safe tasks and assignment workflows"
+  default_prompt: "Use $nvl-tasks to implement or review task actions, app-owned assignees, private attachments, and tenant-safe consumption."

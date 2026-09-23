@@ -55,7 +55,7 @@ The `metadata` JSON object is for small app-owned hints (at most 64 keys and 64 
 
 ## Optional management API
 
-`tasks.routes.management.enabled` is false by default. An app may enable the `api/v1/tasks` route group after binding its authorization policy and securing the configured middleware. The group provides task list/create/read/replace/delete/restore and assignee add/remove endpoints. Its responses are bounded task and assignment resources, not raw Eloquent models. HTTP assignee lookup also requires a host binding for `TaskPrincipalResolver`; the default rejects assignment requests. Apps can instead keep routes entirely host-owned and call the same actions directly.
+`tasks.routes.management.enabled` is false by default. An app may enable the `api/v1/tasks` route group after binding its authorization policy and securing the configured middleware. The group provides task list/create/read/replace/delete/restore and assignee add/remove endpoints. Its `data`/`meta` responses contain bounded `TaskData` and `TaskAssignmentData` projections, not raw Eloquent models or HTTP Resources. HTTP assignee lookup also requires a host binding for `TaskPrincipalResolver`; the default rejects assignment requests. Apps can instead keep routes entirely host-owned and wrap the same Data projections in their centralized API response.
 
 The default middleware is `api`, `auth`, and `throttle:60,1`. The host must ensure the chosen authentication middleware authenticates a persisted Eloquent principal and must authorize every task ability, including assignment targets. Missing authorization or principal-resolution bindings fail closed. A stale HTTP replacement returns 409; invalid input returns 422.
 

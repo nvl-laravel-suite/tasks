@@ -7,8 +7,6 @@ namespace Nvl\Tasks\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Nvl\Tasks\Actions\AssignTaskAction;
 use Nvl\Tasks\Actions\CreateTaskAction;
 use Nvl\Tasks\Actions\DeleteTaskAction;
@@ -18,16 +16,17 @@ use Nvl\Tasks\Actions\RestoreTaskAction;
 use Nvl\Tasks\Actions\UnassignTaskAction;
 use Nvl\Tasks\Actions\UpdateTaskAction;
 use Nvl\Tasks\Contracts\TaskPrincipalResolver;
+use Nvl\Tasks\Data\Mutations\AssignTaskData;
 use Nvl\Tasks\Data\Mutations\CreateTaskData;
+use Nvl\Tasks\Data\Mutations\RestoreTaskData;
 use Nvl\Tasks\Data\Mutations\UpdateTaskData;
+use Nvl\Tasks\Data\Queries\TaskIndexQueryData;
 use Nvl\Tasks\Data\TaskActorData;
-use Nvl\Tasks\Enums\TaskPriority;
-use Nvl\Tasks\Enums\TaskStatus;
+use Nvl\Tasks\Data\TaskAssignmentData;
+use Nvl\Tasks\Data\TaskData;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
-use Nvl\Tasks\Http\Resources\TaskAssignmentResource;
-use Nvl\Tasks\Http\Resources\TaskResource;
+use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Support\TaskActorFactory;
-use Nvl\Tasks\Support\TasksConfiguration;
 
 /** Thin opt-in task management transport over the package's public actions. */
 final class TasksManagementController extends Controller
@@ -39,29 +38,31 @@ final class TasksManagementController extends Controller
         TaskPrincipalResolver $principals,
         ListTasksAction $action,
     ): JsonResponse {
-        $query = Validator::make($request->query(), [
-            'status' => ['sometimes', Rule::enum(TaskStatus::class)],
-            'priority' => ['sometimes', Rule::enum(TaskPriority::class)],
-            'assigneeId' => ['sometimes', 'string', 'max:191'],
-            'perPage' => ['sometimes', 'integer', 'min:1', 'max:'.TasksConfiguration::limit('maximum_page_size', 100)],
-        ])->validate();
-        $status = $query['status'] ?? null;
-        $priority = $query['priority'] ?? null;
-        $assignee = $query['assigneeId'] ?? null;
-        $perPage = $query['perPage'] ?? null;
+        $query = TaskIndexQueryData::validateAndCreate($request->query());
         $actor = $actors->fromRequest($request);
 
         $tasks = $action->execute(
             actor: $actor,
-            status: is_string($status) ? TaskStatus::from($status) : null,
-            priority: is_string($priority) ? TaskPriority::from($priority) : null,
-            assignee: is_string($assignee)
-                ? TaskActorData::fromAuthenticatable($principals->resolve($assignee))
+            status: $query->status,
+            priority: $query->priority,
+            assignee: $query->assigneeId !== null
+                ? TaskActorData::fromAuthenticatable($principals->resolve($query->assigneeId))
                 : null,
-            perPage: is_string($perPage) || is_int($perPage) ? (int) $perPage : null,
+            perPage: $query->perPage,
         );
 
-        return TaskResource::collection($tasks)->response();
+        return response()->json([
+            'data' => array_map(
+                static fn (Task $task): array => TaskData::fromModel($task)->toArray(),
+                $tasks->items(),
+            ),
+            'meta' => [
+                'current_page' => $tasks->currentPage(),
+                'last_page' => $tasks->lastPage(),
+                'per_page' => $tasks->perPage(),
+                'total' => $tasks->total(),
+            ],
+        ]);
     }
 
     /** Create a task from validated app input. */
@@ -72,13 +73,15 @@ final class TasksManagementController extends Controller
             $actors->fromRequest($request),
         );
 
-        return TaskResource::make($task)->response()->setStatusCode(201);
+        return response()->json(['data' => TaskData::fromModel($task)->toArray()], 201);
     }
 
     /** Read a task through the tenant and consumer-policy boundaries. */
     public function show(string $task, Request $request, TaskActorFactory $actors, GetTaskAction $action): JsonResponse
     {
-        return TaskResource::make($action->execute($task, $actors->fromRequest($request)))->response();
+        return response()->json([
+            'data' => TaskData::fromModel($action->execute($task, $actors->fromRequest($request)))->toArray(),
+        ]);
     }
 
     /** Replace a task using an exact revision. */
@@ -94,7 +97,7 @@ final class TasksManagementController extends Controller
             return response()->json(['message' => $exception->getMessage()], 409);
         }
 
-        return TaskResource::make($updated)->response();
+        return response()->json(['data' => TaskData::fromModel($updated)->toArray()]);
     }
 
     /** Soft-delete one authorized task. */
@@ -112,21 +115,19 @@ final class TasksManagementController extends Controller
         TaskActorFactory $actors,
         RestoreTaskAction $action,
     ): JsonResponse {
-        Validator::make($request->all(), [
-            'expectedRevision' => ['required', 'integer', 'min:1'],
-        ])->validate();
+        $data = RestoreTaskData::validateAndCreate($request->all());
 
         try {
             $restored = $action->execute(
                 $task,
-                $request->integer('expectedRevision'),
+                $data->expectedRevision,
                 $actors->fromRequest($request),
             );
         } catch (TaskRevisionConflict $exception) {
             return response()->json(['message' => $exception->getMessage()], 409);
         }
 
-        return TaskResource::make($restored)->response();
+        return response()->json(['data' => TaskData::fromModel($restored)->toArray()]);
     }
 
     /** Assign one host-resolved principal without changing task ownership. */
@@ -137,15 +138,15 @@ final class TasksManagementController extends Controller
         TaskPrincipalResolver $principals,
         AssignTaskAction $action,
     ): JsonResponse {
-        Validator::make($request->all(), ['assigneeId' => ['required', 'string', 'max:191']])->validate();
+        $data = AssignTaskData::validateAndCreate($request->all());
         $actor = $actors->fromRequest($request);
         $assignment = $action->execute(
             $task,
-            $principals->resolve($request->string('assigneeId')->toString()),
+            $principals->resolve($data->assigneeId),
             $actor,
         );
 
-        return TaskAssignmentResource::make($assignment)->response()->setStatusCode(201);
+        return response()->json(['data' => TaskAssignmentData::fromModel($assignment)->toArray()], 201);
     }
 
     /** Remove an assignment through the same host principal resolver. */

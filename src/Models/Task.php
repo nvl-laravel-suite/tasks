@@ -37,6 +37,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  * @property CarbonImmutable|null $completed_at
  * @property array<string, mixed>|null $metadata
  * @property int $revision
+ * @property-read int $assignments_count
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property Carbon|null $deleted_at

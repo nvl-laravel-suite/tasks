@@ -75,7 +75,12 @@ it('exposes bounded task rows, exact-revision writes, and host-resolved assignme
     $this->getJson('/api/v1/tasks?status=open&perPage=10')
         ->assertOk()->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.id', $taskId)
-        ->assertJsonPath('data.0.assigneesCount', 0);
+        ->assertJsonPath('data.0.assigneesCount', 0)
+        ->assertJsonMissingPath('data.0.tenantId');
+
+    $this->getJson('/api/v1/tasks?status=invalid')->assertUnprocessable();
+    $this->getJson('/api/v1/tasks?perPage=0')->assertUnprocessable();
+    $this->postJson("/api/v1/tasks/{$taskId}/assignees", [])->assertUnprocessable();
 
     $this->postJson("/api/v1/tasks/{$taskId}/assignees", [
         'assigneeId' => (string) $assignee->getKey(),
@@ -92,6 +97,9 @@ it('exposes bounded task rows, exact-revision writes, and host-resolved assignme
         'expectedRevision' => 2,
     ])->assertOk()->assertJsonPath('data.status', 'completed');
 
+    $this->getJson('/api/v1/tasks?status=completed&priority=high')
+        ->assertOk()->assertJsonPath('meta.total', 1);
+
     $this->putJson("/api/v1/tasks/{$taskId}", [
         'title' => 'Stale draft',
         'status' => 'open',
@@ -102,6 +110,7 @@ it('exposes bounded task rows, exact-revision writes, and host-resolved assignme
     $this->deleteJson("/api/v1/tasks/{$taskId}/assignees/{$assignee->getKey()}")->assertNoContent();
     $this->deleteJson("/api/v1/tasks/{$taskId}")->assertNoContent();
     $this->getJson("/api/v1/tasks/{$taskId}")->assertNotFound();
+    $this->postJson("/api/v1/tasks/{$taskId}/restore", [])->assertUnprocessable();
     $this->postJson("/api/v1/tasks/{$taskId}/restore", ['expectedRevision' => 3])->assertStatus(409);
     $this->postJson("/api/v1/tasks/{$taskId}/restore", ['expectedRevision' => 4])
         ->assertOk()->assertJsonPath('data.revision', 5);

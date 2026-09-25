@@ -2,6 +2,9 @@
 
 [← NVL Laravel Suite](https://github.com/nvl-laravel-suite)
 
+For support, [open an issue](https://github.com/nvl-laravel-suite/tasks/issues). For vulnerabilities, use
+[private reporting](https://github.com/nvl-laravel-suite/tasks/security/advisories/new). See [Contributing](CONTRIBUTING.md).
+
 ## Quick reference
 
 | Item | Value |
@@ -65,16 +68,14 @@ Standalone mode works with Tenancy disabled. For adopted tenant mode, configure 
 
 ## Development and verification
 
-Run the focused Pest suite, PHPStan at max level, Pint, and package-family validation before distributing changes:
+From a standalone checkout of the public Tasks repository, run the package's Pint, PHPStan, and Pest gate:
 
 ```bash
-vendor/bin/pest --test-directory=packages/nvl/tasks/tests --configuration=packages/nvl/tasks/phpunit.xml.dist --bootstrap=vendor/autoload.php --compact
-vendor/bin/phpstan analyse packages/nvl/tasks/src --memory-limit=2G
-vendor/bin/pint --dirty --format agent
-composer packages:validate
+composer install
+composer quality
 ```
 
-The read-only `nvl:tasks:doctor --strict --format=json` command checks schema, owner registration, route registration, and consumer bindings. For database-backed production deployments, verify task migrations and the tenant adoption plan against the target database before enabling traffic.
+Maintainer CI also validates the package family. In a consuming Laravel application, the read-only `nvl:tasks:doctor --strict --format=json` command checks schema, owner registration, route registration, and consumer bindings. For database-backed production deployments, verify task migrations and the tenant adoption plan against the target database before enabling traffic.
 
 ## License
 

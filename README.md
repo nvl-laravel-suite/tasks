@@ -1,12 +1,12 @@
 # NVL Tasks — API and usage
 
-[← NVL Laravel Suite](../../../README.md)
+[← NVL Laravel Suite](https://github.com/nvl-laravel-suite)
 
 ## Quick reference
 
 | Item | Value |
 |---|---|
-| Installed through | `composer require nvl/laravel-suite:^2.0` |
+| Installed through | `composer require nvl/tasks:^2.0` |
 | Module identifier | `nvl/tasks` |
 | PHP namespace | `Nvl\Tasks` |
 | Service provider | `Nvl\Tasks\Providers\TasksServiceProvider` |
@@ -23,7 +23,7 @@ Other packages keep their own responsibilities. Task detail blocks use the `deta
 Use PHP 8.4+ and Laravel 13. Tasks is currently unreleased; the installation command below applies once a compatible suite release containing Tasks is published. Publish configuration if you need different storage, limits, or an opt-in API:
 
 ```bash
-composer require nvl/laravel-suite:^2.0
+composer require nvl/tasks:^2.0
 php artisan vendor:publish --tag=tasks-config
 php artisan vendor:publish --tag=tasks-skills
 php artisan migrate

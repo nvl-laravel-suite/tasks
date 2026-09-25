@@ -4,6 +4,12 @@ All notable changes to `nvl/tasks` are documented here.
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-09-25
+
+### Documentation
+
+- Correct installation guidance for the independently published package.
+
 ## [2.2.0] - 2026-09-25
 
 ### Changed

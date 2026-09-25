@@ -20,7 +20,7 @@ Other packages keep their own responsibilities. Task detail blocks use the `deta
 
 ## Requirements and installation
 
-Use PHP 8.4+ and Laravel 13. Tasks is currently unreleased; the installation command below applies once a compatible suite release containing Tasks is published. Publish configuration if you need different storage, limits, or an opt-in API:
+Use PHP 8.4+ and Laravel 13. Install Tasks independently from Packagist. Publish configuration if you need different storage, limits, or an opt-in API:
 
 ```bash
 composer require nvl/tasks:^2.0

@@ -5,8 +5,10 @@ declare(strict_types=1);
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Nvl\Tasks\Actions\AddTaskTimeEntryAction;
 use Nvl\Tasks\Actions\CreateTaskAction;
@@ -22,6 +24,7 @@ use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskTimeEntry;
+use Nvl\Tasks\Support\TasksConfiguration;
 
 function timeTrackingActor(string $name = 'Time keeper'): TaskActorData
 {
@@ -102,6 +105,29 @@ it('runs only one timer per task performer and calculates elapsed time on stop',
     } finally {
         Carbon::setTestNow();
     }
+});
+
+it('enforces one running timer per task performer in storage', function (): void {
+    allowTaskTimeUpdates();
+    $actor = timeTrackingActor();
+    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Track storage uniqueness'), $actor);
+    $running = app(StartTaskTimerAction::class)->execute($task, 1, $actor);
+    $duplicate = new TaskTimeEntry;
+    $duplicate->forceFill([
+        'task_id' => $task->id,
+        'performer_type' => $actor->type,
+        'performer_id' => (string) $actor->id,
+        'started_at' => now(),
+    ]);
+
+    expect(fn () => DB::connection(TasksConfiguration::connection())
+        ->transaction(fn () => $duplicate->save()))->toThrow(QueryException::class);
+
+    $running->forceFill(['stopped_at' => now(), 'duration_seconds' => 0])->save();
+    $next = app(StartTaskTimerAction::class)->execute($task, 2, $actor);
+
+    expect($next->id)->not->toBe($running->id)
+        ->and(TaskTimeEntry::query()->whereNull('stopped_at')->count())->toBe(1);
 });
 
 it('rejects invalid manual durations and stale revisions without writes', function (): void {

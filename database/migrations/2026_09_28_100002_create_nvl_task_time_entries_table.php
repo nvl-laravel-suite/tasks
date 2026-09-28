@@ -16,12 +16,14 @@ return new class extends Migration
     {
         $schema = Schema::connection(TasksConfiguration::connection());
         $name = TasksConfiguration::table(TasksTables::TimeEntries);
+        $connection = DB::connection(TasksConfiguration::connection());
+        $driver = $connection->getDriverName();
 
         if ($schema->hasTable($name)) {
             throw new LogicException("Task time entries table [{$name}] already exists; disable tasks.migrations.enabled during controlled schema adoption.");
         }
 
-        $schema->create($name, function (Blueprint $table): void {
+        $schema->create($name, function (Blueprint $table) use ($driver): void {
             $table->uuid('id')->primary();
             $table->uuid('task_id');
             $table->uuid('tenant_id')->nullable();
@@ -36,12 +38,23 @@ return new class extends Migration
             $table->foreign('task_id')->references('id')
                 ->on(TasksConfiguration::table(TasksTables::Tasks))->cascadeOnDelete();
             $table->index(['tenant_id', 'task_id', 'started_at'], 'nvl_task_time_entries_lookup_idx');
+
+            if (in_array($driver, ['mysql', 'mariadb'], true)) {
+                $table->unsignedTinyInteger('running_slot')
+                    ->storedAs('CASE WHEN stopped_at IS NULL THEN 1 ELSE NULL END');
+                $table->unique(
+                    ['task_id', 'performer_type', 'performer_id', 'running_slot'],
+                    'nvl_task_time_entries_running_unique',
+                );
+            }
         });
 
-        $table = DB::connection(TasksConfiguration::connection())->getQueryGrammar()->wrapTable($name);
-        DB::connection(TasksConfiguration::connection())->statement(
-            "CREATE UNIQUE INDEX nvl_task_time_entries_running_unique ON {$table} (task_id, performer_type, performer_id) WHERE stopped_at IS NULL"
-        );
+        if (! in_array($driver, ['mysql', 'mariadb'], true)) {
+            $table = $connection->getQueryGrammar()->wrapTable($name);
+            $connection->statement(
+                "CREATE UNIQUE INDEX nvl_task_time_entries_running_unique ON {$table} (task_id, performer_type, performer_id) WHERE stopped_at IS NULL"
+            );
+        }
     }
 
     /** Remove time entries and their running-timer index. */

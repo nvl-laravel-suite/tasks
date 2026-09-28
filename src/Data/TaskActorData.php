@@ -7,6 +7,7 @@ namespace Nvl\Tasks\Data;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
+use Spatie\LaravelData\Attributes\Hidden as DataHidden;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\Hidden;
 
@@ -19,9 +20,11 @@ final class TaskActorData extends Data
         public readonly ?string $type,
         public readonly int|string|null $id,
         public readonly bool $system = false,
+        #[DataHidden]
+        private readonly ?Model $principal = null,
     ) {
         if ($system) {
-            if ($type !== null || $id !== null) {
+            if ($type !== null || $id !== null || $principal !== null) {
                 throw new InvalidArgumentException('System task actors cannot impersonate a principal.');
             }
 
@@ -30,6 +33,16 @@ final class TaskActorData extends Data
 
         if ($type === null || trim($type) === '' || $id === null || (string) $id === '') {
             throw new InvalidArgumentException('Task actors require a concrete principal identity.');
+        }
+
+        if ($principal !== null) {
+            $principalId = $principal->getKey();
+
+            if (! $principal->exists || $principal->getMorphClass() !== $type
+                || (! is_int($principalId) && ! is_string($principalId))
+                || (string) $principalId !== (string) $id) {
+                throw new InvalidArgumentException('The task actor principal must match its persisted identity.');
+            }
         }
     }
 
@@ -43,7 +56,13 @@ final class TaskActorData extends Data
             throw new InvalidArgumentException('Task actors must be persisted Eloquent authenticatables.');
         }
 
-        return new self($actor->getMorphClass(), $identifier);
+        return new self($actor->getMorphClass(), $identifier, principal: $actor);
+    }
+
+    /** Return the validated principal model when it was supplied by authentication. */
+    public function principal(): ?Model
+    {
+        return $this->principal;
     }
 
     /** Declare an application-trusted system operation. */

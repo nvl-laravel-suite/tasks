@@ -1,18 +1,17 @@
 {
     "name": "nvl/tasks",
-    "description": "Tenant-safe task records and assignments for Laravel applications",
+    "description": "Tenant-safe task management for Laravel applications",
     "type": "library",
     "license": "MIT",
     "keywords": ["laravel", "tasks", "task-management"],
     "require": {
-        "php": "^8.3",
+        "php": "^8.4",
         "ext-json": "*",
         "laravel/framework": "^13.0",
         "nesbot/carbon": "^2.72 || ^3.0",
-        "nvl/content": "^2.0",
+        "nvl/activity": "^2.3.0",
         "nvl/core": "^2.0",
         "nvl/media": "^2.0",
-        "nvl/metafields": "^2.0",
         "nvl/tenancy": "^2.0",
         "spatie/laravel-data": "^4.23",
         "spatie/typescript-transformer": "^3.3"
@@ -45,7 +44,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "2.x-dev"
+            "dev-main": "3.x-dev"
         },
         "laravel": {
             "providers": [

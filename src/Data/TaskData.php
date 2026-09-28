@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Data;
 
 use Nvl\Data\Traits\DataTransform;
-use Nvl\Tasks\Enums\TaskPriority;
-use Nvl\Tasks\Enums\TaskStatus;
 use Nvl\Tasks\Models\Task;
 use Spatie\LaravelData\Attributes\MapOutputName;
 use Spatie\LaravelData\Data;
@@ -30,9 +28,14 @@ final class TaskData extends Data
         public readonly string $id,
         public readonly string $title,
         public readonly ?string $description,
-        public readonly TaskStatus $status,
-        public readonly TaskPriority $priority,
+        public readonly string $status,
+        public readonly string $priority,
+        public readonly string $type,
+        public readonly string $category,
+        public readonly string $importance,
         public readonly ?string $dueAt,
+        public readonly ?string $targetAt,
+        public readonly ?int $estimatedSeconds,
         public readonly ?string $completedAt,
         #[LiteralTypeScriptType('Record<string, unknown>')]
         public readonly array $metadata,
@@ -51,9 +54,14 @@ final class TaskData extends Data
             id: $task->id,
             title: $task->title,
             description: $task->description,
-            status: $task->status,
-            priority: $task->priority,
+            status: (string) $task->status->value,
+            priority: (string) $task->priority->value,
+            type: (string) $task->type->value,
+            category: (string) $task->category->value,
+            importance: (string) $task->importance->value,
             dueAt: $task->due_at?->toISOString(),
+            targetAt: $task->target_at?->toISOString(),
+            estimatedSeconds: $task->estimated_seconds,
             completedAt: $task->completed_at?->toISOString(),
             metadata: $task->metadata ?? [],
             revision: $task->revision,

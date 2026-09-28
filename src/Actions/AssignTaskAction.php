@@ -12,6 +12,7 @@ use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskAssignment;
+use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 use Nvl\Tenancy\Services\TenantBoundary;
 
@@ -19,7 +20,7 @@ use Nvl\Tenancy\Services\TenantBoundary;
 final readonly class AssignTaskAction
 {
     /** Construct the assignment workflow. */
-    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary) {}
+    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}
 
     /** Add one assignee without duplicating an existing assignment. */
     public function execute(Task|string $task, Model&Authenticatable $assignee, TaskActorData $actor): TaskAssignment
@@ -27,7 +28,7 @@ final readonly class AssignTaskAction
         $identity = TaskActorData::fromAuthenticatable($assignee);
         $id = $task instanceof Task ? $task->getKey() : $task;
 
-        return DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $assignee, $id, $identity): TaskAssignment {
+        $assignment = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $assignee, $id, $identity): TaskAssignment {
             $current = $this->boundary->query(Task::query(), Task::TENANT_RESOURCE)
                 ->whereKey($id)->lockForUpdate()->firstOrFail();
             $this->authorization->authorize(TaskAbility::Assign, $actor, $current, $assignee);
@@ -51,8 +52,11 @@ final readonly class AssignTaskAction
             ]);
             $assignment->save();
             $current->forceFill(['revision' => $current->revision + 1])->save();
+            $this->activity->assigned($current, $actor, $identity);
 
-            return $assignment->refresh();
+            return $assignment;
         });
+
+        return $assignment->refresh();
     }
 }

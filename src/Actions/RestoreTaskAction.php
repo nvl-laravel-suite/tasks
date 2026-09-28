@@ -10,21 +10,22 @@ use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
+use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 use Nvl\Tenancy\Services\TenantBoundary;
 
-/** Restores a soft-deleted task without losing Content or Media ownership. */
+/** Restores a soft-deleted task without losing Media attachments. */
 final readonly class RestoreTaskAction
 {
     /** Construct the task-restoration workflow. */
-    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary) {}
+    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}
 
     /** Restore a tenant-visible task only at its exact deleted revision. */
     public function execute(Task|string $task, int $expectedRevision, TaskActorData $actor): Task
     {
         $id = $task instanceof Task ? $task->getKey() : $task;
 
-        return DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $expectedRevision, $id): Task {
+        $restored = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $expectedRevision, $id): Task {
             $current = $this->boundary->query(Task::withTrashed(), Task::TENANT_RESOURCE)
                 ->whereKey($id)->whereNotNull('deleted_at')->lockForUpdate()->firstOrFail();
             $this->authorization->authorize(TaskAbility::Restore, $actor, $current);
@@ -35,8 +36,11 @@ final readonly class RestoreTaskAction
 
             $current->forceFill(['revision' => $current->revision + 1]);
             $current->restore();
+            $this->activity->restored($current, $actor);
 
-            return $current->refresh();
+            return $current;
         });
+
+        return $restored->refresh();
     }
 }

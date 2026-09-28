@@ -4,6 +4,20 @@ All notable changes to `nvl/tasks` are documented here.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-09-28
+
+### Added
+
+- Add configurable model-casted status, priority, type, category, and importance enums, planning targets, firm due dates, and estimates.
+- Add package-owned checklists, tags, time entries and timers, parent/subtask and blocker relationships, dashboard summaries, richer filtering, and task detail projections.
+- Record task lifecycle and assignment events through Activity; expand tenant adoption and diagnostics for task-owned records.
+- Stage Activity records in a durable task outbox with retryable queued and scheduled delivery.
+
+### Changed
+
+- Remove Content and Metafields integrations and dependencies. Keep Activity and Media as the collaboration integrations.
+- Require Activity 2.3 for idempotent outbox delivery.
+
 ## [2.2.2] - 2026-09-26
 
 ### Documentation

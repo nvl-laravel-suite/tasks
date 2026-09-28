@@ -11,6 +11,7 @@ use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
+use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 use Nvl\Tenancy\Services\TenantBoundary;
 
@@ -18,7 +19,7 @@ use Nvl\Tenancy\Services\TenantBoundary;
 final readonly class UnassignTaskAction
 {
     /** Construct the assignment-removal workflow. */
-    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary) {}
+    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}
 
     /** Remove an assignee and report whether an assignment changed. */
     public function execute(Task|string $task, Model&Authenticatable $assignee, TaskActorData $actor): bool
@@ -26,7 +27,7 @@ final readonly class UnassignTaskAction
         $identity = TaskActorData::fromAuthenticatable($assignee);
         $id = $task instanceof Task ? $task->getKey() : $task;
 
-        return DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $assignee, $id, $identity): bool {
+        $changed = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $assignee, $id, $identity): ?Task {
             $current = $this->boundary->query(Task::query(), Task::TENANT_RESOURCE)
                 ->whereKey($id)->lockForUpdate()->firstOrFail();
             $this->authorization->authorize(TaskAbility::Assign, $actor, $current, $assignee);
@@ -36,13 +37,16 @@ final readonly class UnassignTaskAction
                 ->first();
 
             if ($assignment === null) {
-                return false;
+                return null;
             }
 
             $assignment->delete();
             $current->forceFill(['revision' => $current->revision + 1])->save();
+            $this->activity->unassigned($current, $actor, $identity);
 
-            return true;
+            return $current;
         });
+
+        return $changed instanceof Task;
     }
 }

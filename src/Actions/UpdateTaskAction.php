@@ -12,6 +12,7 @@ use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Services\TaskMutationValues;
+use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 use Nvl\Tenancy\Services\TenantBoundary;
 
@@ -23,6 +24,7 @@ final readonly class UpdateTaskAction
         private TaskAuthorization $authorization,
         private TenantBoundary $boundary,
         private TaskMutationValues $values,
+        private TasksActivity $activity,
     ) {}
 
     /** Replace editable fields while rejecting stale client state. */
@@ -30,7 +32,7 @@ final readonly class UpdateTaskAction
     {
         $id = $task instanceof Task ? $task->getKey() : $task;
 
-        return DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $data, $id): Task {
+        $updated = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $data, $id): Task {
             $current = $this->boundary->query(Task::query(), Task::TENANT_RESOURCE)
                 ->whereKey($id)->lockForUpdate()->firstOrFail();
             $this->authorization->authorize(TaskAbility::Update, $actor, $current);
@@ -40,12 +42,15 @@ final readonly class UpdateTaskAction
             }
 
             $current->forceFill([
-                ...$this->values->replace($data, $current->completed_at),
+                ...$this->values->replace($data, $current),
                 'revision' => $current->revision + 1,
             ]);
             $current->save();
+            $this->activity->updated($current, $actor);
 
-            return $current->refresh();
+            return $current;
         });
+
+        return $updated->refresh();
     }
 }

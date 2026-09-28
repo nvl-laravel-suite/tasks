@@ -10,24 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use Nvl\Content\Actions\CreateContentBlockAction;
-use Nvl\Content\Actions\PlaceContentBlockAction;
-use Nvl\Content\Actions\PublishContentBlockAction;
-use Nvl\Content\Actions\SyncContentDefinitionsAction;
-use Nvl\Content\Contracts\ContentOwnerRegistrar;
-use Nvl\Content\Data\ContentActorData;
-use Nvl\Content\Data\Mutations\CreateContentBlockData;
-use Nvl\Content\Data\Mutations\PlaceContentBlockData;
-use Nvl\Content\Schema\ContentDefinitionSource;
-use Nvl\Content\Services\ContentDefinitionRegistry;
 use Nvl\Media\Slots\MediaSlot;
-use Nvl\Metafields\Actions\MetafieldDefinitions\CreateMetafieldDefinitionAction;
-use Nvl\Metafields\Actions\Metafields\SetMetafieldAction;
-use Nvl\Metafields\Contracts\MetafieldAuthorization;
-use Nvl\Metafields\Data\CreateMetafieldDefinitionPayload;
-use Nvl\Metafields\Enums\MetafieldAbility;
-use Nvl\Metafields\Models\MetafieldDefinition;
-use Nvl\Metafields\Support\MetafieldOwnerRegistry;
 use Nvl\Tasks\Actions\AssignTaskAction;
 use Nvl\Tasks\Actions\CreateTaskAction;
 use Nvl\Tasks\Actions\DeleteTaskAction;
@@ -68,7 +51,7 @@ it('denies user mutations until the consuming app binds task authorization', fun
         ->toThrow(AuthorizationException::class);
 });
 
-it('registers bounded private attachments and shared content and metafield ownership', function (): void {
+it('registers bounded private task attachments', function (): void {
     $task = new Task;
     $slot = $task->getMediaSlot('attachments');
 
@@ -76,10 +59,7 @@ it('registers bounded private attachments and shared content and metafield owner
         ->and($slot?->isPublic)->toBeFalse()
         ->and($slot?->sharingMode)->toBe(MediaSlot::SHARING_EXCLUSIVE)
         ->and($slot?->slotSizeLimit)->toBe(10)
-        ->and($slot?->maxFileSize)->toBe(20 * 1024 * 1024)
-        ->and($task->contentGroups())->toBe(['details'])
-        ->and(app(ContentOwnerRegistrar::class)->registered('task'))->toBe(Task::class)
-        ->and(app(MetafieldOwnerRegistry::class)->all()['task']['model'])->toBe(Task::class);
+        ->and($slot?->maxFileSize)->toBe(20 * 1024 * 1024);
 });
 
 it('uses Media for a private task attachment', function (): void {
@@ -99,65 +79,38 @@ it('uses Media for a private task attachment', function (): void {
     expect($restored->getMedia('attachments'))->toHaveCount(1);
 });
 
-it('places rich detail blocks through Content rather than duplicating them on tasks', function (): void {
-    config()->set([
-        'content.locales.available' => ['en'],
-        'content.locales.required_on_publish' => ['en'],
-    ]);
-    app(ContentDefinitionRegistry::class)->register(new ContentDefinitionSource(
-        key: 'tasks.note',
-        name: 'Task note',
-        description: null,
-        category: 'tasks',
-        version: 1,
-        view: null,
-        schema: ['fields' => [[
-            'key' => 'body', 'type' => 'text', 'label' => 'Body',
-            'localized' => true, 'required' => true,
-        ]]],
-        allowedScopes: ['global'],
-        allowedRegions: ['main'],
-    ));
-    $actor = ContentActorData::system();
-    app(SyncContentDefinitionsAction::class)->execute($actor);
-    $block = app(CreateContentBlockAction::class)->execute(new CreateContentBlockData(
-        definition: 'tasks.note',
-        key: 'review-notes',
-        translations: ['en' => ['body' => 'Review every asset.']],
-    ), $actor);
-    $published = app(PublishContentBlockAction::class)->execute($block, $block->revision, $actor);
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Review assets'), TaskActorData::system());
-    app(PlaceContentBlockAction::class)->execute(
-        $published, $task, Task::CONTENT_GROUP, new PlaceContentBlockData(key: 'notes'), $actor,
-    );
+it('keeps task details in its own model without Content or Metafields APIs', function (): void {
+    $task = app(CreateTaskAction::class)->execute(new CreateTaskData(
+        title: 'Review assets',
+        description: 'Check the source files.',
+        metadata: ['reference' => 'brief-123'],
+    ), TaskActorData::system());
 
-    expect($task->contentPlacements()->count())->toBe(1);
+    expect($task->description)->toBe('Check the source files.')
+        ->and($task->metadata)->toBe(['reference' => 'brief-123'])
+        ->and(method_exists($task, 'contentPlacements'))->toBeFalse()
+        ->and(method_exists($task, 'metafields'))->toBeFalse();
+});
+
+it('preserves a full task description through soft deletion and restoration', function (): void {
+    $task = app(CreateTaskAction::class)->execute(new CreateTaskData(
+        title: 'Review assets',
+        description: "Review the brief.\nRecord the decision.",
+    ), TaskActorData::system());
 
     app(DeleteTaskAction::class)->execute($task, TaskActorData::system());
     $restored = app(RestoreTaskAction::class)->execute($task, 1, TaskActorData::system());
 
-    expect($restored->contentPlacements()->count())->toBe(1);
+    expect($restored->description)->toBe("Review the brief.\nRecord the decision.");
 });
 
-it('stores typed task extensions through Metafields', function (): void {
-    app()->instance(MetafieldAuthorization::class, new class implements MetafieldAuthorization
-    {
-        public function authorizeDefinition(MetafieldAbility $ability, ?MetafieldDefinition $definition = null): void {}
+it('stores bounded app hints on task metadata', function (): void {
+    $task = app(CreateTaskAction::class)->execute(new CreateTaskData(
+        title: 'Review assets',
+        metadata: ['source' => 'editorial', 'reference' => 'brief-123'],
+    ), TaskActorData::system());
 
-        public function authorizeOwner(MetafieldAbility $ability, ?Model $owner = null, ?MetafieldDefinition $definition = null): void {}
-    });
-    app(CreateMetafieldDefinitionAction::class)->execute(CreateMetafieldDefinitionPayload::from([
-        'namespace' => 'work',
-        'key' => 'kind',
-        'type' => 'string',
-        'translations' => ['en' => ['title' => 'Work kind']],
-        'assignment' => ['ownerType' => 'task', 'section' => 'general'],
-    ]));
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Review assets'), TaskActorData::system());
-    $field = app(SetMetafieldAction::class)->execute($task, 'work.kind', 'review');
-
-    expect($field->getValue())->toBe('review')
-        ->and($task->metafields()->count())->toBe(1);
+    expect($task->fresh()->metadata)->toBe(['source' => 'editorial', 'reference' => 'brief-123']);
 });
 
 it('reports missing host authorization in strict diagnostics', function (): void {

@@ -7,11 +7,10 @@ namespace Nvl\Tasks\Tests;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
-use Nvl\Content\Providers\ContentServiceProvider;
+use Nvl\Activity\Providers\ActivityServiceProvider;
 use Nvl\Data\Providers\DataServiceProvider;
 use Nvl\Filterable\Providers\FilterableServiceProvider;
 use Nvl\Media\Providers\MediaServiceProvider;
-use Nvl\Metafields\Providers\MetafieldsServiceProvider;
 use Nvl\Support\Providers\SupportServiceProvider;
 use Nvl\Tasks\Providers\TasksServiceProvider;
 use Nvl\Translatable\Providers\TranslatableServiceProvider;
@@ -30,9 +29,8 @@ abstract class TestCase extends Orchestra
             DataServiceProvider::class,
             TranslatableServiceProvider::class,
             FilterableServiceProvider::class,
+            ActivityServiceProvider::class,
             MediaServiceProvider::class,
-            ContentServiceProvider::class,
-            MetafieldsServiceProvider::class,
             TasksServiceProvider::class,
         ];
     }
@@ -44,7 +42,6 @@ abstract class TestCase extends Orchestra
             'filesystems.default' => 'local',
             'media.disk' => 'local',
             'media.routes.assets_enabled' => false,
-            'content.authorization.callback' => static fn (): bool => true,
             'translatable.locales' => ['en'],
             'translatable.fallback_locales' => ['en'],
         ]);

@@ -6,11 +6,10 @@ namespace Nvl\Tasks\Tests;
 
 use Illuminate\Contracts\Foundation\MaintenanceMode;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Nvl\Content\Providers\ContentServiceProvider;
+use Nvl\Activity\Providers\ActivityServiceProvider;
 use Nvl\Data\Providers\DataServiceProvider;
 use Nvl\Filterable\Providers\FilterableServiceProvider;
 use Nvl\Media\Providers\MediaServiceProvider;
-use Nvl\Metafields\Providers\MetafieldsServiceProvider;
 use Nvl\Support\Providers\SupportServiceProvider;
 use Nvl\Tasks\Providers\TasksServiceProvider;
 use Nvl\Tenancy\Contracts\PlatformAccess;
@@ -43,8 +42,7 @@ abstract class TenancyTestCase extends Orchestra
             TranslatableServiceProvider::class,
             FilterableServiceProvider::class,
             MediaServiceProvider::class,
-            ContentServiceProvider::class,
-            MetafieldsServiceProvider::class,
+            ActivityServiceProvider::class,
             TasksServiceProvider::class,
         ];
     }
@@ -57,7 +55,6 @@ abstract class TenancyTestCase extends Orchestra
             'filesystems.default' => 'local',
             'media.disk' => 'local',
             'media.routes.assets_enabled' => false,
-            'content.authorization.callback' => static fn (): bool => true,
             'translatable.locales' => ['en'],
             'translatable.fallback_locales' => ['en'],
             'tenancy.enabled' => true,
@@ -65,8 +62,7 @@ abstract class TenancyTestCase extends Orchestra
             'tenancy.profile' => 'application',
             'tenancy.resources' => [
                 'media' => 'tenant',
-                'content' => 'tenant',
-                'metafields' => 'tenant',
+                'activity' => 'tenant',
                 'tasks' => 'tenant',
             ],
             'tenancy.sharing' => ['media' => 'none', 'metafields' => 'none', 'templates' => 'none'],

@@ -11,6 +11,7 @@ use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Services\TaskMutationValues;
+use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 use Nvl\Tenancy\Services\TenantBoundary;
 
@@ -22,6 +23,7 @@ final readonly class CreateTaskAction
         private TaskAuthorization $authorization,
         private TenantBoundary $boundary,
         private TaskMutationValues $values,
+        private TasksActivity $activity,
     ) {}
 
     /** Persist a validated task and return its post-write state. */
@@ -30,7 +32,7 @@ final readonly class CreateTaskAction
         $this->authorization->authorize(TaskAbility::Create, $actor);
         $values = $this->values->create($data);
 
-        return DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $values): Task {
+        $task = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $values): Task {
             $task = new Task;
             $task->forceFill([
                 ...$values,
@@ -39,8 +41,11 @@ final readonly class CreateTaskAction
                 'creator_id' => $actor->id === null ? null : (string) $actor->id,
             ]);
             $task->save();
+            $this->activity->created($task, $actor);
 
-            return $task->refresh();
+            return $task;
         });
+
+        return $task->refresh();
     }
 }

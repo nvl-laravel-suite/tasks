@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Data\Mutations;
 
+use BackedEnum;
 use Illuminate\Validation\Rule;
 use Nvl\Data\Traits\DataTransform;
-use Nvl\Tasks\Enums\TaskPriority;
-use Nvl\Tasks\Enums\TaskStatus;
+use Nvl\Tasks\Support\TaskEnumConfiguration;
 use Spatie\LaravelData\Attributes\MapInputName;
 use Spatie\LaravelData\Attributes\MapOutputName;
 use Spatie\LaravelData\Data;
@@ -30,11 +30,21 @@ final class CreateTaskData extends Data
     public function __construct(
         public readonly string $title,
         public readonly ?string $description = null,
-        public readonly TaskPriority $priority = TaskPriority::Normal,
-        public readonly TaskStatus $status = TaskStatus::Open,
+        #[LiteralTypeScriptType('string | null')]
+        public readonly BackedEnum|string|null $priority = null,
+        #[LiteralTypeScriptType('string | null')]
+        public readonly BackedEnum|string|null $status = null,
         public readonly ?string $dueAt = null,
         #[LiteralTypeScriptType('Record<string, unknown>')]
         public readonly array $metadata = [],
+        #[LiteralTypeScriptType('string | null')]
+        public readonly BackedEnum|string|null $type = null,
+        #[LiteralTypeScriptType('string | null')]
+        public readonly BackedEnum|string|null $category = null,
+        #[LiteralTypeScriptType('string | null')]
+        public readonly BackedEnum|string|null $importance = null,
+        public readonly ?string $targetAt = null,
+        public readonly ?int $estimatedSeconds = null,
     ) {}
 
     /** Return transport validation rules for task creation.
@@ -46,9 +56,14 @@ final class CreateTaskData extends Data
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:10000'],
-            'priority' => ['sometimes', Rule::enum(TaskPriority::class)],
-            'status' => ['sometimes', Rule::enum(TaskStatus::class)],
-            'dueAt' => ['nullable', 'date'],
+            'priority' => ['nullable', Rule::enum(TaskEnumConfiguration::enumClass('priority'))],
+            'status' => ['nullable', Rule::enum(TaskEnumConfiguration::enumClass('status'))],
+            'type' => ['nullable', Rule::enum(TaskEnumConfiguration::enumClass('type'))],
+            'category' => ['nullable', Rule::enum(TaskEnumConfiguration::enumClass('category'))],
+            'importance' => ['nullable', Rule::enum(TaskEnumConfiguration::enumClass('importance'))],
+            'dueAt' => ['nullable', 'date', 'after_or_equal:targetAt'],
+            'targetAt' => ['nullable', 'date'],
+            'estimatedSeconds' => ['nullable', 'integer', 'min:1', 'max:31536000'],
             'metadata' => ['array', 'max:64'],
         ];
     }

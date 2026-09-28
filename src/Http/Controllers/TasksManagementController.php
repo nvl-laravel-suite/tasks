@@ -7,6 +7,9 @@ namespace Nvl\Tasks\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 use Nvl\Tasks\Actions\AssignTaskAction;
 use Nvl\Tasks\Actions\CreateTaskAction;
 use Nvl\Tasks\Actions\DeleteTaskAction;
@@ -27,6 +30,7 @@ use Nvl\Tasks\Data\TaskData;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Support\TaskActorFactory;
+use Spatie\LaravelData\Optional;
 
 /** Thin opt-in task management transport over the package's public actions. */
 final class TasksManagementController extends Controller
@@ -49,6 +53,15 @@ final class TasksManagementController extends Controller
                 ? TaskActorData::fromAuthenticatable($principals->resolve($query->assigneeId))
                 : null,
             perPage: $query->perPage,
+            type: $query->type,
+            category: $query->category,
+            importance: $query->importance,
+            tag: $query->tag,
+            targetFrom: $query->targetFrom,
+            targetTo: $query->targetTo,
+            dueFrom: $query->dueFrom,
+            dueTo: $query->dueTo,
+            overdue: $query->overdue,
         );
 
         return response()->json([
@@ -69,7 +82,7 @@ final class TasksManagementController extends Controller
     public function store(Request $request, TaskActorFactory $actors, CreateTaskAction $action): JsonResponse
     {
         $task = $action->execute(
-            CreateTaskData::validateAndCreate($request->all()),
+            $this->createData($request),
             $actors->fromRequest($request),
         );
 
@@ -90,7 +103,7 @@ final class TasksManagementController extends Controller
         try {
             $updated = $action->execute(
                 $task,
-                UpdateTaskData::validateAndCreate($request->all()),
+                $this->updateData($request),
                 $actors->fromRequest($request),
             );
         } catch (TaskRevisionConflict $exception) {
@@ -162,5 +175,127 @@ final class TasksManagementController extends Controller
         $action->execute($task, $principals->resolve($assignee), $actor);
 
         return response()->json(status: 204);
+    }
+
+    /** Validate JSON values before constructing a transport-safe task creation DTO. */
+    private function createData(Request $request): CreateTaskData
+    {
+        $values = Validator::make($request->all(), CreateTaskData::rules())->validate();
+
+        return new CreateTaskData(
+            title: $this->requiredString($values, 'title'),
+            description: $this->nullableString($values, 'description'),
+            priority: $this->nullableString($values, 'priority'),
+            status: $this->nullableString($values, 'status'),
+            dueAt: $this->nullableString($values, 'dueAt'),
+            metadata: $this->metadata($values),
+            type: $this->nullableString($values, 'type'),
+            category: $this->nullableString($values, 'category'),
+            importance: $this->nullableString($values, 'importance'),
+            targetAt: $this->nullableString($values, 'targetAt'),
+            estimatedSeconds: $this->nullableInteger($values, 'estimatedSeconds'),
+        );
+    }
+
+    /** Validate JSON values before constructing a transport-safe task replacement DTO. */
+    private function updateData(Request $request): UpdateTaskData
+    {
+        $values = Validator::make($request->all(), UpdateTaskData::rules())->validate();
+
+        return new UpdateTaskData(
+            title: $this->requiredString($values, 'title'),
+            priority: $this->requiredString($values, 'priority'),
+            status: $this->requiredString($values, 'status'),
+            expectedRevision: $this->requiredInteger($values, 'expectedRevision'),
+            description: $this->optionalString($values, 'description'),
+            dueAt: $this->optionalString($values, 'dueAt'),
+            metadata: array_key_exists('metadata', $values) ? $this->metadata($values) : new Optional,
+            type: $this->optionalString($values, 'type'),
+            category: $this->optionalString($values, 'category'),
+            importance: $this->optionalString($values, 'importance'),
+            targetAt: $this->optionalString($values, 'targetAt'),
+            estimatedSeconds: array_key_exists('estimatedSeconds', $values)
+                ? $this->nullableInteger($values, 'estimatedSeconds')
+                : new Optional,
+        );
+    }
+
+    /** @param  array<mixed>  $values */
+    private function requiredString(array $values, string $key): string
+    {
+        $value = $values[$key] ?? null;
+
+        if (! is_string($value)) {
+            throw new InvalidArgumentException("The validated task field [{$key}] must be a string.");
+        }
+
+        return $value;
+    }
+
+    /** @param  array<mixed>  $values */
+    private function nullableString(array $values, string $key): ?string
+    {
+        $value = $values[$key] ?? null;
+
+        if ($value !== null && ! is_string($value)) {
+            throw new InvalidArgumentException("The validated task field [{$key}] must be a string or null.");
+        }
+
+        return $value;
+    }
+
+    /** @param  array<mixed>  $values */
+    private function optionalString(array $values, string $key): string|Optional|null
+    {
+        return array_key_exists($key, $values)
+            ? $this->nullableString($values, $key)
+            : new Optional;
+    }
+
+    /** @param  array<mixed>  $values */
+    private function requiredInteger(array $values, string $key): int
+    {
+        $value = $values[$key] ?? null;
+
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (is_string($value) && $value !== '' && strspn($value, '0123456789') === strlen($value)) {
+            return (int) $value;
+        }
+
+        throw new InvalidArgumentException("The validated task field [{$key}] must be an integer.");
+    }
+
+    /** @param  array<mixed>  $values */
+    private function nullableInteger(array $values, string $key): ?int
+    {
+        return ($values[$key] ?? null) === null ? null : $this->requiredInteger($values, $key);
+    }
+
+    /**
+     * @param  array<mixed>  $values
+     * @return array<string, mixed>
+     */
+    private function metadata(array $values): array
+    {
+        $metadata = $values['metadata'] ?? [];
+
+        if (! is_array($metadata)) {
+            throw ValidationException::withMessages(['metadata' => 'Task metadata must be an object.']);
+        }
+
+        $normalized = [];
+
+        foreach ($metadata as $key => $value) {
+            if (! is_string($key)) {
+                throw ValidationException::withMessages(['metadata' => 'Task metadata keys must be strings.']);
+            }
+
+            $normalized[$key] = $value;
+        }
+
+        return $normalized;
     }
 }

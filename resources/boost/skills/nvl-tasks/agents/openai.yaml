@@ -1,4 +1,4 @@
 interface:
   display_name: "NVL Tasks"
-  short_description: "Build tenant-safe tasks and assignment workflows"
-  default_prompt: "Use $nvl-tasks to implement or review task actions, app-owned assignees, private attachments, and tenant-safe consumption."
+  short_description: "Build complete tenant-safe task workflows"
+  default_prompt: "Use $nvl-tasks to implement or review task lifecycle, classifications, checklists, tags, time tracking, relationships, Activity audit, Media attachments, and tenant-safe API consumption."

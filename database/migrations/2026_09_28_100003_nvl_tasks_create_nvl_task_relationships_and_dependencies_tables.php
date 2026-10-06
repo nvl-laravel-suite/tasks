@@ -5,18 +5,25 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Nvl\Support\Config\PackageStorage;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TasksConfiguration;
 
 return new class extends Migration
 {
+    /** Use the effective package connection for Laravel's migration transaction. */
+    public function getConnection(): ?string
+    {
+        return PackageStorage::connection('tasks');
+    }
+
     /** Create the package-owned parent and blocker graphs. */
     public function up(): void
     {
         $schema = Schema::connection(TasksConfiguration::connection());
-        $relationships = TasksConfiguration::table(TasksTables::Relationships);
-        $dependencies = TasksConfiguration::table(TasksTables::Dependencies);
-        $tasks = TasksConfiguration::table(TasksTables::Tasks);
+        $relationships = TasksConfiguration::table(TasksTables::get(TasksTables::Relationships));
+        $dependencies = TasksConfiguration::table(TasksTables::get(TasksTables::Dependencies));
+        $tasks = TasksConfiguration::table(TasksTables::get(TasksTables::Tasks));
 
         if ($schema->hasTable($relationships) || $schema->hasTable($dependencies)) {
             throw new LogicException('Task relationship tables already exist; disable tasks.migrations.enabled during controlled schema adoption.');
@@ -53,7 +60,7 @@ return new class extends Migration
     public function down(): void
     {
         $schema = Schema::connection(TasksConfiguration::connection());
-        $schema->dropIfExists(TasksConfiguration::table(TasksTables::Dependencies));
-        $schema->dropIfExists(TasksConfiguration::table(TasksTables::Relationships));
+        $schema->dropIfExists(TasksConfiguration::table(TasksTables::get(TasksTables::Dependencies)));
+        $schema->dropIfExists(TasksConfiguration::table(TasksTables::get(TasksTables::Relationships)));
     }
 };

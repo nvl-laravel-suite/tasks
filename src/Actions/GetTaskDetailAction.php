@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Actions;
 
 use Illuminate\Auth\Access\AuthorizationException;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskQueryScope;
 use Nvl\Tasks\Data\TaskActorData;
@@ -13,7 +14,6 @@ use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Services\TaskReadGuard;
 use Nvl\Tasks\Support\TasksConfiguration;
-use Nvl\Tenancy\Services\TenantBoundary;
 use UnexpectedValueException;
 
 /** Reads one task detail with only related IDs the caller may view. */

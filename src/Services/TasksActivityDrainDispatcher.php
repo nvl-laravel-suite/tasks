@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Services;
 
 use Illuminate\Contracts\Config\Repository;
-use Nvl\Activity\Contracts\ActivityTenantWorklist;
-use Nvl\Tenancy\Contracts\TenantContext;
-use Nvl\Tenancy\Enums\TenantContextMode;
-use Nvl\Tenancy\Exceptions\TenantBoundaryViolation;
-use Nvl\Tenancy\Services\TenantRunner;
-use Nvl\Tenancy\ValueObjects\PlatformOperation;
-use Nvl\Tenancy\ValueObjects\TenantId;
+use Nvl\Support\Tenancy\Contracts\TenantContext;
+use Nvl\Support\Tenancy\Contracts\TenantRunner;
+use Nvl\Support\Tenancy\Enums\TenantContextMode;
+use Nvl\Support\Tenancy\Exceptions\TenantBoundaryViolation;
+use Nvl\Support\Tenancy\ValueObjects\PlatformOperation;
+use Nvl\Support\Tenancy\ValueObjects\TenantId;
+use Nvl\Tasks\Contracts\TaskActivityWorklist;
 
 /** Sweep due task activity in every reviewed active tenant scope. */
 final readonly class TasksActivityDrainDispatcher
@@ -21,7 +21,7 @@ final readonly class TasksActivityDrainDispatcher
         private Repository $config,
         private TenantContext $context,
         private TenantRunner $tenants,
-        private ActivityTenantWorklist $worklist,
+        private TaskActivityWorklist $worklist,
         private TasksActivityDelivery $delivery,
     ) {}
 

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskQueryScope;
 use Nvl\Tasks\Data\TaskActorData;
@@ -22,7 +23,6 @@ use Nvl\Tasks\Models\TaskAssignment;
 use Nvl\Tasks\Models\TaskTag;
 use Nvl\Tasks\Support\TaskEnumConfiguration;
 use Nvl\Tasks\Support\TasksConfiguration;
-use Nvl\Tenancy\Services\TenantBoundary;
 
 /** Lists tenant-scoped tasks through an explicitly authorized query. */
 final readonly class ListTasksAction

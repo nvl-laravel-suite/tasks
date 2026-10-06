@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
+use Nvl\Support\Config\PackageStorage;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -43,13 +44,13 @@ final class TaskAssignment extends Model
     /** Return the configured task-assignment table. */
     public function getTable(): string
     {
-        return TasksConfiguration::table(TasksTables::Assignments);
+        return TasksConfiguration::table(TasksTables::get(TasksTables::Assignments));
     }
 
     /** Return the configured Tasks database connection. */
     public function getConnectionName(): ?string
     {
-        return TasksConfiguration::connection() ?? parent::getConnectionName();
+        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('tasks') ?? parent::getConnectionName());
     }
 
     /** Return the assignment's canonical task.

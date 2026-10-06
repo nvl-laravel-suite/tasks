@@ -27,3 +27,21 @@ Use this skill for task-management work in a Laravel application consuming `nvl/
 - Management routes are opt-in. Bind both `TaskAuthorization` and `TaskPrincipalResolver` before enabling HTTP assignment, and secure the host-selected middleware. Apps may keep their own routes and call the same actions.
 - Use `ListTasksAction` for bounded, authorized pages and `GetTaskDashboardAction` for summary counts. Project authorized detail through `TaskDetailData`. Do not serialize task models or load unbounded relations for a list.
 - Run focused Pest tests, PHPStan, and `nvl:tasks:doctor --strict` after changing schema, authorization, tenancy, or route configuration.
+
+## Shared consumer diagnostics
+
+Run `php artisan nvl:doctor --strict --format=json` to combine checks from loaded NVL providers. Retain the package Doctor command for its detailed report; both paths reuse the package-owned inspection service.
+
+## Optional Activity and Media adapters
+
+Tasks installs with Core only. Install `nvl/activity` or `nvl/media` and load its provider to activate that integration. `tasks.activity.enabled` and `tasks.media.enabled` accept `null` (automatic activation from loaded providers), `false` (disabled), or `true` (required). Explicitly requiring an unavailable adapter produces a configuration error; Core Doctor reports inactive automatic integrations as information.
+
+With Activity inactive, ordinary task mutations remain available and create no new Activity outbox events. Existing pending outbox rows remain unchanged, including payloads, attempts, and leases. Delivery and draining return without consuming them. Re-enable the Activity provider before delivering those rows; do not delete them as part of removing the integration.
+
+Use the Tasks-owned `Nvl\Tasks\Contracts\TaskAttachments` boundary for attachment operations: `attach($task, $mediaId, $actor)`, `detach($task, $mediaId, $actor)`, and `ids($task, $actor)`. Its Media adapter retains private file validation, exclusive ownership, bounded retention, tenant checks, and both packages' authorization policies. Requesting attachments while Media is inactive throws a clear exception. The Task model no longer composes foreign Media traits or implements `HasMedia`.
+
+Host adapters can bind `TaskActivityPublisher`, `TaskActivityWorklist`, or `TaskAttachments` before package defaults are registered.
+
+### Brownfield storage identities
+
+Resolve all package tables through the table helper and canonical `tasks.tables.*`, connections through `tasks.connection` with Core/Laravel inheritance. Defaults use `nvl_tasks_*`; migration filenames include that package slug. Never silently adopt a matching table or generic migration filename. Run shared `nvl:doctor --strict --format=json` and the explicit `nvl:schema:upgrade --package=tasks --claim-legacy --dry-run --format=json` before upgrading owned legacy storage. Validate the complete plan and choose one migration owner. Preserve host records, constraint names and stored morph values. Deprecated config inputs last one major; canonical options take precedence.

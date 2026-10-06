@@ -7,6 +7,7 @@ namespace Nvl\Tasks\Actions;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use LogicException;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\Mutations\TimeEntryData;
 use Nvl\Tasks\Data\TaskActorData;
@@ -16,7 +17,6 @@ use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskTimeEntry;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
-use Nvl\Tenancy\Services\TenantBoundary;
 
 /** Adds a manual time interval for one authorized task performer. */
 final readonly class AddTaskTimeEntryAction

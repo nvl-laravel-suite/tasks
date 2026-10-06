@@ -7,6 +7,7 @@ namespace Nvl\Tasks\Actions;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
@@ -14,7 +15,6 @@ use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskAssignment;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
-use Nvl\Tenancy\Services\TenantBoundary;
 
 /** Idempotently assigns a canonical task to a persisted host principal. */
 final readonly class AssignTaskAction

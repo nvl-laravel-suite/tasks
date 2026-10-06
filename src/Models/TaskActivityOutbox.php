@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use LogicException;
+use Nvl\Support\Config\PackageStorage;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -47,13 +48,13 @@ final class TaskActivityOutbox extends Model
     /** Return the configured activity outbox table. */
     public function getTable(): string
     {
-        return TasksConfiguration::table(TasksTables::ActivityOutbox);
+        return TasksConfiguration::table(TasksTables::get(TasksTables::ActivityOutbox));
     }
 
     /** Return the configured Tasks database connection. */
     public function getConnectionName(): ?string
     {
-        return TasksConfiguration::connection() ?? parent::getConnectionName();
+        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('tasks') ?? parent::getConnectionName());
     }
 
     /** Prevent an activity envelope from changing after it is staged. */

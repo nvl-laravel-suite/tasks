@@ -6,6 +6,7 @@ namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\Mutations\TaskTagMutationData;
 use Nvl\Tasks\Data\TaskActorData;
@@ -15,7 +16,6 @@ use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskTag;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
-use Nvl\Tenancy\Services\TenantBoundary;
 
 /** Attaches one normalized task tag within a bounded task label set. */
 final readonly class AddTaskTagAction

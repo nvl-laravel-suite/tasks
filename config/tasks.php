@@ -48,6 +48,7 @@ return [
     ],
 
     'activity' => [
+        'enabled' => null,
         'queue' => 'maintenance',
         'schedule' => [
             'enabled' => true,
@@ -65,6 +66,7 @@ return [
     ],
 
     'media' => [
+        'enabled' => null,
         'maximum_attachments' => 10,
         'maximum_file_bytes' => 20 * 1024 * 1024,
     ],

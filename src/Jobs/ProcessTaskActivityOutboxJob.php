@@ -8,9 +8,9 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Nvl\Support\Tenancy\Contracts\TenantQueuedJob;
+use Nvl\Support\Tenancy\ValueObjects\TenantJobEnvelope;
 use Nvl\Tasks\Services\TasksActivityDelivery;
-use Nvl\Tenancy\Contracts\TenantQueuedJob;
-use Nvl\Tenancy\ValueObjects\TenantJobEnvelope;
 
 /** Deliver one committed task activity event in its captured tenant scope. */
 final class ProcessTaskActivityOutboxJob implements ShouldQueue, TenantQueuedJob

@@ -7,6 +7,7 @@ namespace Nvl\Tasks\Actions;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use InvalidArgumentException;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskQueryScope;
 use Nvl\Tasks\Data\TaskActorData;
@@ -16,7 +17,6 @@ use Nvl\Tasks\Enums\TaskStatus;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskAssignment;
 use Nvl\Tasks\Models\TaskTimeEntry;
-use Nvl\Tenancy\Services\TenantBoundary;
 use stdClass;
 use UnexpectedValueException;
 

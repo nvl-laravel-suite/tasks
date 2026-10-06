@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Services;
 
 use InvalidArgumentException;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
@@ -12,7 +13,6 @@ use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskDependency;
 use Nvl\Tasks\Models\TaskRelationship;
-use Nvl\Tenancy\Services\TenantBoundary;
 
 /** Protects task graph mutations with canonical endpoint, tenant, revision and cycle checks. */
 final readonly class TaskGraphGuard

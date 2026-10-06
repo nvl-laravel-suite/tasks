@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
+use Nvl\Support\Config\PackageStorage;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -35,13 +36,13 @@ final class TaskDependency extends Model
     /** Return the configured task dependency table. */
     public function getTable(): string
     {
-        return TasksConfiguration::table(TasksTables::Dependencies);
+        return TasksConfiguration::table(TasksTables::get(TasksTables::Dependencies));
     }
 
     /** Return the configured Tasks database connection. */
     public function getConnectionName(): ?string
     {
-        return TasksConfiguration::connection() ?? parent::getConnectionName();
+        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('tasks') ?? parent::getConnectionName());
     }
 
     /** Return the blocked task.

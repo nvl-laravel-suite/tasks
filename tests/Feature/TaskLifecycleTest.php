@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Nvl\Media\Models\Media;
 use Nvl\Media\Slots\MediaSlot;
 use Nvl\Tasks\Actions\AssignTaskAction;
 use Nvl\Tasks\Actions\CreateTaskAction;
@@ -19,6 +20,7 @@ use Nvl\Tasks\Actions\ListTasksAction;
 use Nvl\Tasks\Actions\RestoreTaskAction;
 use Nvl\Tasks\Actions\UnassignTaskAction;
 use Nvl\Tasks\Actions\UpdateTaskAction;
+use Nvl\Tasks\Contracts\TaskAttachments;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskQueryScope;
 use Nvl\Tasks\Data\Mutations\CreateTaskData;
@@ -28,6 +30,7 @@ use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Enums\TaskPriority;
 use Nvl\Tasks\Enums\TaskStatus;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
+use Nvl\Tasks\Integrations\MediaTaskAttachments;
 use Nvl\Tasks\Models\Task;
 
 function taskTestUser(string $name): User
@@ -52,8 +55,7 @@ it('denies user mutations until the consuming app binds task authorization', fun
 });
 
 it('registers bounded private task attachments', function (): void {
-    $task = new Task;
-    $slot = $task->getMediaSlot('attachments');
+    $slot = app(MediaTaskAttachments::class)->slot();
 
     expect($slot)->not->toBeNull()
         ->and($slot?->isPublic)->toBeFalse()
@@ -65,18 +67,16 @@ it('registers bounded private task attachments', function (): void {
 it('uses Media for a private task attachment', function (): void {
     Storage::fake('local');
     $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Review assets'), TaskActorData::system());
-    $media = $task->addMediaFromString('Attachment notes')
-        ->usingFileName('notes.txt')
-        ->withoutVariations()
-        ->slot('attachments');
+    $media = Media::factory()->create(['mime_type' => 'text/plain', 'is_public' => false]);
+    app(TaskAttachments::class)->attach($task, $media->id, TaskActorData::system());
 
     expect($media->is_public)->toBeFalse()
-        ->and($task->getMedia('attachments'))->toHaveCount(1);
+        ->and(app(TaskAttachments::class)->ids($task, TaskActorData::system()))->toHaveCount(1);
 
     app(DeleteTaskAction::class)->execute($task, TaskActorData::system());
     $restored = app(RestoreTaskAction::class)->execute($task, 1, TaskActorData::system());
 
-    expect($restored->getMedia('attachments'))->toHaveCount(1);
+    expect(app(TaskAttachments::class)->ids($restored, TaskActorData::system()))->toHaveCount(1);
 });
 
 it('keeps task details in its own model without Content or Metafields APIs', function (): void {

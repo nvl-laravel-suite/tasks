@@ -9,10 +9,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Nvl\Activity\Facades\ActivityLog;
+use Nvl\Activity\Providers\ActivityServiceProvider;
 use Nvl\Activity\Support\ActivityRecordEnvelope;
+use Nvl\Support\Integrations\OptionalIntegration;
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Tasks\Models\TaskActivityOutbox;
 use Nvl\Tasks\Support\TasksConfiguration;
-use Nvl\Tenancy\Services\TenantBoundary;
 use Throwable;
 
 /** Delivers committed task events with a short lease and idempotent Activity IDs. */
@@ -21,11 +23,15 @@ final readonly class TasksActivityDelivery
     private const int LEASE_SECONDS = 120;
 
     /** Construct the tenant-bounded delivery service. */
-    public function __construct(private TenantBoundary $boundary) {}
+    public function __construct(private TenantBoundary $boundary, private OptionalIntegration $integrations) {}
 
     /** Attempt one due event; another worker may already hold its lease. */
     public function deliver(string $id): bool
     {
+        if (! $this->integrations->enabled('tasks.activity.enabled', ActivityServiceProvider::class)) {
+            return false;
+        }
+
         $claim = DB::connection(TasksConfiguration::connection())->transaction(function () use ($id): array|bool|null {
             $event = $this->boundary->query(TaskActivityOutbox::query(), TaskActivityOutbox::TENANT_RESOURCE)
                 ->whereKey($id)->lockForUpdate()->first();
@@ -82,6 +88,10 @@ final readonly class TasksActivityDelivery
     /** Deliver a bounded page of due events within the current tenant scope. */
     public function drain(int $limit): int
     {
+        if (! $this->integrations->enabled('tasks.activity.enabled', ActivityServiceProvider::class)) {
+            return 0;
+        }
+
         $ids = $this->boundary->query(TaskActivityOutbox::query(), TaskActivityOutbox::TENANT_RESOURCE)
             ->whereNull('delivered_at')
             ->where('available_at', '<=', CarbonImmutable::now())

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Tenancy;
 
 use Illuminate\Database\Query\Builder;
+use Nvl\Support\Tenancy\Exceptions\TenantBoundaryViolation;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TasksConfiguration;
 use Nvl\Tenancy\Contracts\TenantAdoptionAdapter;
-use Nvl\Tenancy\Exceptions\TenantBoundaryViolation;
 use Nvl\Tenancy\Services\TenantAdoptionBoundary;
 use Nvl\Tenancy\ValueObjects\TenantAdoptionPlan;
 use Nvl\Tenancy\ValueObjects\TenantBackfillResult;
@@ -34,8 +34,8 @@ final readonly class TasksAdoptionAdapter implements TenantAdoptionAdapter
     {
         $schema = $this->adoption->connection($plan, 'tasks.tasks')->getSchemaBuilder();
         $tables = [
-            TasksConfiguration::table(TasksTables::Tasks),
-            TasksConfiguration::table(TasksTables::ActivityOutbox),
+            TasksConfiguration::table(TasksTables::get(TasksTables::Tasks)),
+            TasksConfiguration::table(TasksTables::get(TasksTables::ActivityOutbox)),
         ];
 
         foreach ($this->children() as $child) {
@@ -58,10 +58,10 @@ final readonly class TasksAdoptionAdapter implements TenantAdoptionAdapter
         $connection->transaction(function () use ($assignments, $connection): void {
             foreach ($assignments as $assignment) {
                 $tenantId = $this->adoption->ownership($assignment, 'tasks.tasks')['tenant_id'];
-                $connection->table(TasksConfiguration::table(TasksTables::Tasks))
+                $connection->table(TasksConfiguration::table(TasksTables::get(TasksTables::Tasks)))
                     ->where('id', $assignment->recordId)->update(['tenant_id' => $tenantId]);
 
-                $connection->table(TasksConfiguration::table(TasksTables::ActivityOutbox))
+                $connection->table(TasksConfiguration::table(TasksTables::get(TasksTables::ActivityOutbox)))
                     ->where('task_id', $assignment->recordId)
                     ->whereNull('tenant_id')
                     ->update(['tenant_id' => $tenantId]);
@@ -81,14 +81,14 @@ final readonly class TasksAdoptionAdapter implements TenantAdoptionAdapter
     public function verify(TenantAdoptionPlan $plan): TenantVerification
     {
         $connection = $this->adoption->connection($plan, 'tasks.tasks');
-        $tasks = TasksConfiguration::table(TasksTables::Tasks);
+        $tasks = TasksConfiguration::table(TasksTables::get(TasksTables::Tasks));
         $errors = [];
 
         if ($connection->table($tasks)->whereNull('tenant_id')->exists()) {
             $errors[] = 'tasks.tenant_id';
         }
 
-        $outbox = TasksConfiguration::table(TasksTables::ActivityOutbox);
+        $outbox = TasksConfiguration::table(TasksTables::get(TasksTables::ActivityOutbox));
 
         if ($connection->table($outbox.' as outbox')
             ->leftJoin($tasks.' as task', 'task.id', '=', 'outbox.task_id')
@@ -149,32 +149,32 @@ final readonly class TasksAdoptionAdapter implements TenantAdoptionAdapter
     {
         return [
             'tasks.assignments' => [
-                'table' => TasksConfiguration::table(TasksTables::Assignments),
+                'table' => TasksConfiguration::table(TasksTables::get(TasksTables::Assignments)),
                 'parent_key' => 'task_id',
                 'other_key' => null,
             ],
             'tasks.checklist_items' => [
-                'table' => TasksConfiguration::table(TasksTables::ChecklistItems),
+                'table' => TasksConfiguration::table(TasksTables::get(TasksTables::ChecklistItems)),
                 'parent_key' => 'task_id',
                 'other_key' => null,
             ],
             'tasks.time_entries' => [
-                'table' => TasksConfiguration::table(TasksTables::TimeEntries),
+                'table' => TasksConfiguration::table(TasksTables::get(TasksTables::TimeEntries)),
                 'parent_key' => 'task_id',
                 'other_key' => null,
             ],
             'tasks.tags' => [
-                'table' => TasksConfiguration::table(TasksTables::Tags),
+                'table' => TasksConfiguration::table(TasksTables::get(TasksTables::Tags)),
                 'parent_key' => 'task_id',
                 'other_key' => null,
             ],
             'tasks.relationships' => [
-                'table' => TasksConfiguration::table(TasksTables::Relationships),
+                'table' => TasksConfiguration::table(TasksTables::get(TasksTables::Relationships)),
                 'parent_key' => 'child_task_id',
                 'other_key' => 'parent_task_id',
             ],
             'tasks.dependencies' => [
-                'table' => TasksConfiguration::table(TasksTables::Dependencies),
+                'table' => TasksConfiguration::table(TasksTables::get(TasksTables::Dependencies)),
                 'parent_key' => 'task_id',
                 'other_key' => 'blocker_task_id',
             ],

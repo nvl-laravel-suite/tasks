@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Nvl\Activity\Definitions\Tables\ActivityTables;
 use Nvl\Activity\Facades\ActivityLog as ActivityWriter;
 use Nvl\Activity\Models\ActivityLog;
 use Nvl\Activity\Support\ActivityRecordEnvelope;
@@ -54,7 +55,7 @@ function allowTaskActivityMutations(): void
 
 function createTaskActivityAuditTable(): void
 {
-    Schema::connection('task_activity_audit')->create('activity_log', function (Blueprint $table): void {
+    Schema::connection('task_activity_audit')->create(ActivityTables::get(ActivityTables::ActivityLog), function (Blueprint $table): void {
         $table->uuid('id')->primary();
         $table->string('log_name')->nullable();
         $table->text('description');
@@ -208,9 +209,9 @@ it('retains and retries a committed task event while Activity uses another conne
 
         expect(app(TasksActivityDelivery::class)->deliver($pending->id))->toBeTrue()
             ->and(app(TasksActivityDelivery::class)->deliver($pending->id))->toBeTrue()
-            ->and(DB::connection('task_activity_audit')->table('activity_log')->count())->toBe(1)
+            ->and(DB::connection('task_activity_audit')->table(ActivityTables::get(ActivityTables::ActivityLog))->count())->toBe(1)
             ->and($pending->fresh()?->delivered_at)->not->toBeNull()
-            ->and((string) DB::connection('task_activity_audit')->table('activity_log')->value('created_at'))
+            ->and((string) DB::connection('task_activity_audit')->table(ActivityTables::get(ActivityTables::ActivityLog))->value('created_at'))
             ->toContain('2026-09-28 10:00:00');
     } finally {
         CarbonImmutable::setTestNow();
@@ -233,7 +234,7 @@ it('does not write Activity on another connection before an outer task transacti
         throw new RuntimeException('Rollback outer task transaction');
     }))->toThrow(RuntimeException::class);
 
-    expect(DB::connection('task_activity_audit')->table('activity_log')->count())->toBe(0);
+    expect(DB::connection('task_activity_audit')->table(ActivityTables::get(ActivityTables::ActivityLog))->count())->toBe(0);
     expect(TaskActivityOutbox::query()->count())->toBe(0);
 });
 
@@ -256,11 +257,11 @@ it('replays a written but unacknowledged event through the recovery command exac
         ->and(Artisan::call('nvl:tasks:activity:drain'))->toBe(0)
         ->and($pending->fresh()?->delivered_at)->not->toBeNull()
         ->and($pending->fresh()?->attempts)->toBeGreaterThanOrEqual(1)
-        ->and(DB::connection('task_activity_audit')->table('activity_log')->count())->toBe(1);
+        ->and(DB::connection('task_activity_audit')->table(ActivityTables::get(ActivityTables::ActivityLog))->count())->toBe(1);
 
     Artisan::call('nvl:tasks:activity:drain');
 
-    expect(DB::connection('task_activity_audit')->table('activity_log')->count())->toBe(1);
+    expect(DB::connection('task_activity_audit')->table(ActivityTables::get(ActivityTables::ActivityLog))->count())->toBe(1);
 });
 
 it('rejects invalid recovery batch sizes', function (): void {

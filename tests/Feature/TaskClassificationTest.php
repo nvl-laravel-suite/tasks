@@ -84,7 +84,7 @@ it('rejects an empty numeric enum in task configuration', function (): void {
 
 it('uses configured enum defaults when adding fields to existing tasks', function (): void {
     $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Existing task'), TaskActorData::system());
-    $migration = require __DIR__.'/../../database/migrations/2026_09_28_080128_add_task_management_fields_to_nvl_tasks_table.php';
+    $migration = require __DIR__.'/../../database/migrations/2026_09_28_080128_nvl_tasks_add_task_management_fields_to_nvl_tasks_table.php';
     $migration->down();
     config()->set([
         'tasks.enums.type' => ConsumerTaskType::class,

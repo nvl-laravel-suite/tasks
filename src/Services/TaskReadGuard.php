@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Services;
 
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
-use Nvl\Tenancy\Services\TenantBoundary;
 
 /** Resolves a canonical tenant task through the host's View policy. */
 final readonly class TaskReadGuard

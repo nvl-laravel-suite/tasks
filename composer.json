@@ -3,16 +3,17 @@
     "description": "Tenant-safe task management for Laravel applications",
     "type": "library",
     "license": "MIT",
-    "keywords": ["laravel", "tasks", "task-management"],
+    "keywords": [
+        "laravel",
+        "tasks",
+        "task-management"
+    ],
     "require": {
         "php": "^8.4",
         "ext-json": "*",
         "laravel/framework": "^13.0",
         "nesbot/carbon": "^2.72 || ^3.0",
-        "nvl/activity": "^2.3.0",
         "nvl/core": "^2.0",
-        "nvl/media": "^2.0",
-        "nvl/tenancy": "^2.0",
         "spatie/laravel-data": "^4.23",
         "spatie/typescript-transformer": "^3.3"
     },
@@ -20,6 +21,7 @@
         "larastan/larastan": "^3.10",
         "laravel/pint": "^1.27",
         "nvl/filterable": "^2.0",
+        "nvl/tenancy": "^2.0",
         "nvl/translatable": "^2.0",
         "orchestra/testbench": "^11.0",
         "pestphp/pest": "^4.0",
@@ -39,7 +41,11 @@
         "analyse": "phpstan analyse --memory-limit=2G",
         "format": "pint --parallel --format agent",
         "format:test": "pint --parallel --test --format agent",
-        "quality": ["@format:test", "@analyse", "@test"],
+        "quality": [
+            "@format:test",
+            "@analyse",
+            "@test"
+        ],
         "test": "pest --compact"
     },
     "extra": {
@@ -71,5 +77,10 @@
         ]
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "suggest": {
+        "nvl/activity": "Enables canonical task history and durable Activity delivery.",
+        "nvl/media": "Enables explicit private task attachments through the loaded Media provider.",
+        "nvl/tenancy": "Enables enforcing tenant ownership, scoped execution, adoption, and captured tenant queue contexts."
+    }
 }

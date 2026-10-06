@@ -23,7 +23,7 @@ Tasks owns task identity, lifecycle, classifications, assignees, checklists, tag
 
 Collaboration integrations are Activity for task audit events and Media for private files in the `attachments` slot. All task management facts live in package-owned tables. Apps may use the public actions without enabling HTTP routes.
 
-Task mutations stage immutable Activity events in `nvl_task_activity_outbox` within the same database transaction. When Activity shares the Tasks connection, the Activity row is written atomically before commit. With a separate connection, a queued job delivers after the outer commit; `nvl:tasks:activity:drain` runs every minute by default to recover missed dispatches and retry failed writes with backoff. Replays use the outbox UUID as the Activity UUID, so a write that succeeded before its acknowledgement does not create a duplicate. Run the configured queue worker for `tasks.activity.queue` (default `maintenance`) and the Laravel scheduler. In tenant mode, configure Activity's reviewed active-tenant worklist for the scheduled sweep; `nvl:tasks:doctor --strict` flags an empty worklist. Keep pending outbox rows until delivery succeeds; inspect `attempts` and `last_error` if delivery stalls. During later tenancy adoption, outbox rows whose tasks were hard deleted cannot be assigned a tenant automatically. Resolve their audit delivery and ownership before activating tenancy; adoption fails closed until those orphan rows are reconciled.
+When the Activity adapter is active, task mutations stage immutable Activity events in `nvl_task_activity_outbox` within the same database transaction. When Activity shares the Tasks connection, the Activity row is written atomically before commit. With a separate connection, a queued job delivers after the outer commit; `nvl:tasks:activity:drain` runs every minute by default to recover missed dispatches and retry failed writes with backoff. Replays use the outbox UUID as the Activity UUID, so a write that succeeded before its acknowledgement does not create a duplicate. Run the configured queue worker for `tasks.activity.queue` (default `maintenance`) and the Laravel scheduler. In tenant mode, configure Activity's reviewed active-tenant worklist for the scheduled sweep; `nvl:tasks:doctor --strict` flags an empty worklist. Keep pending outbox rows until delivery succeeds; inspect `attempts` and `last_error` if delivery stalls. During later tenancy adoption, outbox rows whose tasks were hard deleted cannot be assigned a tenant automatically. Resolve their audit delivery and ownership before activating tenancy; adoption fails closed until those orphan rows are reconciled.
 
 ## Requirements and installation
 
@@ -86,3 +86,34 @@ Maintainer CI also validates the package family. In a consuming Laravel applicat
 ## License
 
 MIT. See [LICENSE](LICENSE). Security reports should follow [SECURITY.md](SECURITY.md); upgrading notes are in [UPGRADING.md](UPGRADING.md).
+
+## Shared consumer diagnostics
+
+Run `php artisan nvl:doctor --strict --format=json` to combine the read-only checks from loaded NVL package providers. Errors fail the gate, and strict mode also fails warnings. This package's existing Doctor command remains available and uses the same package-owned inspection service.
+
+## Optional Activity and Media adapters
+
+Tasks installs with Core only. Install `nvl/activity` or `nvl/media` and load its provider to activate that integration. `tasks.activity.enabled` and `tasks.media.enabled` accept `null` (automatic activation from loaded providers), `false` (disabled), or `true` (required). Explicitly requiring an unavailable adapter produces a configuration error; Core Doctor reports inactive automatic integrations as information.
+
+With Activity inactive, ordinary task mutations remain available and create no new Activity outbox events. Existing pending outbox rows remain unchanged, including payloads, attempts, and leases. Delivery and draining return without consuming them. Re-enable the Activity provider before delivering those rows; do not delete them as part of removing the integration.
+
+Use the Tasks-owned `Nvl\Tasks\Contracts\TaskAttachments` boundary for attachment operations: `attach($task, $mediaId, $actor)`, `detach($task, $mediaId, $actor)`, and `ids($task, $actor)`. Its Media adapter retains private file validation, exclusive ownership, bounded retention, tenant checks, and both packages' authorization policies. Requesting attachments while Media is inactive throws a clear exception. The Task model no longer composes foreign Media traits or implements `HasMedia`.
+
+Host adapters can bind `TaskActivityPublisher`, `TaskActivityWorklist`, or `TaskAttachments` before package defaults are registered.
+
+## Next major: isolated schema identities
+
+Use `tasks.tables.<logical-key>` for every table and `tasks.connection` for its database connection. Null connection inherits `nvl-core.connection`, then Laravel's default. Tables are resolved at runtime by the package table definition helper.
+
+| Logical key | New default | Previous name |
+| --- | --- | --- |
+| `tasks` | `nvl_tasks_tasks` | `nvl_tasks` |
+| `assignments` | `nvl_tasks_assignments` | `nvl_task_assignments` |
+| `checklist_items` | `nvl_tasks_checklist_items` | `nvl_task_checklist_items` |
+| `time_entries` | `nvl_tasks_time_entries` | `nvl_task_time_entries` |
+| `relationships` | `nvl_tasks_relationships` | `nvl_task_relationships` |
+| `dependencies` | `nvl_tasks_dependencies` | `nvl_task_dependencies` |
+| `tags` | `nvl_tasks_tags` | `nvl_task_tags` |
+| `activity_outbox` | `nvl_tasks_activity_outbox` | `nvl_task_activity_outbox` |
+
+Migration filenames contain `nvl_tasks_`. Existing installations must complete the upgrade in `UPGRADING.md` before running new migrations. A pending creator rejects an existing target before any migration in the batch runs; legacy storage with old history needs an ownership decision.

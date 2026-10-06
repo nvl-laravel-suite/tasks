@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
+use Nvl\Support\Config\PackageStorage;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -47,13 +48,13 @@ final class TaskTimeEntry extends Model
     /** Return the configured time-entry table. */
     public function getTable(): string
     {
-        return TasksConfiguration::table(TasksTables::TimeEntries);
+        return TasksConfiguration::table(TasksTables::get(TasksTables::TimeEntries));
     }
 
     /** Return the configured Tasks database connection. */
     public function getConnectionName(): ?string
     {
-        return TasksConfiguration::connection() ?? parent::getConnectionName();
+        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('tasks') ?? parent::getConnectionName());
     }
 
     /** Return the canonical parent task.

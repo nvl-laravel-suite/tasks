@@ -13,9 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
-use Nvl\Media\Contracts\HasMedia;
-use Nvl\Media\Enums\MimeType;
-use Nvl\Media\Traits\InteractsWithMedia;
+use Nvl\Support\Config\PackageStorage;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TaskEnumConfiguration;
 use Nvl\Tasks\Support\TasksConfiguration;
@@ -49,10 +47,9 @@ use Nvl\Tasks\Support\TasksConfiguration;
  * @property-read Collection<int, TaskTimeEntry> $timeEntries
  * @property-read Collection<int, TaskTag> $tags
  */
-final class Task extends Model implements HasMedia
+final class Task extends Model
 {
     use HasUuids;
-    use InteractsWithMedia;
     use SoftDeletes;
 
     public const string TENANT_RESOURCE = 'tasks.tasks';
@@ -82,23 +79,13 @@ final class Task extends Model implements HasMedia
     /** Return the configured task table. */
     public function getTable(): string
     {
-        return TasksConfiguration::table(TasksTables::Tasks);
+        return TasksConfiguration::table(TasksTables::get(TasksTables::Tasks));
     }
 
     /** Return the configured Tasks database connection. */
     public function getConnectionName(): ?string
     {
-        return TasksConfiguration::connection() ?? parent::getConnectionName();
-    }
-
-    /** Define private, bounded task attachments owned by Media. */
-    public function registerMediaSlots(): void
-    {
-        $this->addMediaSlot('attachments')
-            ->privateExclusive()
-            ->onlyKeepLatest(TasksConfiguration::limit('media.maximum_attachments', 10))
-            ->maxFileSize(TasksConfiguration::limit('media.maximum_file_bytes', 20 * 1024 * 1024))
-            ->acceptsMimeTypes([...MimeType::images(), ...MimeType::documents()]);
+        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('tasks') ?? parent::getConnectionName());
     }
 
     /** Return the host-owned creator without assuming an Auth package model.

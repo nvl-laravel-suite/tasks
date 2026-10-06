@@ -5,19 +5,35 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Providers;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
+use Nvl\Activity\Providers\ActivityServiceProvider;
 use Nvl\Data\Services\TypeScriptSourceRegistry;
+use Nvl\Media\Providers\MediaServiceProvider;
+use Nvl\Support\Doctor\PackageDoctorContributor;
+use Nvl\Support\Integrations\OptionalIntegration;
+use Nvl\Support\Providers\SupportServiceProvider;
+use Nvl\Support\Providers\TenantServiceProvider;
+use Nvl\Support\Tenancy\Services\TenantResourceRegistry;
 use Nvl\Support\Traits\MergesPackageConfiguration;
 use Nvl\Tasks\Console\DrainTaskActivityOutboxCommand;
 use Nvl\Tasks\Console\TasksDoctorCommand;
+use Nvl\Tasks\Contracts\TaskActivityPublisher;
+use Nvl\Tasks\Contracts\TaskActivityWorklist;
+use Nvl\Tasks\Contracts\TaskAttachments;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskPrincipalResolver;
+use Nvl\Tasks\Integrations\ActivityTaskPublisher;
+use Nvl\Tasks\Integrations\ActivityTaskWorklist;
+use Nvl\Tasks\Integrations\EmptyTaskActivityWorklist;
+use Nvl\Tasks\Integrations\InactiveTaskActivityPublisher;
+use Nvl\Tasks\Integrations\MediaTaskAttachments;
+use Nvl\Tasks\Integrations\UnavailableTaskAttachments;
 use Nvl\Tasks\Services\ConfiguredTaskAuthorization;
 use Nvl\Tasks\Services\ConfiguredTaskPrincipalResolver;
+use Nvl\Tasks\Services\TasksDoctor;
 use Nvl\Tasks\Tenancy\TasksResourceRegistrar;
-use Nvl\Tenancy\Providers\TenancyServiceProvider;
 use Nvl\Tenancy\Services\TenantAdoptionRegistry;
-use Nvl\Tenancy\Services\TenantResourceRegistry;
 
 /** Registers the headless Tasks runtime and package-owned integrations. */
 final class TasksServiceProvider extends ServiceProvider
@@ -27,12 +43,43 @@ final class TasksServiceProvider extends ServiceProvider
     /** Register safe defaults and the task ownership graph. */
     public function register(): void
     {
+        $this->app->register(SupportServiceProvider::class);
+        PackageDoctorContributor::register($this->app, 'nvl/tasks', function (): array {
+            $report = $this->app->make(TasksDoctor::class)->inspect();
+
+            return [...PackageDoctorContributor::booleanChecks($report['checks'], 'nvl:tasks:doctor'), ...$report['integrations']];
+        });
+
         $this->mergePackageConfiguration(__DIR__.'/../../config/tasks.php', 'tasks');
-        $this->app->register(TenancyServiceProvider::class);
-        (new TasksResourceRegistrar)->register(
-            $this->app->make(TenantResourceRegistry::class),
-            $this->app->make(TenantAdoptionRegistry::class),
-        );
+        $this->app->register(TenantServiceProvider::class);
+        $this->app->bindIf(TaskAttachments::class, static function (Application $app): TaskAttachments {
+            $active = $app->make(OptionalIntegration::class)->enabled('tasks.media.enabled', MediaServiceProvider::class);
+
+            return $app->make($active ? MediaTaskAttachments::class : UnavailableTaskAttachments::class);
+        });
+        $this->app->bindIf(TaskActivityPublisher::class, static function (Application $app): TaskActivityPublisher {
+            $active = $app->make(OptionalIntegration::class)->enabled('tasks.activity.enabled', ActivityServiceProvider::class);
+
+            return $app->make($active ? ActivityTaskPublisher::class : InactiveTaskActivityPublisher::class);
+        });
+        $this->app->bindIf(TaskActivityWorklist::class, static function (Application $app): TaskActivityWorklist {
+            $active = $app->make(OptionalIntegration::class)->enabled('tasks.activity.enabled', ActivityServiceProvider::class);
+
+            return $app->make($active ? ActivityTaskWorklist::class : EmptyTaskActivityWorklist::class);
+        });
+
+        $this->app->booting(function (): void {
+            foreach (['media' => MediaServiceProvider::class, 'activity' => ActivityServiceProvider::class] as $integration => $provider) {
+                if ($this->app->make(OptionalIntegration::class)->enabled('tasks.'.$integration.'.enabled', $provider)) {
+                    $this->app->make(TenantResourceRegistry::class)->requireCompatible('tasks', $integration);
+                }
+            }
+
+            (new TasksResourceRegistrar)->register(
+                $this->app->make(TenantResourceRegistry::class),
+                $this->app->bound(TenantAdoptionRegistry::class) ? $this->app->make(TenantAdoptionRegistry::class) : null,
+            );
+        });
         $this->app->bindIf(TaskAuthorization::class, ConfiguredTaskAuthorization::class);
         $this->app->bindIf(TaskPrincipalResolver::class, ConfiguredTaskPrincipalResolver::class);
     }
@@ -49,8 +96,11 @@ final class TasksServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__.'/../../routes/api.php');
 
         if ($this->app->runningInConsole()) {
-            $this->commands([TasksDoctorCommand::class, DrainTaskActivityOutboxCommand::class]);
-            $this->registerActivityDrainSchedule();
+            $this->commands([TasksDoctorCommand::class]);
+            if ($this->app->make(OptionalIntegration::class)->enabled('tasks.activity.enabled', ActivityServiceProvider::class)) {
+                $this->commands([DrainTaskActivityOutboxCommand::class]);
+                $this->registerActivityDrainSchedule();
+            }
         }
 
         $this->publishes([

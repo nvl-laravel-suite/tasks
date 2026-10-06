@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Services;
 
+use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskChecklistItem;
-use Nvl\Tenancy\Services\TenantBoundary;
 
 /** Resolves canonical task ownership and revision for checklist writes. */
 final readonly class TaskChecklistMutationGuard

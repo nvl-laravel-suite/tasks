@@ -5,16 +5,23 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Nvl\Support\Config\PackageStorage;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TasksConfiguration;
 
 return new class extends Migration
 {
+    /** Use the effective package connection for Laravel's migration transaction. */
+    public function getConnection(): ?string
+    {
+        return PackageStorage::connection('tasks');
+    }
+
     /** Create the task records owned by this package. */
     public function up(): void
     {
         $schema = Schema::connection(TasksConfiguration::connection());
-        $name = TasksConfiguration::table(TasksTables::Tasks);
+        $name = TasksConfiguration::table(TasksTables::get(TasksTables::Tasks));
 
         if ($schema->hasTable($name)) {
             throw new LogicException("Tasks table [{$name}] already exists; disable tasks.migrations.enabled during controlled schema adoption.");
@@ -46,6 +53,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::connection(TasksConfiguration::connection())
-            ->dropIfExists(TasksConfiguration::table(TasksTables::Tasks));
+            ->dropIfExists(TasksConfiguration::table(TasksTables::get(TasksTables::Tasks)));
     }
 };

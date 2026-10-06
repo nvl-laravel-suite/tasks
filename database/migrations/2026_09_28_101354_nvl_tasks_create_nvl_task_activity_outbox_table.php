@@ -5,16 +5,23 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Nvl\Support\Config\PackageStorage;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TasksConfiguration;
 
 return new class extends Migration
 {
+    /** Use the effective package connection for Laravel's migration transaction. */
+    public function getConnection(): ?string
+    {
+        return PackageStorage::connection('tasks');
+    }
+
     /** Create durable activity envelopes independently from task deletion. */
     public function up(): void
     {
         $schema = Schema::connection(TasksConfiguration::connection());
-        $name = TasksConfiguration::table(TasksTables::ActivityOutbox);
+        $name = TasksConfiguration::table(TasksTables::get(TasksTables::ActivityOutbox));
 
         if ($schema->hasTable($name)) {
             throw new LogicException("Task activity outbox table [{$name}] already exists; disable tasks.migrations.enabled during controlled schema adoption.");
@@ -43,6 +50,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::connection(TasksConfiguration::connection())
-            ->dropIfExists(TasksConfiguration::table(TasksTables::ActivityOutbox));
+            ->dropIfExists(TasksConfiguration::table(TasksTables::get(TasksTables::ActivityOutbox)));
     }
 };

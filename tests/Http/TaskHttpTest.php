@@ -31,7 +31,7 @@ it('keeps management routes behind consumer authorization', function (): void {
     expect(Route::has('nvl.tasks.management.index'))->toBeTrue();
 
     $this->actingAs(taskHttpUser('Owner'))
-        ->postJson('/api/v1/tasks', ['title' => 'Review draft'])
+        ->postJson('/nvl/api/v1/tasks', ['title' => 'Review draft'])
         ->assertForbidden();
 });
 
@@ -66,33 +66,33 @@ it('exposes bounded task rows, exact-revision writes, and host-resolved assignme
     $assignee = taskHttpUser('Assignee');
     $this->actingAs($owner);
 
-    $taskId = $this->postJson('/api/v1/tasks', [
+    $taskId = $this->postJson('/nvl/api/v1/tasks', [
         'title' => 'Review draft',
         'description' => 'Check the copy.',
         'metadata' => ['source' => 'editorial'],
     ])->assertCreated()->json('data.id');
 
-    $this->getJson('/api/v1/tasks?status=open&perPage=10')
+    $this->getJson('/nvl/api/v1/tasks?status=open&perPage=10')
         ->assertOk()->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.id', $taskId)
         ->assertJsonPath('data.0.assigneesCount', 0)
         ->assertJsonMissingPath('data.0.tenantId');
 
-    $this->getJson('/api/v1/tasks?status=invalid')->assertUnprocessable();
-    $this->getJson('/api/v1/tasks?perPage=0')->assertUnprocessable();
-    $this->postJson('/api/v1/tasks', ['title' => 'Invalid metadata', 'metadata' => ['not-an-object']])
+    $this->getJson('/nvl/api/v1/tasks?status=invalid')->assertUnprocessable();
+    $this->getJson('/nvl/api/v1/tasks?perPage=0')->assertUnprocessable();
+    $this->postJson('/nvl/api/v1/tasks', ['title' => 'Invalid metadata', 'metadata' => ['not-an-object']])
         ->assertUnprocessable();
-    $this->postJson("/api/v1/tasks/{$taskId}/assignees", [])->assertUnprocessable();
+    $this->postJson("/nvl/api/v1/tasks/{$taskId}/assignees", [])->assertUnprocessable();
 
-    $this->postJson("/api/v1/tasks/{$taskId}/assignees", [
+    $this->postJson("/nvl/api/v1/tasks/{$taskId}/assignees", [
         'assigneeId' => (string) $assignee->getKey(),
     ])->assertCreated()->assertJsonPath('data.assigneeId', (string) $assignee->getKey());
 
-    $this->getJson('/api/v1/tasks?assigneeId='.$assignee->getKey())
+    $this->getJson('/nvl/api/v1/tasks?assigneeId='.$assignee->getKey())
         ->assertOk()->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.assigneesCount', 1);
 
-    $this->putJson("/api/v1/tasks/{$taskId}", [
+    $this->putJson("/nvl/api/v1/tasks/{$taskId}", [
         'title' => 'Approved draft',
         'status' => 'completed',
         'priority' => 'high',
@@ -100,25 +100,25 @@ it('exposes bounded task rows, exact-revision writes, and host-resolved assignme
     ])->assertOk()->assertJsonPath('data.status', 'completed')
         ->assertJsonPath('data.description', 'Check the copy.');
 
-    $this->getJson('/api/v1/tasks?status=completed&priority=high')
+    $this->getJson('/nvl/api/v1/tasks?status=completed&priority=high')
         ->assertOk()->assertJsonPath('meta.total', 1);
 
-    $this->putJson("/api/v1/tasks/{$taskId}", [
+    $this->putJson("/nvl/api/v1/tasks/{$taskId}", [
         'title' => 'Stale draft',
         'status' => 'open',
         'priority' => 'low',
         'expectedRevision' => 2,
     ])->assertStatus(409);
 
-    $this->deleteJson("/api/v1/tasks/{$taskId}/assignees/{$assignee->getKey()}")->assertNoContent();
-    $this->deleteJson("/api/v1/tasks/{$taskId}")->assertNoContent();
-    $this->getJson("/api/v1/tasks/{$taskId}")->assertNotFound();
-    $this->postJson("/api/v1/tasks/{$taskId}/restore", [])->assertUnprocessable();
-    $this->postJson("/api/v1/tasks/{$taskId}/restore", ['expectedRevision' => 3])->assertStatus(409);
-    $this->postJson("/api/v1/tasks/{$taskId}/restore", ['expectedRevision' => 4])
+    $this->deleteJson("/nvl/api/v1/tasks/{$taskId}/assignees/{$assignee->getKey()}")->assertNoContent();
+    $this->deleteJson("/nvl/api/v1/tasks/{$taskId}")->assertNoContent();
+    $this->getJson("/nvl/api/v1/tasks/{$taskId}")->assertNotFound();
+    $this->postJson("/nvl/api/v1/tasks/{$taskId}/restore", [])->assertUnprocessable();
+    $this->postJson("/nvl/api/v1/tasks/{$taskId}/restore", ['expectedRevision' => 3])->assertStatus(409);
+    $this->postJson("/nvl/api/v1/tasks/{$taskId}/restore", ['expectedRevision' => 4])
         ->assertOk()->assertJsonPath('data.revision', 5);
-    $this->getJson("/api/v1/tasks/{$taskId}")->assertOk();
-    $this->putJson("/api/v1/tasks/{$taskId}", [
+    $this->getJson("/nvl/api/v1/tasks/{$taskId}")->assertOk();
+    $this->putJson("/nvl/api/v1/tasks/{$taskId}", [
         'title' => 'Approved draft',
         'status' => 'completed',
         'priority' => 'high',

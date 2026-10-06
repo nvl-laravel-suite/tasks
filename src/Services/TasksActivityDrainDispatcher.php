@@ -28,7 +28,7 @@ final readonly class TasksActivityDrainDispatcher
     /** Return the number of events delivered during this sweep. */
     public function drain(int $limit): int
     {
-        if ($this->config->get('tenancy.enabled') !== true) {
+        if ($this->config->get('nvl-tenancy.enabled') !== true) {
             return $this->delivery->drain($limit);
         }
 

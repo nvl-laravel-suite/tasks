@@ -40,10 +40,10 @@ abstract class TestCase extends Orchestra
         $app['config']->set([
             'cache.default' => 'array',
             'filesystems.default' => 'local',
-            'media.disk' => 'local',
-            'media.routes.assets_enabled' => false,
-            'translatable.locales' => ['en'],
-            'translatable.fallback_locales' => ['en'],
+            'nvl-media.disk' => 'local',
+            'nvl-media.routes.assets_enabled' => false,
+            'nvl-translatable.locales' => ['en'],
+            'nvl-translatable.fallback_locales' => ['en'],
         ]);
     }
 

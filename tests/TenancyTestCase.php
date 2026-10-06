@@ -53,19 +53,19 @@ abstract class TenancyTestCase extends Orchestra
             'app.key' => 'base64:YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=',
             'cache.default' => 'array',
             'filesystems.default' => 'local',
-            'media.disk' => 'local',
-            'media.routes.assets_enabled' => false,
-            'translatable.locales' => ['en'],
-            'translatable.fallback_locales' => ['en'],
-            'tenancy.enabled' => true,
-            'tenancy.migrations.enabled' => true,
-            'tenancy.profile' => 'application',
-            'tenancy.resources' => [
+            'nvl-media.disk' => 'local',
+            'nvl-media.routes.assets_enabled' => false,
+            'nvl-translatable.locales' => ['en'],
+            'nvl-translatable.fallback_locales' => ['en'],
+            'nvl-tenancy.enabled' => true,
+            'nvl-tenancy.migrations.enabled' => true,
+            'nvl-tenancy.profile' => 'application',
+            'nvl-tenancy.resources' => [
                 'media' => 'tenant',
                 'activity' => 'tenant',
                 'tasks' => 'tenant',
             ],
-            'tenancy.sharing' => ['media' => 'none', 'metafields' => 'none', 'templates' => 'none'],
+            'nvl-tenancy.sharing' => ['media' => 'none', 'metafields' => 'none', 'templates' => 'none'],
         ]);
 
         $app->instance(TenantDirectory::class, new class implements TenantDirectory

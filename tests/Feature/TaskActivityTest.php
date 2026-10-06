@@ -175,7 +175,7 @@ it('keeps authenticated principal models out of actor payloads and rejects misma
 });
 
 it('rolls back a task when atomic same-connection activity cannot be recorded', function (): void {
-    config()->set('activity.storage.table', 'missing_activity_table');
+    config()->set('nvl-activity.storage.table', 'missing_activity_table');
 
     expect(fn () => app(CreateTaskAction::class)->execute(new CreateTaskData('Rejected task'), TaskActorData::system()))
         ->toThrow(QueryException::class);
@@ -191,7 +191,7 @@ it('retains and retries a committed task event while Activity uses another conne
         'prefix' => '',
         'foreign_key_constraints' => true,
     ]);
-    config()->set('activity.storage.connection', 'task_activity_audit');
+    config()->set('nvl-activity.storage.connection', 'task_activity_audit');
     $occurredAt = CarbonImmutable::parse('2026-09-28 10:00:00 UTC');
     CarbonImmutable::setTestNow($occurredAt);
 
@@ -225,7 +225,7 @@ it('does not write Activity on another connection before an outer task transacti
         'prefix' => '',
         'foreign_key_constraints' => true,
     ]);
-    config()->set('activity.storage.connection', 'task_activity_audit');
+    config()->set('nvl-activity.storage.connection', 'task_activity_audit');
     createTaskActivityAuditTable();
 
     expect(fn () => DB::transaction(function (): void {
@@ -245,7 +245,7 @@ it('replays a written but unacknowledged event through the recovery command exac
         'prefix' => '',
         'foreign_key_constraints' => true,
     ]);
-    config()->set('activity.storage.connection', 'task_activity_audit');
+    config()->set('nvl-activity.storage.connection', 'task_activity_audit');
 
     $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Recoverable task'), TaskActorData::system());
     $pending = TaskActivityOutbox::query()->where('task_id', $task->id)->firstOrFail();
@@ -277,7 +277,7 @@ it('keeps a committed event when immediate queue dispatch is unavailable', funct
         'prefix' => '',
         'foreign_key_constraints' => true,
     ]);
-    config()->set('activity.storage.connection', 'task_activity_audit');
+    config()->set('nvl-activity.storage.connection', 'task_activity_audit');
     config()->set('queue.default', 'unavailable_task_activity_queue');
 
     $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Committed despite queue outage'), TaskActorData::system());

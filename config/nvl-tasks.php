@@ -10,6 +10,7 @@ use Nvl\Tasks\Enums\TaskStatus;
 use Nvl\Tasks\Enums\TaskType;
 
 return [
+    'queue' => ['connection' => null, 'name' => null],
     'connection' => null,
 
     'tables' => [
@@ -49,7 +50,7 @@ return [
 
     'activity' => [
         'enabled' => null,
-        'queue' => 'maintenance',
+        'queue' => null,
         'schedule' => [
             'enabled' => true,
         ],
@@ -59,7 +60,7 @@ return [
     'routes' => [
         'management' => [
             'enabled' => false,
-            'prefix' => 'api/v1/tasks',
+            'prefix' => 'nvl/api/v1/tasks',
             'name' => 'nvl.tasks.management.',
             'middleware' => ['api', 'auth', 'throttle:60,1'],
         ],

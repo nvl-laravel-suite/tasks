@@ -43,8 +43,8 @@ it('reports the outbox table and required columns in Tasks Doctor', function ():
 });
 
 it('reports a missing tenant recovery worklist before scheduled delivery is enabled', function (): void {
-    config()->set('tenancy.enabled', true);
-    config()->set('activity.tenancy.active_tenant_worklist', []);
+    config()->set('nvl-tenancy.enabled', true);
+    config()->set('nvl-activity.tenancy.active_tenant_worklist', []);
 
     expect(Artisan::call('nvl:tasks:doctor', ['--format' => 'json']))->toBe(0);
 
@@ -53,7 +53,7 @@ it('reports a missing tenant recovery worklist before scheduled delivery is enab
 
     expect($result['checks']['activity_outbox.recovery_worklist'])->toBeFalse();
 
-    config()->set('activity.tenancy.active_tenant_worklist', ['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa']);
+    config()->set('nvl-activity.tenancy.active_tenant_worklist', ['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa']);
     Artisan::call('nvl:tasks:doctor', ['--format' => 'json']);
 
     /** @var array{checks: array<string, bool>} $result */

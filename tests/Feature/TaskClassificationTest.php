@@ -46,10 +46,10 @@ it('casts the built-in task classification and scheduling fields', function (): 
 
 it('uses configured enum classes for model casts and completion semantics', function (): void {
     config()->set([
-        'tasks.enums.status' => ConsumerTaskStatus::class,
-        'tasks.enums.type' => ConsumerTaskType::class,
-        'tasks.defaults.status' => ConsumerTaskStatus::InQueue->value,
-        'tasks.lifecycle.completed_status' => ConsumerTaskStatus::Done->value,
+        'nvl-tasks.enums.status' => ConsumerTaskStatus::class,
+        'nvl-tasks.enums.type' => ConsumerTaskType::class,
+        'nvl-tasks.defaults.status' => ConsumerTaskStatus::InQueue->value,
+        'nvl-tasks.lifecycle.completed_status' => ConsumerTaskStatus::Done->value,
     ]);
 
     $actor = TaskActorData::system();
@@ -76,7 +76,7 @@ it('uses configured enum classes for model casts and completion semantics', func
 });
 
 it('rejects an empty numeric enum in task configuration', function (): void {
-    config()->set('tasks.enums.type', EmptyNumericTaskType::class);
+    config()->set('nvl-tasks.enums.type', EmptyNumericTaskType::class);
 
     expect(fn () => TaskEnumConfiguration::enumClass('type'))
         ->toThrow(InvalidArgumentException::class);
@@ -87,12 +87,12 @@ it('uses configured enum defaults when adding fields to existing tasks', functio
     $migration = require __DIR__.'/../../database/migrations/2026_09_28_080128_nvl_tasks_add_task_management_fields_to_nvl_tasks_table.php';
     $migration->down();
     config()->set([
-        'tasks.enums.type' => ConsumerTaskType::class,
-        'tasks.enums.category' => ConsumerTaskType::class,
-        'tasks.enums.importance' => ConsumerTaskType::class,
-        'tasks.defaults.type' => ConsumerTaskType::Meeting->value,
-        'tasks.defaults.category' => ConsumerTaskType::Meeting->value,
-        'tasks.defaults.importance' => ConsumerTaskType::Meeting->value,
+        'nvl-tasks.enums.type' => ConsumerTaskType::class,
+        'nvl-tasks.enums.category' => ConsumerTaskType::class,
+        'nvl-tasks.enums.importance' => ConsumerTaskType::class,
+        'nvl-tasks.defaults.type' => ConsumerTaskType::Meeting->value,
+        'nvl-tasks.defaults.category' => ConsumerTaskType::Meeting->value,
+        'nvl-tasks.defaults.importance' => ConsumerTaskType::Meeting->value,
     ]);
     $migration->up();
 

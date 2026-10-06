@@ -32,7 +32,7 @@ final class TaskEnumConfiguration
     public static function enumClass(string $field): string
     {
         $fallback = self::FALLBACKS[$field] ?? throw new InvalidArgumentException("Unknown task enum field [{$field}].");
-        $enum = config("tasks.enums.{$field}", $fallback);
+        $enum = config("nvl-tasks.enums.{$field}", $fallback);
 
         if (! is_string($enum) || ! enum_exists($enum) || ! is_subclass_of($enum, BackedEnum::class)) {
             throw new InvalidArgumentException("tasks.enums.{$field} must be a string-backed enum class.");
@@ -48,7 +48,7 @@ final class TaskEnumConfiguration
     /** Resolve and validate the default persisted value for one task field. */
     public static function defaultValue(string $field): string
     {
-        $default = config("tasks.defaults.{$field}");
+        $default = config("nvl-tasks.defaults.{$field}");
         $enum = self::enumClass($field);
 
         if (! is_string($default) || $enum::tryFrom($default) === null) {
@@ -61,7 +61,7 @@ final class TaskEnumConfiguration
     /** Resolve the task status that records completion. */
     public static function completedStatus(): string
     {
-        $value = config('tasks.lifecycle.completed_status');
+        $value = config('nvl-tasks.lifecycle.completed_status');
         $enum = self::enumClass('status');
 
         if (! is_string($value) || $enum::tryFrom($value) === null) {

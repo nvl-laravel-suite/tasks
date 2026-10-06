@@ -79,8 +79,8 @@ it('combines status, priority, type, category, and importance filters', function
 });
 
 it('accepts configured replacement enums and validates query values against them', function (): void {
-    config()->set('tasks.enums.type', SearchTaskType::class);
-    config()->set('tasks.defaults.type', SearchTaskType::Request->value);
+    config()->set('nvl-tasks.enums.type', SearchTaskType::class);
+    config()->set('nvl-tasks.defaults.type', SearchTaskType::Request->value);
     $incident = searchTask('Incident', ['type' => SearchTaskType::Incident]);
     searchTask('Request');
 

@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Nvl\Support\Config\PackageOptions;
 use Nvl\Support\Tenancy\Contracts\TenantQueuedJob;
 use Nvl\Support\Tenancy\ValueObjects\TenantJobEnvelope;
 use Nvl\Tasks\Services\TasksActivityDelivery;
@@ -25,6 +26,8 @@ final class ProcessTaskActivityOutboxJob implements ShouldQueue, TenantQueuedJob
     /** Construct an immutable outbox reference and tenant envelope. */
     public function __construct(public readonly string $eventId, private readonly TenantJobEnvelope $envelope)
     {
+        $this->onConnection(PackageOptions::queueConnection('tasks'));
+        $this->onQueue(PackageOptions::queueName('tasks'));
         $this->afterCommit();
     }
 

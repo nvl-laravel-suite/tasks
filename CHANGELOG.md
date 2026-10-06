@@ -4,6 +4,13 @@ All notable changes to `nvl/tasks` are documented here.
 
 ## [Unreleased]
 
+### Changed
+
+- Prepare lockstep major 5 with required and development NVL peer floors of `^5.0`. This candidate has not been tagged or published.
+- Retain the correctness-critical outbox schedule and diagnose scheduler heartbeat and distributed-lock readiness.
+- Inherit queue destinations and use canonical names for package-owned global registrations.
+- Review [UPGRADING.md](UPGRADING.md) before adopting the new names and infrastructure boundaries.
+
 ## [3.0.0] - 2026-09-28
 
 ### Added

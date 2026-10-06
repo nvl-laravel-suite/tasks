@@ -13,7 +13,7 @@ final class TasksConfiguration
     /** Return the optional package database connection. */
     public static function connection(): ?string
     {
-        $connection = config('tasks.connection');
+        $connection = config('nvl-tasks.connection');
 
         if ($connection === null || $connection === '') {
             return null;
@@ -36,7 +36,7 @@ final class TasksConfiguration
     public static function limit(string $key, int $default): int
     {
         $path = str_contains($key, '.') ? $key : "limits.{$key}";
-        $value = config("tasks.{$path}", $default);
+        $value = config("nvl-tasks.{$path}", $default);
 
         if (! is_int($value) || $value < 1) {
             throw new InvalidArgumentException("tasks.limits.{$key} must be a positive integer.");

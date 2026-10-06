@@ -17,7 +17,7 @@ use Nvl\Tasks\Models\TaskAssignment;
 use Nvl\Tasks\Models\TaskTimeEntry;
 
 it('aggregates statuses, firm deadlines, assignments, estimates and logged time', function (): void {
-    config()->set('tasks.dashboard.due_soon_days', 3);
+    config()->set('nvl-tasks.dashboard.due_soon_days', 3);
     $actor = TaskActorData::system();
     $overdue = new Task;
     $overdue->forceFill(['title' => 'Overdue', 'status' => TaskStatus::Open->value, 'due_at' => now()->subDay(), 'estimated_seconds' => 3600])->save();
@@ -99,10 +99,10 @@ it('uses the host list policy and scoped task visibility for every aggregate', f
 
 it('uses configured lifecycle values and a fixed number of aggregate queries', function (): void {
     config()->set([
-        'tasks.defaults.status' => TaskStatus::Blocked->value,
-        'tasks.dashboard.statuses.in_progress' => TaskStatus::Open->value,
-        'tasks.dashboard.statuses.blocked' => TaskStatus::InProgress->value,
-        'tasks.lifecycle.completed_status' => TaskStatus::Cancelled->value,
+        'nvl-tasks.defaults.status' => TaskStatus::Blocked->value,
+        'nvl-tasks.dashboard.statuses.in_progress' => TaskStatus::Open->value,
+        'nvl-tasks.dashboard.statuses.blocked' => TaskStatus::InProgress->value,
+        'nvl-tasks.lifecycle.completed_status' => TaskStatus::Cancelled->value,
     ]);
     foreach ([TaskStatus::Blocked->value, TaskStatus::Open->value, TaskStatus::Cancelled->value] as $status) {
         $task = new Task;

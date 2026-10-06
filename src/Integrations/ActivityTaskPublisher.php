@@ -116,9 +116,7 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
         $tenantEnvelope = TenantJobEnvelope::capture($this->tenantContext);
         $taskConnection->afterCommit(static function () use ($eventId, $tenantEnvelope): void {
             try {
-                $queue = config('tasks.activity.queue', 'maintenance');
-                ProcessTaskActivityOutboxJob::dispatch($eventId, $tenantEnvelope)
-                    ->onQueue(is_string($queue) && $queue !== '' ? $queue : 'maintenance');
+                ProcessTaskActivityOutboxJob::dispatch($eventId, $tenantEnvelope);
             } catch (Throwable $exception) {
                 Log::error('Task activity delivery dispatch failed; the outbox event remains pending.', [
                     'event_id' => $eventId,

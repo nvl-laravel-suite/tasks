@@ -34,17 +34,17 @@ final readonly class GetTaskDashboardAction
     {
         $this->authorization->authorize(TaskAbility::List, $actor);
 
-        $days = $dueSoonDays ?? config('tasks.dashboard.due_soon_days', 7);
+        $days = $dueSoonDays ?? config('nvl-tasks.dashboard.due_soon_days', 7);
 
         if (! is_int($days) || $days < 1 || $days > 90) {
             throw new InvalidArgumentException('The dashboard due-soon window must be between 1 and 90 days.');
         }
 
-        $open = $this->status('tasks.dashboard.statuses.open', $this->status('tasks.defaults.status', TaskStatus::Open->value));
-        $inProgress = $this->status('tasks.dashboard.statuses.in_progress', TaskStatus::InProgress->value);
-        $blocked = $this->status('tasks.dashboard.statuses.blocked', TaskStatus::Blocked->value);
-        $completed = $this->status('tasks.dashboard.statuses.completed', $this->status('tasks.lifecycle.completed_status', TaskStatus::Completed->value));
-        $cancelled = $this->status('tasks.dashboard.statuses.cancelled', TaskStatus::Cancelled->value);
+        $open = $this->status('nvl-tasks.dashboard.statuses.open', $this->status('nvl-tasks.defaults.status', TaskStatus::Open->value));
+        $inProgress = $this->status('nvl-tasks.dashboard.statuses.in_progress', TaskStatus::InProgress->value);
+        $blocked = $this->status('nvl-tasks.dashboard.statuses.blocked', TaskStatus::Blocked->value);
+        $completed = $this->status('nvl-tasks.dashboard.statuses.completed', $this->status('nvl-tasks.lifecycle.completed_status', TaskStatus::Completed->value));
+        $cancelled = $this->status('nvl-tasks.dashboard.statuses.cancelled', TaskStatus::Cancelled->value);
         $now = CarbonImmutable::now();
         $soonEnd = $now->addDays($days);
 

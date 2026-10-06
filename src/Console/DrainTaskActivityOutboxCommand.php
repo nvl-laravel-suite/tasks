@@ -24,7 +24,7 @@ final class DrainTaskActivityOutboxCommand extends Command
     public function handle(): int
     {
         $option = $this->option('limit');
-        $configured = config('tasks.activity.drain_limit', 100);
+        $configured = config('nvl-tasks.activity.drain_limit', 100);
         $limit = $option === null ? $configured : (
             $option !== '' && (string) (int) $option === $option
                 ? (int) $option

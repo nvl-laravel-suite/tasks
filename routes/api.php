@@ -7,7 +7,7 @@ use Nvl\Tasks\Http\Controllers\TasksManagementController;
 use Nvl\Tasks\Http\Controllers\TasksManagementExtrasController;
 use Nvl\Tasks\Support\TasksRouteConfiguration;
 
-if (config('tasks.routes.management.enabled', false) === true) {
+if (config('nvl-tasks.routes.management.enabled', false) === true) {
     Route::prefix(TasksRouteConfiguration::path())
         ->name(TasksRouteConfiguration::name())
         ->middleware(TasksRouteConfiguration::middleware())

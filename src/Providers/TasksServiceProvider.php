@@ -16,6 +16,7 @@ use Nvl\Support\Providers\SupportServiceProvider;
 use Nvl\Support\Providers\TenantServiceProvider;
 use Nvl\Support\Tenancy\Services\TenantResourceRegistry;
 use Nvl\Support\Traits\MergesPackageConfiguration;
+use Nvl\Support\Traits\RegistersNamespacedResources;
 use Nvl\Tasks\Console\DrainTaskActivityOutboxCommand;
 use Nvl\Tasks\Console\TasksDoctorCommand;
 use Nvl\Tasks\Contracts\TaskActivityPublisher;
@@ -23,12 +24,14 @@ use Nvl\Tasks\Contracts\TaskActivityWorklist;
 use Nvl\Tasks\Contracts\TaskAttachments;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskPrincipalResolver;
+use Nvl\Tasks\Contracts\TaskSchedulerReadiness;
 use Nvl\Tasks\Integrations\ActivityTaskPublisher;
 use Nvl\Tasks\Integrations\ActivityTaskWorklist;
 use Nvl\Tasks\Integrations\EmptyTaskActivityWorklist;
 use Nvl\Tasks\Integrations\InactiveTaskActivityPublisher;
 use Nvl\Tasks\Integrations\MediaTaskAttachments;
 use Nvl\Tasks\Integrations\UnavailableTaskAttachments;
+use Nvl\Tasks\Services\CachedTaskSchedulerReadiness;
 use Nvl\Tasks\Services\ConfiguredTaskAuthorization;
 use Nvl\Tasks\Services\ConfiguredTaskPrincipalResolver;
 use Nvl\Tasks\Services\TasksDoctor;
@@ -39,6 +42,7 @@ use Nvl\Tenancy\Services\TenantAdoptionRegistry;
 final class TasksServiceProvider extends ServiceProvider
 {
     use MergesPackageConfiguration;
+    use RegistersNamespacedResources;
 
     /** Register safe defaults and the task ownership graph. */
     public function register(): void
@@ -50,7 +54,7 @@ final class TasksServiceProvider extends ServiceProvider
             return [...PackageDoctorContributor::booleanChecks($report['checks'], 'nvl:tasks:doctor'), ...$report['integrations']];
         });
 
-        $this->mergePackageConfiguration(__DIR__.'/../../config/tasks.php', 'tasks');
+        $this->mergePackageConfiguration(__DIR__.'/../../config/nvl-tasks.php', 'tasks');
         $this->app->register(TenantServiceProvider::class);
         $this->app->bindIf(TaskAttachments::class, static function (Application $app): TaskAttachments {
             $active = $app->make(OptionalIntegration::class)->enabled('tasks.media.enabled', MediaServiceProvider::class);
@@ -80,6 +84,7 @@ final class TasksServiceProvider extends ServiceProvider
                 $this->app->bound(TenantAdoptionRegistry::class) ? $this->app->make(TenantAdoptionRegistry::class) : null,
             );
         });
+        $this->app->bindIf(TaskSchedulerReadiness::class, CachedTaskSchedulerReadiness::class);
         $this->app->bindIf(TaskAuthorization::class, ConfiguredTaskAuthorization::class);
         $this->app->bindIf(TaskPrincipalResolver::class, ConfiguredTaskPrincipalResolver::class);
     }
@@ -89,7 +94,7 @@ final class TasksServiceProvider extends ServiceProvider
     {
         $typeScriptSources->register(__DIR__.'/..', 'nvl/tasks');
 
-        if ((bool) config('tasks.migrations.enabled', true)) {
+        if ((bool) config('nvl-tasks.migrations.enabled', true)) {
             $this->loadMigrationsFrom(__DIR__.'/../../database/migrations');
         }
 
@@ -104,7 +109,7 @@ final class TasksServiceProvider extends ServiceProvider
         }
 
         $this->publishes([
-            __DIR__.'/../../config/tasks.php' => config_path('tasks.php'),
+            __DIR__.'/../../config/nvl-tasks.php' => config_path('nvl-tasks.php'),
         ], 'tasks-config');
         $this->publishesMigrations([
             __DIR__.'/../../database/migrations' => database_path('migrations'),
@@ -117,7 +122,7 @@ final class TasksServiceProvider extends ServiceProvider
     /** Schedule recovery of committed events missed by immediate queue dispatch. */
     private function registerActivityDrainSchedule(): void
     {
-        if (config('tasks.activity.schedule.enabled', true) !== true) {
+        if (config('nvl-tasks.activity.schedule.enabled', true) !== true) {
             return;
         }
 
@@ -125,6 +130,7 @@ final class TasksServiceProvider extends ServiceProvider
             $this->app->make(Schedule::class)
                 ->command('nvl:tasks:activity:drain')
                 ->everyMinute()
+                ->before(fn () => $this->app->make(CachedTaskSchedulerReadiness::class)->recordHeartbeat())
                 ->withoutOverlapping()
                 ->onOneServer();
         });

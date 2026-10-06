@@ -96,8 +96,8 @@ final readonly class ListTasksAction
 
         if ($overdue !== null) {
             $now = CarbonImmutable::now();
-            $completedStatus = $this->status('tasks.dashboard.statuses.completed', TaskEnumConfiguration::completedStatus());
-            $cancelledStatus = $this->status('tasks.dashboard.statuses.cancelled', TaskStatus::Cancelled->value);
+            $completedStatus = $this->status('nvl-tasks.dashboard.statuses.completed', TaskEnumConfiguration::completedStatus());
+            $cancelledStatus = $this->status('nvl-tasks.dashboard.statuses.cancelled', TaskStatus::Cancelled->value);
 
             if ($overdue) {
                 $query->where('due_at', '<', $now)->whereNotIn('status', [$completedStatus, $cancelledStatus]);

@@ -12,8 +12,8 @@ abstract class HttpTestCase extends TestCase
         parent::defineEnvironment($app);
 
         $app['config']->set([
-            'tasks.routes.management.enabled' => true,
-            'tasks.routes.management.middleware' => ['api', 'auth'],
+            'nvl-tasks.routes.management.enabled' => true,
+            'nvl-tasks.routes.management.middleware' => ['api', 'auth'],
         ]);
     }
 }

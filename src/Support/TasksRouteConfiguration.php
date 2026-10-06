@@ -12,7 +12,7 @@ final class TasksRouteConfiguration
     /** Return a safe route prefix. */
     public static function path(): string
     {
-        $path = config('tasks.routes.management.prefix', 'api/v1/tasks');
+        $path = config('nvl-tasks.routes.management.prefix', 'nvl/api/v1/tasks');
 
         if (! is_string($path)) {
             throw new InvalidArgumentException('tasks.routes.management.prefix must be a string.');
@@ -31,7 +31,7 @@ final class TasksRouteConfiguration
     /** Return a safe route-name prefix. */
     public static function name(): string
     {
-        $name = config('tasks.routes.management.name', 'nvl.tasks.management.');
+        $name = config('nvl-tasks.routes.management.name', 'nvl.tasks.management.');
 
         if (! is_string($name)) {
             throw new InvalidArgumentException('tasks.routes.management.name must be a string.');
@@ -52,7 +52,7 @@ final class TasksRouteConfiguration
      */
     public static function middleware(): array
     {
-        $middleware = config('tasks.routes.management.middleware', ['api', 'auth']);
+        $middleware = config('nvl-tasks.routes.management.middleware', ['api', 'auth']);
 
         if (! is_array($middleware) || $middleware === []) {
             throw new InvalidArgumentException('tasks.routes.management.middleware must be a non-empty list.');

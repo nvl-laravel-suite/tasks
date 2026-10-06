@@ -31,6 +31,7 @@ final class TasksDoctor
         private TenantResourceRegistry $tenancyResources,
         private TaskActivityWorklist $activityTenants,
         private OptionalIntegration $integrations,
+        private TaskSchedulerDiagnostics $scheduler,
     ) {}
 
     /**
@@ -48,7 +49,7 @@ final class TasksDoctor
         $schema = Schema::connection(TasksConfiguration::connection());
         $tasks = TasksConfiguration::table(TasksTables::get(TasksTables::Tasks));
         $assignments = TasksConfiguration::table(TasksTables::get(TasksTables::Assignments));
-        $routesEnabled = config('tasks.routes.management.enabled', false) === true;
+        $routesEnabled = config('nvl-tasks.routes.management.enabled', false) === true;
         $checks = [
             'tasks.table' => $schema->hasTable($tasks),
             'assignments.table' => $schema->hasTable($assignments),
@@ -60,8 +61,8 @@ final class TasksDoctor
 
         try {
             $checks['activity_outbox.recovery_worklist'] = ! $this->integrations->enabled('tasks.activity.enabled', ActivityServiceProvider::class)
-                || config('tenancy.enabled') !== true
-                || config('tasks.activity.schedule.enabled', true) !== true
+                || config('nvl-tenancy.enabled') !== true
+                || config('nvl-tasks.activity.schedule.enabled', true) !== true
                 || $activityTenants->activeTenantIds() !== [];
         } catch (Throwable) {
             $checks['activity_outbox.recovery_worklist'] = false;
@@ -127,6 +128,7 @@ final class TasksDoctor
         }
 
         $integrations = [
+            ...$this->scheduler->inspect(),
             $this->integrations->check('tasks.activity.enabled', ActivityServiceProvider::class),
             $this->integrations->check('tasks.media.enabled', MediaServiceProvider::class),
         ];

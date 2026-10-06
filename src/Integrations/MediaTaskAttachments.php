@@ -64,7 +64,7 @@ final readonly class MediaTaskAttachments implements TaskAttachments
             $association = $this->attachMedia->execute($media, $task, 'attachments', dispatchVariations: false);
             $excess = MediaAssociation::query()->forModel($task)->forCollection('attachments')
                 ->orderByDesc('created_at')->orderByDesc('id')
-                ->offset(TasksConfiguration::limit('media.maximum_attachments', 10))->limit(1000)->get();
+                ->offset(TasksConfiguration::limit('nvl-media.maximum_attachments', 10))->limit(1000)->get();
 
             foreach ($excess as $previous) {
                 $this->detachMedia->execute($previous->media_id, $task, 'attachments');
@@ -111,8 +111,8 @@ final readonly class MediaTaskAttachments implements TaskAttachments
     public function slot(): MediaSlot
     {
         return (new MediaSlot('attachments'))->privateExclusive()
-            ->onlyKeepLatest(TasksConfiguration::limit('media.maximum_attachments', 10))
-            ->maxFileSize(TasksConfiguration::limit('media.maximum_file_bytes', 20 * 1024 * 1024))
+            ->onlyKeepLatest(TasksConfiguration::limit('nvl-media.maximum_attachments', 10))
+            ->maxFileSize(TasksConfiguration::limit('nvl-media.maximum_file_bytes', 20 * 1024 * 1024))
             ->acceptsMimeTypes([...MimeType::images(), ...MimeType::documents()]);
     }
 

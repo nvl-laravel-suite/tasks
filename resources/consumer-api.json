@@ -1,0 +1,990 @@
+{
+    "schema_version": 1,
+    "package": "nvl/tasks",
+    "psr4": {
+        "Nvl\\Tasks\\": "src"
+    },
+    "symbols": {
+        "Nvl\\Tasks\\Actions\\AddTaskChecklistItemAction": {
+            "kind": "class",
+            "file": "src/Actions/AddTaskChecklistItemAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\AddTaskDependencyAction": {
+            "kind": "class",
+            "file": "src/Actions/AddTaskDependencyAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\AddTaskTagAction": {
+            "kind": "class",
+            "file": "src/Actions/AddTaskTagAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\AddTaskTimeEntryAction": {
+            "kind": "class",
+            "file": "src/Actions/AddTaskTimeEntryAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\AssignTaskAction": {
+            "kind": "class",
+            "file": "src/Actions/AssignTaskAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\CreateTaskAction": {
+            "kind": "class",
+            "file": "src/Actions/CreateTaskAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\DeleteTaskAction": {
+            "kind": "class",
+            "file": "src/Actions/DeleteTaskAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\DeleteTaskTimeEntryAction": {
+            "kind": "class",
+            "file": "src/Actions/DeleteTaskTimeEntryAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\GetTaskAction": {
+            "kind": "class",
+            "file": "src/Actions/GetTaskAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\GetTaskDashboardAction": {
+            "kind": "class",
+            "file": "src/Actions/GetTaskDashboardAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\GetTaskDetailAction": {
+            "kind": "class",
+            "file": "src/Actions/GetTaskDetailAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\LinkTaskParentAction": {
+            "kind": "class",
+            "file": "src/Actions/LinkTaskParentAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\ListTaskChecklistItemsAction": {
+            "kind": "class",
+            "file": "src/Actions/ListTaskChecklistItemsAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\ListTaskTimeEntriesAction": {
+            "kind": "class",
+            "file": "src/Actions/ListTaskTimeEntriesAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\ListTasksAction": {
+            "kind": "class",
+            "file": "src/Actions/ListTasksAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\RemoveTaskChecklistItemAction": {
+            "kind": "class",
+            "file": "src/Actions/RemoveTaskChecklistItemAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\RemoveTaskDependencyAction": {
+            "kind": "class",
+            "file": "src/Actions/RemoveTaskDependencyAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\RemoveTaskTagAction": {
+            "kind": "class",
+            "file": "src/Actions/RemoveTaskTagAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\ReorderTaskChecklistItemsAction": {
+            "kind": "class",
+            "file": "src/Actions/ReorderTaskChecklistItemsAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\RestoreTaskAction": {
+            "kind": "class",
+            "file": "src/Actions/RestoreTaskAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\StartTaskTimerAction": {
+            "kind": "class",
+            "file": "src/Actions/StartTaskTimerAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\StopTaskTimerAction": {
+            "kind": "class",
+            "file": "src/Actions/StopTaskTimerAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\ToggleTaskChecklistItemAction": {
+            "kind": "class",
+            "file": "src/Actions/ToggleTaskChecklistItemAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\UnassignTaskAction": {
+            "kind": "class",
+            "file": "src/Actions/UnassignTaskAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\UnlinkTaskParentAction": {
+            "kind": "class",
+            "file": "src/Actions/UnlinkTaskParentAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\UpdateTaskAction": {
+            "kind": "class",
+            "file": "src/Actions/UpdateTaskAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\UpdateTaskChecklistItemAction": {
+            "kind": "class",
+            "file": "src/Actions/UpdateTaskChecklistItemAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Actions\\UpdateTaskTimeEntryAction": {
+            "kind": "class",
+            "file": "src/Actions/UpdateTaskTimeEntryAction.php",
+            "methods": [
+                "__construct",
+                "execute"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Contracts\\TaskActivityPublisher": {
+            "kind": "interface",
+            "file": "src/Contracts/TaskActivityPublisher.php",
+            "methods": [
+                "record"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Contracts\\TaskActivityWorklist": {
+            "kind": "interface",
+            "file": "src/Contracts/TaskActivityWorklist.php",
+            "methods": [
+                "activeTenantIds"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Contracts\\TaskAttachments": {
+            "kind": "interface",
+            "file": "src/Contracts/TaskAttachments.php",
+            "methods": [
+                "attach",
+                "detach",
+                "ids"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Contracts\\TaskAuthorization": {
+            "kind": "interface",
+            "file": "src/Contracts/TaskAuthorization.php",
+            "methods": [
+                "authorize"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Contracts\\TaskPrincipalResolver": {
+            "kind": "interface",
+            "file": "src/Contracts/TaskPrincipalResolver.php",
+            "methods": [
+                "resolve"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Contracts\\TaskQueryScope": {
+            "kind": "interface",
+            "file": "src/Contracts/TaskQueryScope.php",
+            "methods": [
+                "scopeTasks"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Contracts\\TaskSchedulerReadiness": {
+            "kind": "interface",
+            "file": "src/Contracts/TaskSchedulerReadiness.php",
+            "methods": [
+                "running"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Data\\Mutations\\AddTaskChecklistItemData": {
+            "kind": "class",
+            "file": "src/Data/Mutations/AddTaskChecklistItemData.php",
+            "methods": [
+                "__construct",
+                "rules",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "expectedRevision",
+                "title"
+            ],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Data\\Mutations\\CreateTaskData": {
+            "kind": "class",
+            "file": "src/Data/Mutations/CreateTaskData.php",
+            "methods": [
+                "__construct",
+                "rules",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "category",
+                "description",
+                "dueAt",
+                "estimatedSeconds",
+                "importance",
+                "metadata",
+                "priority",
+                "status",
+                "targetAt",
+                "title",
+                "type"
+            ],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Data\\Mutations\\RemoveTaskChecklistItemData": {
+            "kind": "class",
+            "file": "src/Data/Mutations/RemoveTaskChecklistItemData.php",
+            "methods": [
+                "__construct",
+                "rules",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "expectedRevision"
+            ],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Data\\Mutations\\ReorderTaskChecklistItemsData": {
+            "kind": "class",
+            "file": "src/Data/Mutations/ReorderTaskChecklistItemsData.php",
+            "methods": [
+                "__construct",
+                "rules",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "expectedRevision",
+                "itemIds"
+            ],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Data\\Mutations\\TaskTagMutationData": {
+            "kind": "class",
+            "file": "src/Data/Mutations/TaskTagMutationData.php",
+            "methods": [
+                "__construct",
+                "normalizedTag",
+                "rules"
+            ],
+            "properties": [
+                "expectedRevision",
+                "tag"
+            ],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Data\\Mutations\\TimeEntryData": {
+            "kind": "class",
+            "file": "src/Data/Mutations/TimeEntryData.php",
+            "methods": [
+                "__construct",
+                "interval",
+                "rules"
+            ],
+            "properties": [
+                "description",
+                "endedAt",
+                "expectedRevision",
+                "startedAt"
+            ],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Data\\Mutations\\ToggleTaskChecklistItemData": {
+            "kind": "class",
+            "file": "src/Data/Mutations/ToggleTaskChecklistItemData.php",
+            "methods": [
+                "__construct",
+                "rules",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "completed",
+                "expectedRevision"
+            ],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Data\\Mutations\\UpdateTaskChecklistItemData": {
+            "kind": "class",
+            "file": "src/Data/Mutations/UpdateTaskChecklistItemData.php",
+            "methods": [
+                "__construct",
+                "rules",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "expectedRevision",
+                "title"
+            ],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Data\\Mutations\\UpdateTaskData": {
+            "kind": "class",
+            "file": "src/Data/Mutations/UpdateTaskData.php",
+            "methods": [
+                "__construct",
+                "rules",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "category",
+                "description",
+                "dueAt",
+                "estimatedSeconds",
+                "expectedRevision",
+                "importance",
+                "metadata",
+                "priority",
+                "status",
+                "targetAt",
+                "title",
+                "type"
+            ],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Data\\TaskActorData": {
+            "kind": "class",
+            "file": "src/Data/TaskActorData.php",
+            "methods": [
+                "__construct",
+                "fromAuthenticatable",
+                "principal",
+                "system"
+            ],
+            "properties": [
+                "id",
+                "system",
+                "type"
+            ],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Data\\TaskDashboardData": {
+            "kind": "class",
+            "file": "src/Data/TaskDashboardData.php",
+            "methods": [
+                "__construct",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "blocked",
+                "completed",
+                "dueSoon",
+                "dueSoonDays",
+                "estimatedSeconds",
+                "inProgress",
+                "loggedSeconds",
+                "open",
+                "overdue",
+                "total",
+                "unassigned"
+            ],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Data\\TaskData": {
+            "kind": "class",
+            "file": "src/Data/TaskData.php",
+            "methods": [
+                "__construct",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "assigneesCount",
+                "category",
+                "completedAt",
+                "createdAt",
+                "creatorId",
+                "creatorType",
+                "description",
+                "dueAt",
+                "estimatedSeconds",
+                "id",
+                "importance",
+                "metadata",
+                "priority",
+                "revision",
+                "status",
+                "targetAt",
+                "title",
+                "type",
+                "updatedAt"
+            ],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Data\\TaskDetailData": {
+            "kind": "class",
+            "file": "src/Data/TaskDetailData.php",
+            "methods": [
+                "__construct",
+                "scopedRules",
+                "toArray",
+                "toModel",
+                "toModelFiltered",
+                "toModelPatch",
+                "translatedAttributes",
+                "translatedMessages"
+            ],
+            "properties": [
+                "blockedTaskIds",
+                "blockerIds",
+                "checklist",
+                "childIds",
+                "loggedSeconds",
+                "parentId",
+                "tags",
+                "task",
+                "timeEntries"
+            ],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Enums\\TaskAbility": {
+            "kind": "enum",
+            "file": "src/Enums/TaskAbility.php",
+            "methods": [
+                "cases",
+                "from",
+                "tryFrom"
+            ],
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "Assign",
+                "Create",
+                "Delete",
+                "List",
+                "Restore",
+                "Update",
+                "View"
+            ]
+        },
+        "Nvl\\Tasks\\Enums\\TaskCategory": {
+            "kind": "enum",
+            "file": "src/Enums/TaskCategory.php",
+            "methods": [
+                "cases",
+                "from",
+                "tryFrom"
+            ],
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "Administrative",
+                "General",
+                "Operations",
+                "Project"
+            ]
+        },
+        "Nvl\\Tasks\\Enums\\TaskImportance": {
+            "kind": "enum",
+            "file": "src/Enums/TaskImportance.php",
+            "methods": [
+                "cases",
+                "from",
+                "tryFrom"
+            ],
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "Critical",
+                "High",
+                "Low",
+                "Normal"
+            ]
+        },
+        "Nvl\\Tasks\\Enums\\TaskPriority": {
+            "kind": "enum",
+            "file": "src/Enums/TaskPriority.php",
+            "methods": [
+                "cases",
+                "from",
+                "tryFrom"
+            ],
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "High",
+                "Low",
+                "Normal",
+                "Urgent"
+            ]
+        },
+        "Nvl\\Tasks\\Enums\\TaskStatus": {
+            "kind": "enum",
+            "file": "src/Enums/TaskStatus.php",
+            "methods": [
+                "cases",
+                "from",
+                "tryFrom"
+            ],
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "Blocked",
+                "Cancelled",
+                "Completed",
+                "InProgress",
+                "Open"
+            ]
+        },
+        "Nvl\\Tasks\\Enums\\TaskType": {
+            "kind": "enum",
+            "file": "src/Enums/TaskType.php",
+            "methods": [
+                "cases",
+                "from",
+                "tryFrom"
+            ],
+            "properties": [
+                "name",
+                "value"
+            ],
+            "constants": [
+                "Action",
+                "Approval",
+                "FollowUp",
+                "General",
+                "Review"
+            ]
+        },
+        "Nvl\\Tasks\\Models\\Task": {
+            "kind": "class",
+            "file": "src/Models/Task.php",
+            "methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Models\\TaskAssignment": {
+            "kind": "class",
+            "file": "src/Models/TaskAssignment.php",
+            "methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Models\\TaskChecklistItem": {
+            "kind": "class",
+            "file": "src/Models/TaskChecklistItem.php",
+            "methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Models\\TaskDependency": {
+            "kind": "class",
+            "file": "src/Models/TaskDependency.php",
+            "methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Models\\TaskRelationship": {
+            "kind": "class",
+            "file": "src/Models/TaskRelationship.php",
+            "methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Models\\TaskTag": {
+            "kind": "class",
+            "file": "src/Models/TaskTag.php",
+            "methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Models\\TaskTimeEntry": {
+            "kind": "class",
+            "file": "src/Models/TaskTimeEntry.php",
+            "methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "properties": [],
+            "constants": []
+        }
+    },
+    "models": {
+        "Nvl\\Tasks\\Models\\Task": {
+            "read": [],
+            "identity_methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "capability_relations": []
+        },
+        "Nvl\\Tasks\\Models\\TaskAssignment": {
+            "read": [],
+            "identity_methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "capability_relations": []
+        },
+        "Nvl\\Tasks\\Models\\TaskChecklistItem": {
+            "read": [],
+            "identity_methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "capability_relations": []
+        },
+        "Nvl\\Tasks\\Models\\TaskDependency": {
+            "read": [],
+            "identity_methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "capability_relations": []
+        },
+        "Nvl\\Tasks\\Models\\TaskRelationship": {
+            "read": [],
+            "identity_methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "capability_relations": []
+        },
+        "Nvl\\Tasks\\Models\\TaskTag": {
+            "read": [],
+            "identity_methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "capability_relations": []
+        },
+        "Nvl\\Tasks\\Models\\TaskTimeEntry": {
+            "read": [],
+            "identity_methods": [
+                "getKey",
+                "getKeyName",
+                "getMorphClass",
+                "getRouteKey",
+                "getRouteKeyName",
+                "is",
+                "isNot",
+                "relationLoaded"
+            ],
+            "capability_relations": []
+        }
+    },
+    "capability_relations": {},
+    "tables": {
+        "activity_outbox": "nvl_tasks_activity_outbox",
+        "assignments": "nvl_tasks_assignments",
+        "checklist_items": "nvl_tasks_checklist_items",
+        "dependencies": "nvl_tasks_dependencies",
+        "relationships": "nvl_tasks_relationships",
+        "tags": "nvl_tasks_tags",
+        "tasks": "nvl_tasks_tasks",
+        "time_entries": "nvl_tasks_time_entries"
+    }
+}

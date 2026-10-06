@@ -13,7 +13,11 @@ use Nvl\Tasks\Services\TaskGraphGuard;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Links one child task to its single parent within the active tenant. */
+/**
+ * Links one child task to its single parent within the active tenant.
+ *
+ * @api
+ */
 final readonly class LinkTaskParentAction
 {
     /** Construct the parent-link workflow. */

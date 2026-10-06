@@ -15,7 +15,11 @@ use Nvl\Tasks\Services\TaskMutationValues;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Creates one task within the active tenant and caller authorization boundary. */
+/**
+ * Creates one task within the active tenant and caller authorization boundary.
+ *
+ * @api
+ */
 final readonly class CreateTaskAction
 {
     /** Construct the task creation workflow. */

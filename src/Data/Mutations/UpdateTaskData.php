@@ -17,7 +17,11 @@ use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
 use Spatie\TypeScriptTransformer\Attributes\Optional as TypeScriptOptional;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
-/** Revision-guarded task replacement with explicit optional-field clearing. */
+/**
+ * Revision-guarded task replacement with explicit optional-field clearing.
+ *
+ * @api
+ */
 #[MapInputName(CamelCaseMapper::class)]
 #[MapOutputName(CamelCaseMapper::class)]
 #[TypeScript]

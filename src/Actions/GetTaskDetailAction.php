@@ -16,7 +16,11 @@ use Nvl\Tasks\Services\TaskReadGuard;
 use Nvl\Tasks\Support\TasksConfiguration;
 use UnexpectedValueException;
 
-/** Reads one task detail with only related IDs the caller may view. */
+/**
+ * Reads one task detail with only related IDs the caller may view.
+ *
+ * @api
+ */
 final readonly class GetTaskDetailAction
 {
     /** Construct the task detail read boundary. */

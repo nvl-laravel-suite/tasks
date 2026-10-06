@@ -7,7 +7,11 @@ namespace Nvl\Tasks\Contracts;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
 
-/** Publishes semantic task events without requiring an external Activity runtime. */
+/**
+ * Publishes semantic task events without requiring an external Activity runtime.
+ *
+ * @api
+ */
 interface TaskActivityPublisher
 {
     /**

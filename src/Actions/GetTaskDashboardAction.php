@@ -20,7 +20,11 @@ use Nvl\Tasks\Models\TaskTimeEntry;
 use stdClass;
 use UnexpectedValueException;
 
-/** Aggregates only tasks visible to the actor in the active tenant. */
+/**
+ * Aggregates only tasks visible to the actor in the active tenant.
+ *
+ * @api
+ */
 final readonly class GetTaskDashboardAction
 {
     /** Construct the authorized dashboard reader. */

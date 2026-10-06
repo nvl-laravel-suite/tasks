@@ -13,7 +13,11 @@ use Nvl\Tasks\Services\TaskGraphGuard;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Adds a blocker that a task must wait for. */
+/**
+ * Adds a blocker that a task must wait for.
+ *
+ * @api
+ */
 final readonly class AddTaskDependencyAction
 {
     /** Construct the blocker-addition workflow. */

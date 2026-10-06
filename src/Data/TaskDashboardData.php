@@ -10,7 +10,11 @@ use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
-/** Bounded task dashboard summary for an authorized caller. */
+/**
+ * Bounded task dashboard summary for an authorized caller.
+ *
+ * @api
+ */
 #[MapOutputName(CamelCaseMapper::class)]
 #[TypeScript]
 final class TaskDashboardData extends Data

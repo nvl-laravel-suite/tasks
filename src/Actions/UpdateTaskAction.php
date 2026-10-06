@@ -16,7 +16,11 @@ use Nvl\Tasks\Services\TaskMutationValues;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Replaces a task after checking its canonical tenant and exact revision. */
+/**
+ * Replaces a task after checking its canonical tenant and exact revision.
+ *
+ * @api
+ */
 final readonly class UpdateTaskAction
 {
     /** Construct the task replacement workflow. */

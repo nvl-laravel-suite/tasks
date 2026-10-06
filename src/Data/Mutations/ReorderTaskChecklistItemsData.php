@@ -11,7 +11,11 @@ use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
-/** Complete checklist order guarded by an exact task revision. */
+/**
+ * Complete checklist order guarded by an exact task revision.
+ *
+ * @api
+ */
 #[MapInputName(CamelCaseMapper::class)]
 #[MapOutputName(CamelCaseMapper::class)]
 #[TypeScript]

@@ -13,7 +13,11 @@ use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
-/** Describes a manual time interval while leaving its duration to the server. */
+/**
+ * Describes a manual time interval while leaving its duration to the server.
+ *
+ * @api
+ */
 #[MapInputName(CamelCaseMapper::class)]
 #[MapOutputName(CamelCaseMapper::class)]
 #[TypeScript]

@@ -11,7 +11,11 @@ use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
-/** Explicit checklist completion state with optimistic concurrency. */
+/**
+ * Explicit checklist completion state with optimistic concurrency.
+ *
+ * @api
+ */
 #[MapInputName(CamelCaseMapper::class)]
 #[MapOutputName(CamelCaseMapper::class)]
 #[TypeScript]

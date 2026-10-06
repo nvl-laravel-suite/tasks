@@ -13,7 +13,11 @@ use Spatie\LaravelData\Optional;
 use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
-/** Bounded task projection for authorized management consumers. */
+/**
+ * Bounded task projection for authorized management consumers.
+ *
+ * @api
+ */
 #[MapOutputName(CamelCaseMapper::class)]
 #[TypeScript]
 final class TaskData extends Data
@@ -47,7 +51,11 @@ final class TaskData extends Data
         public readonly string $updatedAt,
     ) {}
 
-    /** Project a task without loading relations or leaking Eloquent internals. */
+    /**
+     * Project a task without loading relations or leaking Eloquent internals.
+     *
+     * @internal
+     */
     public static function fromModel(Task $task): self
     {
         return new self(

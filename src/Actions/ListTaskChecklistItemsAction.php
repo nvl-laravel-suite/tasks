@@ -12,7 +12,11 @@ use Nvl\Tasks\Models\TaskChecklistItem;
 use Nvl\Tasks\Services\TaskReadGuard;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Pages checklist history for one authorized task. */
+/**
+ * Pages checklist history for one authorized task.
+ *
+ * @api
+ */
 final readonly class ListTaskChecklistItemsAction
 {
     /** Construct the checklist reader. */

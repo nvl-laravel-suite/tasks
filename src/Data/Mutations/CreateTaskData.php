@@ -15,7 +15,11 @@ use Spatie\LaravelData\Mappers\CamelCaseMapper;
 use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
-/** Validated input for creating one task without accepting ownership fields. */
+/**
+ * Validated input for creating one task without accepting ownership fields.
+ *
+ * @api
+ */
 #[MapInputName(CamelCaseMapper::class)]
 #[MapOutputName(CamelCaseMapper::class)]
 #[TypeScript]

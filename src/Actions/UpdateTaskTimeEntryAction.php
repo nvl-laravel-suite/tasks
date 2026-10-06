@@ -17,7 +17,11 @@ use Nvl\Tasks\Models\TaskTimeEntry;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Replaces a performer's manual interval under the canonical task boundary. */
+/**
+ * Replaces a performer's manual interval under the canonical task boundary.
+ *
+ * @api
+ */
 final readonly class UpdateTaskTimeEntryAction
 {
     /** Construct the manual interval replacement workflow. */

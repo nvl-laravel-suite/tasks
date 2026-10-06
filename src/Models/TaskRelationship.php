@@ -22,6 +22,8 @@ use Nvl\Tasks\Support\TasksConfiguration;
  * @property Carbon $updated_at
  * @property-read Task $child
  * @property-read Task $parent
+ *
+ * @api
  */
 final class TaskRelationship extends Model
 {

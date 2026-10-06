@@ -17,7 +17,11 @@ use Nvl\Tasks\Models\TaskTag;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Attaches one normalized task tag within a bounded task label set. */
+/**
+ * Attaches one normalized task tag within a bounded task label set.
+ *
+ * @api
+ */
 final readonly class AddTaskTagAction
 {
     /** Construct the task-tag addition workflow. */

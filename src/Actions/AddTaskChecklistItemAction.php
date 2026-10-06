@@ -14,7 +14,11 @@ use Nvl\Tasks\Services\TaskChecklistMutationGuard;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Appends one checklist item to a canonical task. */
+/**
+ * Appends one checklist item to a canonical task.
+ *
+ * @api
+ */
 final readonly class AddTaskChecklistItemAction
 {
     /** Construct the checklist addition workflow. */

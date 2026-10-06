@@ -24,7 +24,11 @@ use Nvl\Tasks\Models\TaskTag;
 use Nvl\Tasks\Support\TaskEnumConfiguration;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Lists tenant-scoped tasks through an explicitly authorized query. */
+/**
+ * Lists tenant-scoped tasks through an explicitly authorized query.
+ *
+ * @api
+ */
 final readonly class ListTasksAction
 {
     /** Construct the task listing boundary. */

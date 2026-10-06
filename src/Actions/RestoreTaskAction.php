@@ -14,7 +14,11 @@ use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Restores a soft-deleted task without losing Media attachments. */
+/**
+ * Restores a soft-deleted task without losing Media attachments.
+ *
+ * @api
+ */
 final readonly class RestoreTaskAction
 {
     /** Construct the task-restoration workflow. */

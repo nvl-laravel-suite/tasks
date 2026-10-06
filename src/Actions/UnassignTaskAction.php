@@ -15,7 +15,11 @@ use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Removes one assignment only from a task in the active tenant. */
+/**
+ * Removes one assignment only from a task in the active tenant.
+ *
+ * @api
+ */
 final readonly class UnassignTaskAction
 {
     /** Construct the assignment-removal workflow. */

@@ -9,7 +9,11 @@ use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
 
-/** Consumer-owned policy boundary for task and assignee operations. */
+/**
+ * Consumer-owned policy boundary for task and assignee operations.
+ *
+ * @api
+ */
 interface TaskAuthorization
 {
     /** Authorize a capability, including any assignment target. */

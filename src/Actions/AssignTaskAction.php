@@ -16,7 +16,11 @@ use Nvl\Tasks\Models\TaskAssignment;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Idempotently assigns a canonical task to a persisted host principal. */
+/**
+ * Idempotently assigns a canonical task to a persisted host principal.
+ *
+ * @api
+ */
 final readonly class AssignTaskAction
 {
     /** Construct the assignment workflow. */

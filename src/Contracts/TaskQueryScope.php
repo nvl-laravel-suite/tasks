@@ -8,7 +8,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
 
-/** Optionally constrains task catalog queries through a host authorization adapter. */
+/**
+ * Optionally constrains task catalog queries through a host authorization adapter.
+ *
+ * @api
+ */
 interface TaskQueryScope
 {
     /** Apply actor-owned visibility before tenant scoping, filters, and pagination.

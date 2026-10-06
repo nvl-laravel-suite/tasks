@@ -14,7 +14,11 @@ use Nvl\Tasks\Services\TaskChecklistMutationGuard;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Removes one item and closes its checklist position gap. */
+/**
+ * Removes one item and closes its checklist position gap.
+ *
+ * @api
+ */
 final readonly class RemoveTaskChecklistItemAction
 {
     /** Construct the checklist removal workflow. */

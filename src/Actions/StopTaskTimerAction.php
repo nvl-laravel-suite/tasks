@@ -18,7 +18,11 @@ use Nvl\Tasks\Models\TaskTimeEntry;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Stops a performer's running timer with a server-calculated duration. */
+/**
+ * Stops a performer's running timer with a server-calculated duration.
+ *
+ * @api
+ */
 final readonly class StopTaskTimerAction
 {
     /** Construct the timer stop workflow. */

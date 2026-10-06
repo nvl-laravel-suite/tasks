@@ -22,6 +22,8 @@ use Nvl\Tasks\Support\TasksConfiguration;
  * @property Carbon $updated_at
  * @property-read Task $task
  * @property-read Task $blocker
+ *
+ * @api
  */
 final class TaskDependency extends Model
 {

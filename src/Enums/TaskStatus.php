@@ -6,7 +6,11 @@ namespace Nvl\Tasks\Enums;
 
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
-/** Describes the durable lifecycle of a task. */
+/**
+ * Describes the durable lifecycle of a task.
+ *
+ * @api
+ */
 #[TypeScript]
 enum TaskStatus: string
 {

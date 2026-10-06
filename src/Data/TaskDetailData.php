@@ -16,7 +16,11 @@ use Spatie\TypeScriptTransformer\Attributes\LiteralTypeScriptType;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 use UnexpectedValueException;
 
-/** A bounded detail view of one authorized task and its package-owned records. */
+/**
+ * A bounded detail view of one authorized task and its package-owned records.
+ *
+ * @api
+ */
 #[MapOutputName(CamelCaseMapper::class)]
 #[TypeScript]
 final class TaskDetailData extends Data
@@ -54,6 +58,8 @@ final class TaskDetailData extends Data
      * @param  list<string>  $childIds
      * @param  list<string>  $blockerIds
      * @param  list<string>  $blockedTaskIds
+     *
+     * @internal
      */
     public static function fromModel(
         Task $task,

@@ -7,7 +7,11 @@ namespace Nvl\Tasks\Contracts;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 
-/** Host-owned lookup of an assignee named by an opt-in HTTP request. */
+/**
+ * Host-owned lookup of an assignee named by an opt-in HTTP request.
+ *
+ * @api
+ */
 interface TaskPrincipalResolver
 {
     /** Resolve only a persisted principal visible to the current caller.

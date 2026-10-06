@@ -6,7 +6,11 @@ namespace Nvl\Tasks\Enums;
 
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
-/** Expresses task impact independently of urgency. */
+/**
+ * Expresses task impact independently of urgency.
+ *
+ * @api
+ */
 #[TypeScript]
 enum TaskImportance: string
 {

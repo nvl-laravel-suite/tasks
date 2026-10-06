@@ -15,7 +15,11 @@ use Nvl\Tasks\Services\TaskChecklistMutationGuard;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Applies a complete, unambiguous order to one task checklist. */
+/**
+ * Applies a complete, unambiguous order to one task checklist.
+ *
+ * @api
+ */
 final readonly class ReorderTaskChecklistItemsAction
 {
     /** Construct the checklist ordering workflow. */

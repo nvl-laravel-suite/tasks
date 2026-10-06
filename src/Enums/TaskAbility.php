@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Enums;
 
-/** Names the capabilities a host application must authorize. */
+/**
+ * Names the capabilities a host application must authorize.
+ *
+ * @api
+ */
 enum TaskAbility: string
 {
     case Create = 'create';

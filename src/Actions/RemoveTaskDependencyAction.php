@@ -12,7 +12,11 @@ use Nvl\Tasks\Services\TaskGraphGuard;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Removes one blocker edge from a task. */
+/**
+ * Removes one blocker edge from a task.
+ *
+ * @api
+ */
 final readonly class RemoveTaskDependencyAction
 {
     /** Construct the blocker-removal workflow. */

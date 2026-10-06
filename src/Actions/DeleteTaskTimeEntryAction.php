@@ -15,7 +15,11 @@ use Nvl\Tasks\Models\TaskTimeEntry;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Removes a performer's time entry from an authorized task. */
+/**
+ * Removes a performer's time entry from an authorized task.
+ *
+ * @api
+ */
 final readonly class DeleteTaskTimeEntryAction
 {
     /** Construct the time-entry removal workflow. */

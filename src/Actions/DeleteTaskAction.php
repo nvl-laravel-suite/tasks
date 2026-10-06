@@ -13,7 +13,11 @@ use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Soft-deletes a task while retaining recoverable details and attachments. */
+/**
+ * Soft-deletes a task while retaining recoverable details and attachments.
+ *
+ * @api
+ */
 final readonly class DeleteTaskAction
 {
     /** Construct the task deletion workflow. */

@@ -46,6 +46,8 @@ use Nvl\Tasks\Support\TasksConfiguration;
  * @property-read Collection<int, TaskChecklistItem> $checklistItems
  * @property-read Collection<int, TaskTimeEntry> $timeEntries
  * @property-read Collection<int, TaskTag> $tags
+ *
+ * @api
  */
 final class Task extends Model
 {

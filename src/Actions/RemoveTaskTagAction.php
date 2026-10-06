@@ -16,7 +16,11 @@ use Nvl\Tasks\Models\TaskTag;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Detaches one normalized tag from a canonical task. */
+/**
+ * Detaches one normalized tag from a canonical task.
+ *
+ * @api
+ */
 final readonly class RemoveTaskTagAction
 {
     /** Construct the task-tag removal workflow. */

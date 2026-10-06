@@ -6,7 +6,11 @@ namespace Nvl\Tasks\Enums;
 
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
-/** Classifies the workflow a task represents. */
+/**
+ * Classifies the workflow a task represents.
+ *
+ * @api
+ */
 #[TypeScript]
 enum TaskType: string
 {

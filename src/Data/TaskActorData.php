@@ -11,7 +11,11 @@ use Spatie\LaravelData\Attributes\Hidden as DataHidden;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\Hidden;
 
-/** Transport-neutral identity for task authorization and audit fields. */
+/**
+ * Transport-neutral identity for task authorization and audit fields.
+ *
+ * @api
+ */
 #[Hidden]
 final class TaskActorData extends Data
 {

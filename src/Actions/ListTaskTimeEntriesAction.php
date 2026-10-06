@@ -12,7 +12,11 @@ use Nvl\Tasks\Models\TaskTimeEntry;
 use Nvl\Tasks\Services\TaskReadGuard;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Pages recorded effort for one authorized task. */
+/**
+ * Pages recorded effort for one authorized task.
+ *
+ * @api
+ */
 final readonly class ListTaskTimeEntriesAction
 {
     /** Construct the time-entry reader. */

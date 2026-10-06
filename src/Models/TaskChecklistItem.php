@@ -28,6 +28,8 @@ use Nvl\Tasks\Support\TasksConfiguration;
  * @property Carbon $updated_at
  * @property-read Task $task
  * @property-read Model|null $completedBy
+ *
+ * @api
  */
 final class TaskChecklistItem extends Model
 {

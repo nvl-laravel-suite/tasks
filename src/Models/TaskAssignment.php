@@ -27,6 +27,8 @@ use Nvl\Tasks\Support\TasksConfiguration;
  * @property-read Task $task
  * @property-read Model|null $assignee
  * @property-read Model|null $assignedBy
+ *
+ * @api
  */
 final class TaskAssignment extends Model
 {

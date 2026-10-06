@@ -85,6 +85,12 @@ composer quality
 
 Maintainer CI also validates the package family. In a consuming Laravel application, the read-only `nvl:tasks:doctor --strict --format=json` command checks schema, owner registration, route registration, and consumer bindings. For database-backed production deployments, verify task migrations and the tenant adoption plan against the target database before enabling traffic.
 
+## Supported PHP usage
+
+The source `@api` declarations identify supported workflows, extension contracts, and value types. Public members marked `@internal` and untagged implementation types remain package-owned. Concrete Actions retain their existing constructors, qualifiers, and `execute()` signatures.
+
+A package model returned or accepted by a public workflow is an identity/result handle. Use its declared type and `getKey()`, `getKeyName()`, `getMorphClass()`, `getRouteKey()`, `getRouteKeyName()`, `is()`, `isNot()`, and `relationLoaded()`. Read only explicitly declared in-memory `@nvl-consumer-read` fields; ordinary model PHPDocs and fillable attributes do not grant consumer reads. Obtain display projections through public reads. Persistence, additional model queries, relation access/loading, and generic model serialization are outside this contract. Host-model queries remain available, while traversal or aggregates of package capability relations require the package public reader or authorized adapter.
+
 ## License
 
 MIT. See [LICENSE](LICENSE). Security reports should follow [SECURITY.md](SECURITY.md); upgrading notes are in [UPGRADING.md](UPGRADING.md).

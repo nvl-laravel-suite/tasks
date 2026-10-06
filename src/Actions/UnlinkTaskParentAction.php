@@ -12,7 +12,11 @@ use Nvl\Tasks\Services\TaskGraphGuard;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Removes a specified child-to-parent edge from the task hierarchy. */
+/**
+ * Removes a specified child-to-parent edge from the task hierarchy.
+ *
+ * @api
+ */
 final readonly class UnlinkTaskParentAction
 {
     /** Construct the parent-unlink workflow. */

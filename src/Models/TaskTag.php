@@ -21,6 +21,8 @@ use Nvl\Tasks\Support\TasksConfiguration;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property-read Task $task
+ *
+ * @api
  */
 final class TaskTag extends Model
 {

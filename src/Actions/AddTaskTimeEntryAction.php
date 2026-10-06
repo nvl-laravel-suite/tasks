@@ -18,7 +18,11 @@ use Nvl\Tasks\Models\TaskTimeEntry;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Adds a manual time interval for one authorized task performer. */
+/**
+ * Adds a manual time interval for one authorized task performer.
+ *
+ * @api
+ */
 final readonly class AddTaskTimeEntryAction
 {
     /** Construct the manual time-entry workflow. */

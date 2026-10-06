@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Contracts;
 
-/** Enumerates reviewed tenant identifiers for task activity recovery. */
+/**
+ * Enumerates reviewed tenant identifiers for task activity recovery.
+ *
+ * @api
+ */
 interface TaskActivityWorklist
 {
     /**

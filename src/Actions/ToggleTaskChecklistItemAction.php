@@ -15,7 +15,11 @@ use Nvl\Tasks\Services\TaskChecklistMutationGuard;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Sets completion state and records the completing principal. */
+/**
+ * Sets completion state and records the completing principal.
+ *
+ * @api
+ */
 final readonly class ToggleTaskChecklistItemAction
 {
     /** Construct the checklist completion workflow. */

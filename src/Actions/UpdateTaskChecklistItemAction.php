@@ -14,7 +14,11 @@ use Nvl\Tasks\Services\TaskChecklistMutationGuard;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Replaces the title of one checklist item. */
+/**
+ * Replaces the title of one checklist item.
+ *
+ * @api
+ */
 final readonly class UpdateTaskChecklistItemAction
 {
     /** Construct the checklist title workflow. */

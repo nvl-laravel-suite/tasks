@@ -7,7 +7,11 @@ namespace Nvl\Tasks\Contracts;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
 
-/** Exposes explicit authorized task attachments without foreign model traits. */
+/**
+ * Exposes explicit authorized task attachments without foreign model traits.
+ *
+ * @api
+ */
 interface TaskAttachments
 {
     /** Associate an existing private Media asset and return its association identifier. */

@@ -18,7 +18,11 @@ use Nvl\Tasks\Models\TaskTimeEntry;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Starts one running timer for a task performer. */
+/**
+ * Starts one running timer for a task performer.
+ *
+ * @api
+ */
 final readonly class StartTaskTimerAction
 {
     /** Construct the timer start workflow. */

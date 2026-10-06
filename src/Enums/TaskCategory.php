@@ -6,7 +6,11 @@ namespace Nvl\Tasks\Enums;
 
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
-/** Groups tasks for broad reporting without binding them to an application domain. */
+/**
+ * Groups tasks for broad reporting without binding them to an application domain.
+ *
+ * @api
+ */
 #[TypeScript]
 enum TaskCategory: string
 {

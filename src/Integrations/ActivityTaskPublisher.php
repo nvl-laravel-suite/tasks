@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Integrations;
 
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use LogicException;
 use Nvl\Activity\Facades\ActivityLog;
@@ -15,6 +14,7 @@ use Nvl\Activity\Support\ActivityRecordEnvelope;
 use Nvl\Activity\Support\ActivitySubjectReference;
 use Nvl\Activity\Support\TimelineActivityRules;
 use Nvl\Activity\Tenancy\ActivityOwnershipGuard;
+use Nvl\Support\Facades\PackageLog;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Support\Tenancy\Contracts\TenantContext;
 use Nvl\Support\Tenancy\Exceptions\TenantBoundaryViolation;
@@ -118,10 +118,10 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
             try {
                 ProcessTaskActivityOutboxJob::dispatch($eventId, $tenantEnvelope);
             } catch (Throwable $exception) {
-                Log::error('Task activity delivery dispatch failed; the outbox event remains pending.', [
+                PackageLog::log('tasks', 'error', 'nvl.tasks.activity_dispatch.failed', [
                     'event_id' => $eventId,
                     'exception' => $exception,
-                ]);
+                ], 'normal');
             }
         });
     }

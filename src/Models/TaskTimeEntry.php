@@ -6,11 +6,13 @@ namespace Nvl\Tasks\Models;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Tasks\Database\Factories\TaskTimeEntryFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -34,6 +36,9 @@ use Nvl\Tasks\Support\TasksConfiguration;
  */
 final class TaskTimeEntry extends Model
 {
+    /** @use HasFactory<TaskTimeEntryFactory> */
+    use HasFactory;
+
     use HasUuids;
 
     /** @var list<string> */
@@ -88,5 +93,15 @@ final class TaskTimeEntry extends Model
             'stopped_at' => 'immutable_datetime',
             'duration_seconds' => 'integer',
         ];
+    }
+
+    /**
+     * Return the package's runtime fixture factory.
+     *
+     * @internal
+     */
+    protected static function newFactory(): TaskTimeEntryFactory
+    {
+        return TaskTimeEntryFactory::new();
     }
 }

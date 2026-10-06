@@ -6,6 +6,7 @@ namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use Nvl\Tasks\Contracts\AddTaskDependencyContract;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskDependency;
@@ -18,7 +19,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class AddTaskDependencyAction
+final readonly class AddTaskDependencyAction implements AddTaskDependencyContract
 {
     /** Construct the blocker-addition workflow. */
     public function __construct(private TaskGraphGuard $guard, private TasksActivity $activity) {}

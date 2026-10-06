@@ -6,6 +6,7 @@ namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Tasks\Contracts\RemoveTaskTagContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\Mutations\TaskTagMutationData;
 use Nvl\Tasks\Data\TaskActorData;
@@ -21,7 +22,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class RemoveTaskTagAction
+final readonly class RemoveTaskTagAction implements RemoveTaskTagContract
 {
     /** Construct the task-tag removal workflow. */
     public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}

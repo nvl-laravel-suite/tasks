@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Tasks\Contracts\ListTasksContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskQueryScope;
 use Nvl\Tasks\Data\TaskActorData;
@@ -29,7 +30,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class ListTasksAction
+final readonly class ListTasksAction implements ListTasksContract
 {
     /** Construct the task listing boundary. */
     public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary) {}

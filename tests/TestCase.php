@@ -11,6 +11,7 @@ use Nvl\Activity\Providers\ActivityServiceProvider;
 use Nvl\Data\Providers\DataServiceProvider;
 use Nvl\Filterable\Providers\FilterableServiceProvider;
 use Nvl\Media\Providers\MediaServiceProvider;
+use Nvl\Support\Providers\LocaleServiceProvider;
 use Nvl\Support\Providers\SupportServiceProvider;
 use Nvl\Tasks\Providers\TasksServiceProvider;
 use Nvl\Translatable\Providers\TranslatableServiceProvider;
@@ -25,12 +26,13 @@ abstract class TestCase extends Orchestra
     protected function getPackageProviders($app): array
     {
         return [
+            LocaleServiceProvider::class,
             SupportServiceProvider::class,
             DataServiceProvider::class,
             TranslatableServiceProvider::class,
             FilterableServiceProvider::class,
-            ActivityServiceProvider::class,
-            MediaServiceProvider::class,
+            ...(class_exists(ActivityServiceProvider::class) ? [ActivityServiceProvider::class] : []),
+            ...(class_exists(MediaServiceProvider::class) ? [MediaServiceProvider::class] : []),
             TasksServiceProvider::class,
         ];
     }

@@ -7,6 +7,7 @@ namespace Nvl\Tasks\Actions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Nvl\Tasks\Contracts\ReorderTaskChecklistItemsContract;
 use Nvl\Tasks\Data\Mutations\ReorderTaskChecklistItemsData;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
@@ -20,7 +21,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class ReorderTaskChecklistItemsAction
+final readonly class ReorderTaskChecklistItemsAction implements ReorderTaskChecklistItemsContract
 {
     /** Construct the checklist ordering workflow. */
     public function __construct(private TaskChecklistMutationGuard $guard, private TasksActivity $activity) {}

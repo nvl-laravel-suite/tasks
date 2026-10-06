@@ -6,6 +6,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Nvl\Support\Exceptions\BindingRequiredException;
 use Nvl\Tasks\Actions\GetTaskDashboardAction;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskQueryScope;
@@ -71,7 +72,7 @@ it('uses the host list policy and scoped task visibility for every aggregate', f
     $entry = new TaskTimeEntry;
     $entry->forceFill(['task_id' => $foreign->id, 'performer_type' => 'test-user', 'performer_id' => 'other', 'started_at' => now()->subMinute(), 'stopped_at' => now(), 'duration_seconds' => 450])->save();
 
-    expect(fn () => app(GetTaskDashboardAction::class)->execute($owner))->toThrow(AuthorizationException::class);
+    expect(fn () => app(GetTaskDashboardAction::class)->execute($owner))->toThrow(BindingRequiredException::class);
 
     app()->bind(TaskAuthorization::class, static fn () => new class implements TaskAuthorization, TaskQueryScope
     {

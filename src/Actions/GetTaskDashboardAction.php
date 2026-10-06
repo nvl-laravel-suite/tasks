@@ -8,6 +8,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use InvalidArgumentException;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Tasks\Contracts\GetTaskDashboardContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskQueryScope;
 use Nvl\Tasks\Data\TaskActorData;
@@ -25,7 +26,7 @@ use UnexpectedValueException;
  *
  * @api
  */
-final readonly class GetTaskDashboardAction
+final readonly class GetTaskDashboardAction implements GetTaskDashboardContract
 {
     /** Construct the authorized dashboard reader. */
     public function __construct(

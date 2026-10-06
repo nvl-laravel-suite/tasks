@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Tasks\Database\Factories\TaskTagFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -26,6 +28,9 @@ use Nvl\Tasks\Support\TasksConfiguration;
  */
 final class TaskTag extends Model
 {
+    /** @use HasFactory<TaskTagFactory> */
+    use HasFactory;
+
     use HasUuids;
 
     /** @var list<string> */
@@ -50,5 +55,15 @@ final class TaskTag extends Model
     public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class, 'task_id');
+    }
+
+    /**
+     * Return the package's runtime fixture factory.
+     *
+     * @internal
+     */
+    protected static function newFactory(): TaskTagFactory
+    {
+        return TaskTagFactory::new();
     }
 }

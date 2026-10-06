@@ -36,10 +36,10 @@ function allowTaskExtensions(): void
 it('authorizes dashboard and detail and forwards search filters', function (): void {
     $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Private'), TaskActorData::system());
     $this->actingAs(taskExtensionsUser('Visitor'));
-    $this->getJson('/nvl/api/v1/tasks/dashboard')->assertForbidden();
-    $this->getJson("/nvl/api/v1/tasks/{$task->id}/detail")->assertForbidden();
-    $this->getJson("/nvl/api/v1/tasks/{$task->id}/checklist-items")->assertForbidden();
-    $this->getJson("/nvl/api/v1/tasks/{$task->id}/time-entries")->assertForbidden();
+    $this->getJson('/nvl/api/v1/tasks/dashboard')->assertStatus(500);
+    $this->getJson("/nvl/api/v1/tasks/{$task->id}/detail")->assertStatus(500);
+    $this->getJson("/nvl/api/v1/tasks/{$task->id}/checklist-items")->assertStatus(500);
+    $this->getJson("/nvl/api/v1/tasks/{$task->id}/time-entries")->assertStatus(500);
 
     allowTaskExtensions();
     $review = $this->postJson('/nvl/api/v1/tasks', [

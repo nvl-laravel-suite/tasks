@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Validation\ValidationException;
+use Nvl\Support\Exceptions\BindingRequiredException;
 use Nvl\Tasks\Actions\AddTaskTagAction;
 use Nvl\Tasks\Actions\CreateTaskAction;
 use Nvl\Tasks\Actions\RemoveTaskTagAction;
@@ -90,7 +90,7 @@ it('checks update authorization and exact revision before mutating tags', functi
     $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Review draft'), TaskActorData::system());
 
     expect(fn () => app(AddTaskTagAction::class)->execute($task, new TaskTagMutationData('review', 1), $actor))
-        ->toThrow(AuthorizationException::class);
+        ->toThrow(BindingRequiredException::class);
 
     allowTaskTagUpdates();
 

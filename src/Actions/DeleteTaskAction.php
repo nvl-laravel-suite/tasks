@@ -6,6 +6,7 @@ namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Tasks\Contracts\DeleteTaskContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
@@ -18,7 +19,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class DeleteTaskAction
+final readonly class DeleteTaskAction implements DeleteTaskContract
 {
     /** Construct the task deletion workflow. */
     public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}

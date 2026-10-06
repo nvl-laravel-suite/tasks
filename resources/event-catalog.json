@@ -1,0 +1,440 @@
+{
+  "schema_version": 1,
+  "package": "nvl/tasks",
+  "documentation": "docs/events.md",
+  "implementation_status": "implemented; executable acceptance proof pending",
+  "events": [
+    {
+      "class": "Nvl\\Tasks\\Events\\TaskChanged",
+      "source": "packages/nvl/tasks/src/Events/TaskChanged.php",
+      "constructor_fields": [
+        {
+          "name": "taskId",
+          "type": "string",
+          "visibility": "public",
+          "required": true
+        },
+        {
+          "name": "revision",
+          "type": "int",
+          "visibility": "public",
+          "required": true
+        },
+        {
+          "name": "operation",
+          "type": "Nvl\\Tasks\\Enums\\TaskChangeOperation",
+          "visibility": "public",
+          "required": true
+        },
+        {
+          "name": "actor",
+          "type": "Nvl\\Tasks\\Data\\TaskEventActorData",
+          "visibility": "public",
+          "required": true
+        },
+        {
+          "name": "context",
+          "type": "array",
+          "visibility": "public",
+          "required": false,
+          "default_expression": "[]",
+          "phpdoc_type": "array<string, bool|float|int|string|null>"
+        },
+        {
+          "name": "envelope",
+          "type": "?Nvl\\Support\\Tenancy\\ValueObjects\\TenantJobEnvelope",
+          "visibility": "private",
+          "required": false,
+          "default_expression": "null"
+        },
+        {
+          "name": "schemaVersion",
+          "type": "int",
+          "visibility": "public",
+          "required": false,
+          "default_expression": "1"
+        }
+      ],
+      "public_fields": [
+        {
+          "name": "taskId",
+          "type": "string"
+        },
+        {
+          "name": "revision",
+          "type": "int"
+        },
+        {
+          "name": "operation",
+          "type": "Nvl\\Tasks\\Enums\\TaskChangeOperation"
+        },
+        {
+          "name": "actor",
+          "type": "Nvl\\Tasks\\Data\\TaskEventActorData"
+        },
+        {
+          "name": "context",
+          "type": "array",
+          "phpdoc_type": "array<string, bool|float|int|string|null>"
+        },
+        {
+          "name": "schemaVersion",
+          "type": "int"
+        }
+      ],
+      "kind": "value_object",
+      "schema_version": 1,
+      "trigger": "Task semantic operation persisted.",
+      "aliases": [],
+      "producers": [
+        {
+          "path": "packages/nvl/tasks/src/Services/TaskEvents.php",
+          "trigger": "Task semantic operation persisted.",
+          "connection": "$task->getConnection()",
+          "construction_expression": "new TaskChanged( $task->id, $task->revision, $operation, TaskEventActorData::fromActor($actor), $context, TenantJobEnvelope::capture($this->tenantContext), )"
+        }
+      ],
+      "producer_callers": [
+        {
+          "path": "packages/nvl/tasks/src/Services/TasksActivity.php",
+          "publisher_method": "TaskEvents::record",
+          "connection": "$task->getConnection() (or $child->getConnection() for parent edge operations)",
+          "trigger": "Each qualifying semantic operation before the optional TaskActivityPublisher."
+        }
+      ],
+      "context_by_operation": {
+        "created": {},
+        "updated": {},
+        "deleted": {},
+        "restored": {},
+        "checklist_reordered": {},
+        "tag_added": {},
+        "tag_removed": {},
+        "assigned": {
+          "assignee_type": "?string",
+          "assignee_id": "int|string|null"
+        },
+        "unassigned": {
+          "assignee_type": "?string",
+          "assignee_id": "int|string|null"
+        },
+        "checklist_item_added": {
+          "item_id": "string"
+        },
+        "checklist_item_updated": {
+          "item_id": "string"
+        },
+        "checklist_item_completed": {
+          "item_id": "string"
+        },
+        "checklist_item_reopened": {
+          "item_id": "string"
+        },
+        "checklist_item_removed": {
+          "item_id": "string"
+        },
+        "time_entry_added": {
+          "entry_id": "string",
+          "duration_seconds": "int"
+        },
+        "time_entry_updated": {
+          "entry_id": "string",
+          "duration_seconds": "int"
+        },
+        "timer_stopped": {
+          "entry_id": "string",
+          "duration_seconds": "int"
+        },
+        "time_entry_removed": {
+          "entry_id": "string"
+        },
+        "timer_started": {
+          "entry_id": "string"
+        },
+        "parent_linked": {
+          "parent_task_id": "string"
+        },
+        "parent_unlinked": {
+          "parent_task_id": "string"
+        },
+        "blocker_added": {
+          "blocker_task_id": "string"
+        },
+        "blocker_removed": {
+          "blocker_task_id": "string"
+        }
+      },
+      "security_notes": [
+        "Scalar actor copied into TaskEventActorData, task revision, operation and safe context; no TaskActorData principal model, description, checklist title, tag text or private field values. Private captured TenantJobEnvelope is available through tenantJobEnvelope(). Assignment IDs, relation IDs and existing durations are operation context."
+      ],
+      "no_op_semantics": "No-op updates, technical timestamp/revision-only changes, duplicate assignment, replayed mutations and rejected revisions emit nothing. TaskEvents runs at TasksActivity semantic boundaries before optional Activity publication. Activity installation and outbox retries do not create or replay TaskChanged."
+    }
+  ],
+  "value_types": [
+    {
+      "class": "Nvl\\Support\\Tenancy\\Enums\\TenantContextMode",
+      "source": "packages/nvl/core/support/src/Tenancy/Enums/TenantContextMode.php",
+      "constructor_fields": [],
+      "public_fields": [],
+      "kind": "enum",
+      "backing_type": "string",
+      "cases": [
+        {
+          "name": "Disabled",
+          "value": "disabled"
+        },
+        {
+          "name": "Unresolved",
+          "value": "unresolved"
+        },
+        {
+          "name": "Tenant",
+          "value": "tenant"
+        },
+        {
+          "name": "Platform",
+          "value": "platform"
+        }
+      ]
+    },
+    {
+      "class": "Nvl\\Support\\Tenancy\\ValueObjects\\TenantContextSnapshot",
+      "source": "packages/nvl/core/support/src/Tenancy/ValueObjects/TenantContextSnapshot.php",
+      "constructor_fields": [
+        {
+          "name": "mode",
+          "type": "Nvl\\Support\\Tenancy\\Enums\\TenantContextMode",
+          "visibility": "public",
+          "required": true
+        },
+        {
+          "name": "tenantId",
+          "type": "?Nvl\\Support\\Tenancy\\ValueObjects\\TenantId",
+          "visibility": "public",
+          "required": false,
+          "default_expression": "null"
+        }
+      ],
+      "public_fields": [
+        {
+          "name": "mode",
+          "type": "Nvl\\Support\\Tenancy\\Enums\\TenantContextMode"
+        },
+        {
+          "name": "tenantId",
+          "type": "?Nvl\\Support\\Tenancy\\ValueObjects\\TenantId"
+        }
+      ],
+      "kind": "value_object"
+    },
+    {
+      "class": "Nvl\\Support\\Tenancy\\ValueObjects\\TenantId",
+      "source": "packages/nvl/core/support/src/Tenancy/ValueObjects/TenantId.php",
+      "constructor_fields": [
+        {
+          "name": "value",
+          "type": "string",
+          "visibility": "parameter",
+          "required": true
+        }
+      ],
+      "public_fields": [
+        {
+          "name": "value",
+          "type": "string"
+        }
+      ],
+      "kind": "value_object"
+    },
+    {
+      "class": "Nvl\\Support\\Tenancy\\ValueObjects\\TenantJobEnvelope",
+      "source": "packages/nvl/core/support/src/Tenancy/ValueObjects/TenantJobEnvelope.php",
+      "constructor_fields": [
+        {
+          "name": "context",
+          "type": "Nvl\\Support\\Tenancy\\ValueObjects\\TenantContextSnapshot",
+          "visibility": "public",
+          "required": true
+        },
+        {
+          "name": "version",
+          "type": "int",
+          "visibility": "public",
+          "required": false,
+          "default_expression": "1"
+        }
+      ],
+      "public_fields": [
+        {
+          "name": "context",
+          "type": "Nvl\\Support\\Tenancy\\ValueObjects\\TenantContextSnapshot"
+        },
+        {
+          "name": "version",
+          "type": "int"
+        }
+      ],
+      "kind": "value_object"
+    },
+    {
+      "class": "Nvl\\Tasks\\Data\\TaskEventActorData",
+      "source": "packages/nvl/tasks/src/Data/TaskEventActorData.php",
+      "constructor_fields": [
+        {
+          "name": "type",
+          "type": "?string",
+          "visibility": "public",
+          "required": true
+        },
+        {
+          "name": "id",
+          "type": "int|string|null",
+          "visibility": "public",
+          "required": true
+        },
+        {
+          "name": "system",
+          "type": "bool",
+          "visibility": "public",
+          "required": false,
+          "default_expression": "false"
+        }
+      ],
+      "public_fields": [
+        {
+          "name": "type",
+          "type": "?string"
+        },
+        {
+          "name": "id",
+          "type": "int|string|null"
+        },
+        {
+          "name": "system",
+          "type": "bool"
+        }
+      ],
+      "kind": "value_object"
+    },
+    {
+      "class": "Nvl\\Tasks\\Enums\\TaskChangeOperation",
+      "source": "packages/nvl/tasks/src/Enums/TaskChangeOperation.php",
+      "constructor_fields": [],
+      "public_fields": [],
+      "kind": "enum",
+      "backing_type": "string",
+      "cases": [
+        {
+          "name": "Created",
+          "value": "created"
+        },
+        {
+          "name": "Updated",
+          "value": "updated"
+        },
+        {
+          "name": "Deleted",
+          "value": "deleted"
+        },
+        {
+          "name": "Restored",
+          "value": "restored"
+        },
+        {
+          "name": "Assigned",
+          "value": "assigned"
+        },
+        {
+          "name": "Unassigned",
+          "value": "unassigned"
+        },
+        {
+          "name": "ChecklistItemAdded",
+          "value": "checklist_item_added"
+        },
+        {
+          "name": "ChecklistItemUpdated",
+          "value": "checklist_item_updated"
+        },
+        {
+          "name": "ChecklistItemCompleted",
+          "value": "checklist_item_completed"
+        },
+        {
+          "name": "ChecklistItemReopened",
+          "value": "checklist_item_reopened"
+        },
+        {
+          "name": "ChecklistReordered",
+          "value": "checklist_reordered"
+        },
+        {
+          "name": "ChecklistItemRemoved",
+          "value": "checklist_item_removed"
+        },
+        {
+          "name": "TagAdded",
+          "value": "tag_added"
+        },
+        {
+          "name": "TagRemoved",
+          "value": "tag_removed"
+        },
+        {
+          "name": "TimeEntryAdded",
+          "value": "time_entry_added"
+        },
+        {
+          "name": "TimeEntryUpdated",
+          "value": "time_entry_updated"
+        },
+        {
+          "name": "TimeEntryRemoved",
+          "value": "time_entry_removed"
+        },
+        {
+          "name": "TimerStarted",
+          "value": "timer_started"
+        },
+        {
+          "name": "TimerStopped",
+          "value": "timer_stopped"
+        },
+        {
+          "name": "ParentLinked",
+          "value": "parent_linked"
+        },
+        {
+          "name": "ParentUnlinked",
+          "value": "parent_unlinked"
+        },
+        {
+          "name": "BlockerAdded",
+          "value": "blocker_added"
+        },
+        {
+          "name": "BlockerRemoved",
+          "value": "blocker_removed"
+        }
+      ]
+    }
+  ],
+  "aliases": [],
+  "publication": {
+    "publication": "The native host dispatcher receives the captured event after the supplied source connection outer commit, or immediately when that connection has no active transaction.",
+    "rollback": "Callbacks attach to the matching native connection and current nesting record; native outer/savepoint rollback discards the corresponding callbacks.",
+    "registration_failure": "Missing source transaction records fail before commit; Mail Notifications reports and drops unusable observations.",
+    "host_policy": "Host after-commit listeners and queue after_commit policies can add their own deferral after publication. Host transaction infrastructure and dispatcher bindings are preserved.",
+    "delivery_limit": "Local callbacks are not an outbox. Process exit between commit and callback can lose delivery; no crash durability or exactly-once delivery is promised.",
+    "cardinality": "One canonical object is dispatched per qualifying producer call. This is local publication, not cross-process deduplication or a guarantee that repeated observations are unique.",
+    "manual_producers": "Use Nvl\\Support\\Events\\DomainEventDispatcher::dispatch($event, $writerConnection). Native Event::dispatch() is immediate and has no package interception."
+  },
+  "security_notes": [
+    "Scalar actor copied into TaskEventActorData, task revision, operation and safe context; no TaskActorData principal model, description, checklist title, tag text or private field values. Private captured TenantJobEnvelope is available through tenantJobEnvelope(). Assignment IDs, relation IDs and existing durations are operation context."
+  ],
+  "no_op_semantics": "No-op updates, technical timestamp/revision-only changes, duplicate assignment, replayed mutations and rejected revisions emit nothing. TaskEvents runs at TasksActivity semantic boundaries before optional Activity publication. Activity installation and outbox retries do not create or replay TaskChanged.",
+  "notes": [
+    "Task context: assigned/unassigned use assignee_type and assignee_id; checklist item operations use item_id; time_entry_added/time_entry_updated/timer_stopped use entry_id and duration_seconds; removed/time-start use entry_id; parent operations use parent_task_id; blocker operations use blocker_task_id. Other operations use an empty context, including updated and tag changes.",
+    "TaskActorData may privately retain a model and is deliberately not embedded. TaskEventActorData uses the native int|string|null identifier. TenantJobEnvelope is captured inside the semantic writer boundary."
+  ]
+}

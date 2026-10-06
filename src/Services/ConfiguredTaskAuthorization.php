@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Services;
 
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
+use Nvl\Support\Exceptions\BindingRequiredException;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
@@ -25,8 +25,6 @@ final class ConfiguredTaskAuthorization implements TaskAuthorization
             return;
         }
 
-        throw new AuthorizationException(
-            "Task ability [{$ability->value}] requires a consumer authorization binding.",
-        );
+        throw BindingRequiredException::for('tasks', TaskAuthorization::class, 'user_task_mutation');
     }
 }

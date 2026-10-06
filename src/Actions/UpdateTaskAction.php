@@ -7,6 +7,7 @@ namespace Nvl\Tasks\Actions;
 use Illuminate\Support\Facades\DB;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
+use Nvl\Tasks\Contracts\UpdateTaskContract;
 use Nvl\Tasks\Data\Mutations\UpdateTaskData;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
@@ -21,7 +22,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class UpdateTaskAction
+final readonly class UpdateTaskAction implements UpdateTaskContract
 {
     /** Construct the task replacement workflow. */
     public function __construct(

@@ -6,12 +6,12 @@ namespace Nvl\Tasks\Services;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Nvl\Activity\Facades\ActivityLog;
 use Nvl\Activity\Providers\ActivityServiceProvider;
 use Nvl\Activity\Support\ActivityRecordEnvelope;
 use Nvl\Support\Integrations\OptionalIntegration;
+use Nvl\Support\Logging\PackageLogger;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Tasks\Models\TaskActivityOutbox;
 use Nvl\Tasks\Support\TasksConfiguration;
@@ -23,7 +23,7 @@ final readonly class TasksActivityDelivery
     private const int LEASE_SECONDS = 120;
 
     /** Construct the tenant-bounded delivery service. */
-    public function __construct(private TenantBoundary $boundary, private OptionalIntegration $integrations) {}
+    public function __construct(private TenantBoundary $boundary, private OptionalIntegration $integrations, private PackageLogger $packageLogger) {}
 
     /** Attempt one due event; another worker may already hold its lease. */
     public function deliver(string $id): bool
@@ -132,11 +132,11 @@ final readonly class TasksActivityDelivery
                 }
             });
         } finally {
-            Log::warning('Task activity delivery failed; the outbox event remains pending.', [
+            $this->packageLogger->log('tasks', 'warning', 'nvl.tasks.activity_delivery.failed', [
                 'event_id' => $id,
                 'attempts' => $attempts,
                 'exception' => $exception,
-            ]);
+            ], 'normal');
         }
     }
 }

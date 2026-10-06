@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Validation\ValidationException;
+use Nvl\Support\Exceptions\BindingRequiredException;
 use Nvl\Tasks\Actions\AddTaskChecklistItemAction;
 use Nvl\Tasks\Actions\CreateTaskAction;
 use Nvl\Tasks\Actions\RemoveTaskChecklistItemAction;
@@ -118,6 +118,6 @@ it('requires update authorization and refuses items from another task', function
     $visitor = TaskActorData::fromAuthenticatable($user);
 
     expect(fn () => app(AddTaskChecklistItemAction::class)->execute($task, new AddTaskChecklistItemData('Forbidden', 1), $visitor))
-        ->toThrow(AuthorizationException::class)
+        ->toThrow(BindingRequiredException::class)
         ->and(TaskChecklistItem::query()->where('task_id', $task->id)->count())->toBe(0);
 });

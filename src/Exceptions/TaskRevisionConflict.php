@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Exceptions;
 
-use RuntimeException;
-
-/** Signals that a task changed after a consumer read its revision. */
-final class TaskRevisionConflict extends RuntimeException
+/**
+ * @api
+ Signals that a task changed after a consumer read its revision. */
+final class TaskRevisionConflict extends TasksException
 {
     /** Describe the rejected stale task update. */
     public function __construct()

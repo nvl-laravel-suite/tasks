@@ -9,6 +9,7 @@ use Nvl\Tasks\Enums\TaskPriority;
 use Nvl\Tasks\Enums\TaskStatus;
 use Nvl\Tasks\Enums\TaskType;
 
+/** Complete runtime defaults; publication sections are declared in ../resources/config/sections.json. */
 return [
     'queue' => ['connection' => null, 'name' => null],
     'connection' => null,

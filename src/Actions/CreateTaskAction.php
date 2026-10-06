@@ -6,6 +6,7 @@ namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Tasks\Contracts\CreateTaskContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\Mutations\CreateTaskData;
 use Nvl\Tasks\Data\TaskActorData;
@@ -20,7 +21,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class CreateTaskAction
+final readonly class CreateTaskAction implements CreateTaskContract
 {
     /** Construct the task creation workflow. */
     public function __construct(

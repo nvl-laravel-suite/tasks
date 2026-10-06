@@ -1,8 +1,20 @@
 # Changelog
 
+## Unreleased — consumer runtime integration
+
+- Added focused consumer contract/testing guidance and shipped-factory usage limits.
+- Versioned committed event payloads and documented canonical aliases, source connections, failure metadata and optional safe rendering.
+- Added explicit first-use/installer and deployment guidance; new acceptance checks remain pending.
+
+
 All notable changes to `nvl/tasks` are documented here.
 
 ## [Unreleased]
+
+### Added
+
+- Added focused injectable contracts for all 28 selected public workflows, with native signatures and conditional defaults preserving host bindings.
+
 
 ### Changed
 

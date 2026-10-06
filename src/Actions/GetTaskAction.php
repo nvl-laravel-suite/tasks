@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Actions;
 
+use Nvl\Tasks\Contracts\GetTaskContract;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Services\TaskReadGuard;
@@ -13,7 +14,7 @@ use Nvl\Tasks\Services\TaskReadGuard;
  *
  * @api
  */
-final readonly class GetTaskAction
+final readonly class GetTaskAction implements GetTaskContract
 {
     /** Construct the task read boundary. */
     public function __construct(private TaskReadGuard $guard) {}

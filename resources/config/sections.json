@@ -1,0 +1,52 @@
+{
+    "schema_version": 1,
+    "configs": {
+        "nvl-tasks": {
+            "required": [],
+            "common": [
+                "activity.enabled",
+                "activity.schedule.enabled",
+                "connection",
+                "media.enabled",
+                "migrations.enabled",
+                "queue.connection",
+                "queue.name",
+                "routes.management.enabled",
+                "routes.management.middleware",
+                "routes.management.name",
+                "routes.management.prefix",
+                "tables.nvl_tasks_activity_outbox",
+                "tables.nvl_tasks_assignments",
+                "tables.nvl_tasks_dependencies",
+                "tables.nvl_tasks_relationships",
+                "tables.nvl_tasks_tags",
+                "tables.nvl_tasks_tasks",
+                "tables.nvl_tasks_time_entries"
+            ],
+            "advanced": [
+                "activity.drain_limit",
+                "activity.queue",
+                "dashboard.due_soon_days",
+                "defaults.category",
+                "defaults.importance",
+                "defaults.priority",
+                "defaults.status",
+                "defaults.type",
+                "detail.maximum_checklist_items",
+                "detail.maximum_task_links",
+                "detail.maximum_time_entries",
+                "enums.category",
+                "enums.importance",
+                "enums.priority",
+                "enums.status",
+                "enums.type",
+                "lifecycle.completed_status",
+                "limits.default_page_size",
+                "limits.maximum_page_size",
+                "media.maximum_attachments",
+                "media.maximum_file_bytes",
+                "tables.nvl_tasks_checklist_items"
+            ]
+        }
+    }
+}

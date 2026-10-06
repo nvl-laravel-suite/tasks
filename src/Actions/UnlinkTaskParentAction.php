@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
+use Nvl\Tasks\Contracts\UnlinkTaskParentContract;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskRelationship;
@@ -17,7 +18,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class UnlinkTaskParentAction
+final readonly class UnlinkTaskParentAction implements UnlinkTaskParentContract
 {
     /** Construct the parent-unlink workflow. */
     public function __construct(private TaskGraphGuard $guard, private TasksActivity $activity) {}

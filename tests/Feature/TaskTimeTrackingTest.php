@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
@@ -10,6 +9,7 @@ use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Nvl\Support\Exceptions\BindingRequiredException;
 use Nvl\Tasks\Actions\AddTaskTimeEntryAction;
 use Nvl\Tasks\Actions\CreateTaskAction;
 use Nvl\Tasks\Actions\DeleteTaskTimeEntryAction;
@@ -165,7 +165,7 @@ it('requires host update authorization before creating time', function (): void 
         startedAt: '2026-09-28T09:00:00Z',
         endedAt: '2026-09-28T10:00:00Z',
         expectedRevision: 1,
-    ), $actor))->toThrow(AuthorizationException::class);
+    ), $actor))->toThrow(BindingRequiredException::class);
 });
 
 it('keeps time entries bound to their canonical task and performer', function (): void {

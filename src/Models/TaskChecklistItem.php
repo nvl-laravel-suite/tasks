@@ -6,11 +6,13 @@ namespace Nvl\Tasks\Models;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Tasks\Database\Factories\TaskChecklistItemFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -33,6 +35,9 @@ use Nvl\Tasks\Support\TasksConfiguration;
  */
 final class TaskChecklistItem extends Model
 {
+    /** @use HasFactory<TaskChecklistItemFactory> */
+    use HasFactory;
+
     use HasUuids;
 
     /** @var list<string> */
@@ -81,5 +86,15 @@ final class TaskChecklistItem extends Model
             'position' => 'integer',
             'completed_at' => 'immutable_datetime',
         ];
+    }
+
+    /**
+     * Return the package's runtime fixture factory.
+     *
+     * @internal
+     */
+    protected static function newFactory(): TaskChecklistItemFactory
+    {
+        return TaskChecklistItemFactory::new();
     }
 }

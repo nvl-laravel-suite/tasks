@@ -6,6 +6,7 @@ namespace Nvl\Tasks\Actions;
 
 use Illuminate\Auth\Access\AuthorizationException;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Tasks\Contracts\GetTaskDetailContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskQueryScope;
 use Nvl\Tasks\Data\TaskActorData;
@@ -21,7 +22,7 @@ use UnexpectedValueException;
  *
  * @api
  */
-final readonly class GetTaskDetailAction
+final readonly class GetTaskDetailAction implements GetTaskDetailContract
 {
     /** Construct the task detail read boundary. */
     public function __construct(

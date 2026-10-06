@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
+use Nvl\Support\Http\PackageExceptionPayload;
 use Nvl\Tasks\Actions\AddTaskChecklistItemAction;
 use Nvl\Tasks\Actions\AddTaskDependencyAction;
 use Nvl\Tasks\Actions\AddTaskTagAction;
@@ -49,6 +50,8 @@ use Nvl\Tasks\Support\TasksConfiguration;
 /** Opt-in JSON transport for task dashboard and package-owned child workflows. */
 final class TasksManagementExtrasController extends Controller
 {
+    public function __construct(private readonly PackageExceptionPayload $payload) {}
+
     /** Return a tenant-scoped dashboard summary after list authorization. */
     public function dashboard(Request $request, TaskActorFactory $actors, GetTaskDashboardAction $action): JsonResponse
     {
@@ -467,7 +470,7 @@ final class TasksManagementExtrasController extends Controller
                 ? response()->json(status: 204)
                 : response()->json(['data' => $data], $status);
         } catch (TaskRevisionConflict $exception) {
-            return response()->json(['message' => $exception->getMessage()], 409);
+            return response()->json(['message' => $this->payload->for($exception)['message']], 409);
         } catch (InvalidArgumentException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
         }

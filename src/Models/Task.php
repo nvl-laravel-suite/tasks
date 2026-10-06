@@ -8,12 +8,14 @@ use BackedEnum;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Tasks\Database\Factories\TaskFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TaskEnumConfiguration;
 use Nvl\Tasks\Support\TasksConfiguration;
@@ -51,6 +53,9 @@ use Nvl\Tasks\Support\TasksConfiguration;
  */
 final class Task extends Model
 {
+    /** @use HasFactory<TaskFactory> */
+    use HasFactory;
+
     use HasUuids;
     use SoftDeletes;
 
@@ -169,5 +174,15 @@ final class Task extends Model
             'metadata' => 'array',
             'revision' => 'integer',
         ];
+    }
+
+    /**
+     * Return the package's runtime fixture factory.
+     *
+     * @internal
+     */
+    protected static function newFactory(): TaskFactory
+    {
+        return TaskFactory::new();
     }
 }

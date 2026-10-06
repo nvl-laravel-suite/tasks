@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User;
@@ -12,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Nvl\Media\Models\Media;
 use Nvl\Media\Slots\MediaSlot;
+use Nvl\Support\Exceptions\BindingRequiredException;
 use Nvl\Tasks\Actions\AssignTaskAction;
 use Nvl\Tasks\Actions\CreateTaskAction;
 use Nvl\Tasks\Actions\DeleteTaskAction;
@@ -51,7 +51,7 @@ it('denies user mutations until the consuming app binds task authorization', fun
     $actor = TaskActorData::fromAuthenticatable(taskTestUser('Owner'));
 
     expect(fn () => app(CreateTaskAction::class)->execute(new CreateTaskData('Review draft'), $actor))
-        ->toThrow(AuthorizationException::class);
+        ->toThrow(BindingRequiredException::class);
 });
 
 it('registers bounded private task attachments', function (): void {

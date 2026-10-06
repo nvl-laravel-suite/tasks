@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Tests;
 
 use Nvl\Data\Providers\DataServiceProvider;
+use Nvl\Support\Providers\LocaleServiceProvider;
 use Nvl\Support\Providers\SupportServiceProvider;
 use Nvl\Tasks\Providers\TasksServiceProvider;
 
@@ -18,6 +19,7 @@ abstract class StandaloneTasksTestCase extends TestCase
      */
     protected function getPackageProviders($app): array
     {
-        return [SupportServiceProvider::class, DataServiceProvider::class, TasksServiceProvider::class];
+        return [
+            LocaleServiceProvider::class, SupportServiceProvider::class, DataServiceProvider::class, TasksServiceProvider::class];
     }
 }

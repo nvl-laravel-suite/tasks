@@ -6,6 +6,7 @@ namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Nvl\Tasks\Contracts\AddTaskChecklistItemContract;
 use Nvl\Tasks\Data\Mutations\AddTaskChecklistItemData;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
@@ -19,7 +20,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class AddTaskChecklistItemAction
+final readonly class AddTaskChecklistItemAction implements AddTaskChecklistItemContract
 {
     /** Construct the checklist addition workflow. */
     public function __construct(private TaskChecklistMutationGuard $guard, private TasksActivity $activity) {}

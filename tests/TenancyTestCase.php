@@ -10,6 +10,7 @@ use Nvl\Activity\Providers\ActivityServiceProvider;
 use Nvl\Data\Providers\DataServiceProvider;
 use Nvl\Filterable\Providers\FilterableServiceProvider;
 use Nvl\Media\Providers\MediaServiceProvider;
+use Nvl\Support\Providers\LocaleServiceProvider;
 use Nvl\Support\Providers\SupportServiceProvider;
 use Nvl\Tasks\Providers\TasksServiceProvider;
 use Nvl\Tenancy\Contracts\PlatformAccess;
@@ -36,6 +37,7 @@ abstract class TenancyTestCase extends Orchestra
     protected function getPackageProviders($app): array
     {
         return [
+            LocaleServiceProvider::class,
             SupportServiceProvider::class,
             DataServiceProvider::class,
             TenancyServiceProvider::class,

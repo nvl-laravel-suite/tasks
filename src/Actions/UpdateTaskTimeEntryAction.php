@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use LogicException;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
+use Nvl\Tasks\Contracts\UpdateTaskTimeEntryContract;
 use Nvl\Tasks\Data\Mutations\TimeEntryData;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
@@ -22,7 +23,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class UpdateTaskTimeEntryAction
+final readonly class UpdateTaskTimeEntryAction implements UpdateTaskTimeEntryContract
 {
     /** Construct the manual interval replacement workflow. */
     public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}

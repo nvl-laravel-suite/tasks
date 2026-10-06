@@ -7,6 +7,7 @@ namespace Nvl\Tasks\Actions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Tasks\Contracts\AddTaskTagContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\Mutations\TaskTagMutationData;
 use Nvl\Tasks\Data\TaskActorData;
@@ -22,7 +23,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class AddTaskTagAction
+final readonly class AddTaskTagAction implements AddTaskTagContract
 {
     /** Construct the task-tag addition workflow. */
     public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}

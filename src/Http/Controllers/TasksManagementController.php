@@ -10,6 +10,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
+use Nvl\Support\Http\PackageExceptionPayload;
 use Nvl\Tasks\Actions\AssignTaskAction;
 use Nvl\Tasks\Actions\CreateTaskAction;
 use Nvl\Tasks\Actions\DeleteTaskAction;
@@ -35,6 +36,8 @@ use Spatie\LaravelData\Optional;
 /** Thin opt-in task management transport over the package's public actions. */
 final class TasksManagementController extends Controller
 {
+    public function __construct(private readonly PackageExceptionPayload $payload) {}
+
     /** Return one bounded, authorized task table page. */
     public function index(
         Request $request,
@@ -107,7 +110,7 @@ final class TasksManagementController extends Controller
                 $actors->fromRequest($request),
             );
         } catch (TaskRevisionConflict $exception) {
-            return response()->json(['message' => $exception->getMessage()], 409);
+            return response()->json(['message' => $this->payload->for($exception)['message']], 409);
         }
 
         return response()->json(['data' => TaskData::fromModel($updated)->toArray()]);
@@ -137,7 +140,7 @@ final class TasksManagementController extends Controller
                 $actors->fromRequest($request),
             );
         } catch (TaskRevisionConflict $exception) {
-            return response()->json(['message' => $exception->getMessage()], 409);
+            return response()->json(['message' => $this->payload->for($exception)['message']], 409);
         }
 
         return response()->json(['data' => TaskData::fromModel($restored)->toArray()]);

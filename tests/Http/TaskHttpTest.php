@@ -32,7 +32,16 @@ it('keeps management routes behind consumer authorization', function (): void {
 
     $this->actingAs(taskHttpUser('Owner'))
         ->postJson('/nvl/api/v1/tasks', ['title' => 'Review draft'])
-        ->assertForbidden();
+        ->assertStatus(500);
+
+    app()->bind(TaskAuthorization::class, static fn () => new class implements TaskAuthorization
+    {
+        public function authorize(TaskAbility $ability, TaskActorData $actor, ?Task $task = null, ?Model $subject = null): void
+        {
+            throw new AuthorizationException('Host denied the authenticated actor.');
+        }
+    });
+    $this->postJson('/nvl/api/v1/tasks', ['title' => 'Review draft'])->assertForbidden();
 });
 
 it('rejects unauthenticated actor resolution before looking up host principals', function (): void {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
+use Nvl\Tasks\Contracts\RemoveTaskDependencyContract;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskDependency;
@@ -17,7 +18,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class RemoveTaskDependencyAction
+final readonly class RemoveTaskDependencyAction implements RemoveTaskDependencyContract
 {
     /** Construct the blocker-removal workflow. */
     public function __construct(private TaskGraphGuard $guard, private TasksActivity $activity) {}

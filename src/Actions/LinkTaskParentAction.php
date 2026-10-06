@@ -6,6 +6,7 @@ namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use Nvl\Tasks\Contracts\LinkTaskParentContract;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskRelationship;
@@ -18,7 +19,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class LinkTaskParentAction
+final readonly class LinkTaskParentAction implements LinkTaskParentContract
 {
     /** Construct the parent-link workflow. */
     public function __construct(private TaskGraphGuard $guard, private TasksActivity $activity) {}

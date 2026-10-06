@@ -7,6 +7,7 @@ namespace Nvl\Tasks\Actions;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Nvl\Tasks\Contracts\ToggleTaskChecklistItemContract;
 use Nvl\Tasks\Data\Mutations\ToggleTaskChecklistItemData;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
@@ -20,7 +21,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class ToggleTaskChecklistItemAction
+final readonly class ToggleTaskChecklistItemAction implements ToggleTaskChecklistItemContract
 {
     /** Construct the checklist completion workflow. */
     public function __construct(private TaskChecklistMutationGuard $guard, private TasksActivity $activity) {}

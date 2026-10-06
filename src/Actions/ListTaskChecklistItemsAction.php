@@ -6,6 +6,7 @@ namespace Nvl\Tasks\Actions;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use InvalidArgumentException;
+use Nvl\Tasks\Contracts\ListTaskChecklistItemsContract;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskChecklistItem;
@@ -17,7 +18,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final readonly class ListTaskChecklistItemsAction
+final readonly class ListTaskChecklistItemsAction implements ListTaskChecklistItemsContract
 {
     /** Construct the checklist reader. */
     public function __construct(private TaskReadGuard $guard) {}

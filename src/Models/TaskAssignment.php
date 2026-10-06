@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Tasks\Database\Factories\TaskAssignmentFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -32,6 +34,9 @@ use Nvl\Tasks\Support\TasksConfiguration;
  */
 final class TaskAssignment extends Model
 {
+    /** @use HasFactory<TaskAssignmentFactory> */
+    use HasFactory;
+
     use HasUuids;
 
     /** @var list<string> */
@@ -80,5 +85,15 @@ final class TaskAssignment extends Model
     public function assignedBy(): MorphTo
     {
         return $this->morphTo('assignedBy', 'assigned_by_type', 'assigned_by_id');
+    }
+
+    /**
+     * Return the package's runtime fixture factory.
+     *
+     * @internal
+     */
+    protected static function newFactory(): TaskAssignmentFactory
+    {
+        return TaskAssignmentFactory::new();
     }
 }

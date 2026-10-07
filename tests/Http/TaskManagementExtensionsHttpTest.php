@@ -67,7 +67,8 @@ it('authorizes dashboard and detail and forwards search filters', function (): v
 
 it('manages checklist, tags, manual time and timers through revision-checked routes', function (): void {
     allowTaskExtensions();
-    $this->actingAs(taskExtensionsUser('Owner'));
+    $owner = taskExtensionsUser('Owner');
+    $this->actingAs($owner);
     $task = $this->postJson('/nvl/api/v1/tasks', ['title' => 'Prepare release'])
         ->assertCreated()->json('data.id');
 
@@ -79,7 +80,7 @@ it('manages checklist, tags, manual time and timers through revision-checked rou
     ])->assertOk()->assertJsonPath('data.title', 'Check all links');
     $this->postJson("/nvl/api/v1/tasks/{$task}/checklist-items/{$item}/completion", [
         'completed' => true, 'expectedRevision' => 3,
-    ])->assertOk()->assertJsonPath('data.completedById', '1');
+    ])->assertOk()->assertJsonPath('data.completedById', (string) $owner->getKey());
     $this->putJson("/nvl/api/v1/tasks/{$task}/checklist-items/order", [
         'itemIds' => [$item], 'expectedRevision' => 4,
     ])->assertOk()->assertJsonPath('data.revision', 5);
@@ -133,7 +134,8 @@ it('manages checklist, tags, manual time and timers through revision-checked rou
 
 it('links and unlinks parent and blocker edges using both task revisions', function (): void {
     allowTaskExtensions();
-    $this->actingAs(taskExtensionsUser('Owner'));
+    $owner = taskExtensionsUser('Owner');
+    $this->actingAs($owner);
     $child = $this->postJson('/nvl/api/v1/tasks', ['title' => 'Child'])->assertCreated()->json('data.id');
     $parent = $this->postJson('/nvl/api/v1/tasks', ['title' => 'Parent'])->assertCreated()->json('data.id');
 
@@ -159,7 +161,8 @@ it('links and unlinks parent and blocker edges using both task revisions', funct
 
 it('pages checklist and time history beyond bounded task detail', function (): void {
     allowTaskExtensions();
-    $this->actingAs(taskExtensionsUser('Owner'));
+    $owner = taskExtensionsUser('Owner');
+    $this->actingAs($owner);
     config()->set('nvl-tasks.detail.maximum_checklist_items', 1);
     config()->set('nvl-tasks.detail.maximum_time_entries', 1);
     $task = $this->postJson('/nvl/api/v1/tasks', ['title' => 'History'])->assertCreated()->json('data.id');

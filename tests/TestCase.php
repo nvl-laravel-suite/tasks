@@ -29,7 +29,7 @@ abstract class TestCase extends Orchestra
             LocaleServiceProvider::class,
             SupportServiceProvider::class,
             DataServiceProvider::class,
-            TranslatableServiceProvider::class,
+            ...(class_exists(TranslatableServiceProvider::class) ? [TranslatableServiceProvider::class] : []),
             FilterableServiceProvider::class,
             ...(class_exists(ActivityServiceProvider::class) ? [ActivityServiceProvider::class] : []),
             ...(class_exists(MediaServiceProvider::class) ? [MediaServiceProvider::class] : []),

@@ -52,7 +52,7 @@ When Activity integration is active, Tasks registers an every-minute outbox corr
 
 ## Requirements and installation
 
-Use PHP 8.4+ and Laravel 13. Install Tasks independently from Packagist. Publish configuration if you need different storage, limits, or an opt-in API:
+Use PHP 8.4+ and Laravel 12–13. Install Tasks independently from Packagist. Publish configuration if you need different storage, limits, or an opt-in API:
 
 ```bash
 composer require nvl/tasks:^5.0

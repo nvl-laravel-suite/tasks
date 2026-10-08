@@ -3,7 +3,9 @@
 
 All notable changes to `nvl/tasks` are documented here.
 
-## [5.0.0] — release candidate (unpublished)
+## [Unreleased]
+
+## [5.0.0] - 2026-10-08
 
 ### Added
 
@@ -13,7 +15,7 @@ All notable changes to `nvl/tasks` are documented here.
 ### Changed
 
 - Classify the supported consumer PHP surface with explicit source annotations and restrict package model handles to declared identity and in-memory read fields; preserve existing workflow behavior and concrete signatures.
-- Prepare lockstep major 5 with required and development NVL peer floors of `^5.0`. This candidate has not been tagged or published.
+- Adopt lockstep major 5 with required and development NVL peer floors of `^5.0`.
 - Retain the correctness-critical outbox schedule and diagnose scheduler heartbeat and distributed-lock readiness.
 - Inherit queue destinations and use canonical names for package-owned global registrations.
 - Review [UPGRADING.md](UPGRADING.md) before adopting the new names and infrastructure boundaries.

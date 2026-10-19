@@ -53,6 +53,9 @@ Constructor parameters, in native order:
 | `$context` | `array` | public | `[]` | `array<string, bool\|float\|int\|string\|null>` |
 | `$envelope` | `?Nvl\Support\Tenancy\ValueObjects\TenantJobEnvelope` | private | `null` | — |
 | `$schemaVersion` | `int` | public | `1` | — |
+| `$ownership` | `?Nvl\Support\Ownership\ValueObjects\OwnershipJobEnvelope` | private | `null` | — |
+
+Native queued listeners use the private scalar ownership envelope captured at the producer. The deprecated tenant envelope is bridge-only; neither envelope grants listener authorization.
 
 Public payload fields:
 

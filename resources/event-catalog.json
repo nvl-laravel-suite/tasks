@@ -53,6 +53,13 @@
           "visibility": "public",
           "required": false,
           "default_expression": "1"
+        },
+        {
+          "name": "ownership",
+          "visibility": "private",
+          "type": "?Nvl\\Support\\Ownership\\ValueObjects\\OwnershipJobEnvelope",
+          "required": false,
+          "default_expression": "null"
         }
       ],
       "public_fields": [
@@ -103,13 +110,13 @@
         }
       ],
       "context_by_operation": {
-        "created": {},
-        "updated": {},
-        "deleted": {},
-        "restored": {},
-        "checklist_reordered": {},
-        "tag_added": {},
-        "tag_removed": {},
+        "created": [],
+        "updated": [],
+        "deleted": [],
+        "restored": [],
+        "checklist_reordered": [],
+        "tag_added": [],
+        "tag_removed": [],
         "assigned": {
           "assignee_type": "?string",
           "assignee_id": "int|string|null"

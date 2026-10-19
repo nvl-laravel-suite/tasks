@@ -1,15 +1,21 @@
 ---
 name: nvl-tasks
-description: Use when implementing or reviewing nvl/tasks lifecycle, classification enums, checklists, tags, time tracking, task relationships, Activity audit, Media attachments, tenant isolation, or management routes.
+description: Use when implementing or reviewing nvl/tasks lifecycle, classification enums, checklists, tags, time tracking, task relationships, Activity audit, Media attachments, ownership isolation, or management routes.
 ---
 
 # NVL Tasks
+
+For major 6, use native Ownership for new isolated integrations and the installed
+Ownership README/UPGRADING runbook for configured subclasses and reviewed adoption.
+Ordinary unowned hosts keep unscoped declarations; installation does not enable
+isolation. Tenant-specific APIs below apply only to the explicitly selected
+deprecated Tenancy bridge; they never substitute for native owner admission.
 
 Use this skill for task-management work in a Laravel application consuming `nvl/tasks`.
 
 ## Ownership and policy
 
-- Use package actions for task, checklist, tag, time-entry, timer, hierarchy, dependency, and assignment writes. They re-read task identity through the tenant boundary; never let request data set tenant or creator columns.
+- Use package actions for task, checklist, tag, time-entry, timer, hierarchy, dependency, and assignment writes. They re-read task identity through the canonical ownership boundary; never let request data set tenant or creator columns.
 - Bind `TaskAuthorization` for every user-facing ability. The default rejects user work. Use `TaskActorData::fromAuthenticatable()` with a persisted Eloquent principal; reserve `TaskActorData::system()` for trusted jobs or seeders.
 - `UpdateTaskAction` requires the current `expectedRevision`. Surface `TaskRevisionConflict` as a conflict, not an unguarded retry.
 - Keep assignees in task assignment records. Register stable morph aliases for host principal models; do not couple Tasks to a specific Auth package model or write polymorphic type names from HTTP input.
@@ -20,7 +26,7 @@ Use this skill for task-management work in a Laravel application consuming `nvl/
 - Plain description and small app hints belong on the task. Use package checklists for steps, tags for labels, time entries for effort, and task links for hierarchy or blockers. `target_at` is a planning target; `due_at` is the firm deadline.
 - Activity records meaningful task lifecycle and assignment events. Use Activity's timeline reads for audit views.
 - Task files use the private, exclusive Media `attachments` slot. Use Media's upload/attachment actions and delivery policy, not new file columns or public URLs.
-- For tenant mode, adopt Media and Activity before Tasks. Task roots receive tenant identity from `TenantBoundary`; child records inherit it from their canonical task.
+- For owned Tasks, explicitly declare the configured Task root ownership and adopt participating Media and Activity resources before Tasks. Children inherit from their canonical Task; queue/outbox records capture scalar ownership. Legacy TenantBoundary applies only to the bridge.
 
 ## Transport and verification
 
@@ -49,7 +55,7 @@ Resolve all package tables through the table helper and canonical `nvl-tasks.tab
 ## Canonical configuration ownership
 
 - Read/write `nvl-tasks` configuration and publish only canonical `nvl-<package>-<resource>` tags. Keep logical package/tenant resource identifiers unchanged.
-- Generic config roots and unprefixed package environment names are foreign by default. For an upgrading NVL host only, select `nvl-core.compatibility.legacy_config` package IDs and `legacy_env` explicitly; both default off. Canonical presence wins, including false/null/empty values. Legacy inputs are read without writing back and are removed in major 6.
+- Generic config roots and unprefixed package environment names are foreign by default. For an upgrading NVL host only, select `nvl-core.compatibility.legacy_config` package IDs and `legacy_env` explicitly; both default off. Canonical presence wins, including false/null/empty values. Legacy inputs are read without writing back and remain deprecated in major 6.
 - Use canonical `NVL_<PACKAGE>_*` variables only in config evaluation, then rebuild configuration caches and restart workers after cutover. Shared Laravel environment variables retain their names. Consult Core's versioned `support/resources/global-names.json` for all renames.
 - Old global aliases and legacy route families require separate explicit `global_aliases`/`legacy_routes` package selections. Preserve collisions and use Doctor diagnostics; never grant generic permissions automatically or claim signed-link compatibility without the same authorization/signature checks.
 
@@ -61,10 +67,10 @@ Resolve all package tables through the table helper and canonical `nvl-tasks.tab
 
 ## Consumer runtime and testing contracts
 
-Start with the package README Quickstart and Testing your app sections. Use `nvl:install <package>` for loaded-package common config publication; it does not enable features, run schema or refresh caches. Preserve native host owner keys/morph maps and selected auth/tenancy defaults. Read full runtime defaults and publish advanced config only deliberately.
+Start with the package README Quickstart and Testing your app sections. Use `nvl:install <package>` for loaded-package common config publication; it does not enable features, run schema or refresh caches. Preserve native host owner keys/morph maps and selected host Auth and ownership defaults. Read full runtime defaults and publish advanced config only deliberately.
 
 Inject the supported focused interfaces and preserve host bindings. Returned model handles do not permit package-table queries/writes outside documented capability/extension seams. Host tests may substitute contracts in Laravel's container, use shipped model factories (ordinary make may persist parents; withoutParents()->make is detached), and use Laravel effect fakes deliberately. Only Media/Stripe have dedicated provider/library fakes; do not invent a universal package fake. Settings InteractsWithSettings is definition-only. Host PHPStan may include vendor/nvl/core/support/consumer-audit.neon; no unpublished workbench command is a consumer requirement.
 
-Read docs/events.md and the package README error table. Domain events use schemaVersion=1, model-free facts and actual source-connection commit callbacks; only six declared old Event suffix aliases remain for major 5. Migrate exact listeners/fakes and suffix wildcards, drain old queued payloads, rebuild event cache and restart workers. Delivery is not a durable outbox. The Core exception renderer is opt-in, JSON-only for respondable failures, with exactly message/code/context and host-selected locale. Do not expose diagnostics or reinterpret missing bindings as authorization denial.
+Read docs/events.md and the package README error table. Domain events use schemaVersion=1, model-free facts and actual source-connection commit callbacks; only six declared old Event suffix aliases remain deprecated through major 6. Migrate exact listeners/fakes and suffix wildcards, drain old queued payloads, rebuild event cache and restart workers. Delivery is not a durable outbox. The Core exception renderer is opt-in, JSON-only for respondable failures, with exactly message/code/context and host-selected locale. Do not expose diagnostics or reinterpret missing bindings as authorization denial.
 
 Core package logging uses nvl/normal with CSV quiet by default, stable message keys and bounded context; incidents survive quiet. Do not mutate global logger context or log raw row/provider/content/credential payloads. Run only authorized project checks and report new acceptance as pending until actual output exists.

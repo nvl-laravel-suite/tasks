@@ -3,12 +3,12 @@
 ## Quickstart
 
 ```sh
-composer require nvl/tasks:^5.0
+composer require nvl/tasks:^6.0
 php artisan nvl:install tasks --dry-run
 php artisan nvl:install tasks
 ```
 
-Required NVL dependencies: `nvl/core` (`^5.0`). Bind TaskAuthorization for user operations and TaskPrincipalResolver when enabling management HTTP assignments. Supply validated TaskActorData; trusted system actors are a separate explicit capability.
+Required NVL dependencies: `nvl/core` (`^6.0`). Bind TaskAuthorization for user operations and TaskPrincipalResolver when enabling management HTTP assignments. Supply validated TaskActorData; trusted system actors are a separate explicit capability.
 Review the published common config, select one migration owner, and run schema preflight before existing-table upgrades. The installer does not enable features or run migrations. Follow the detailed installation and capability sections below before invoking a storage/provider operation.
 
 Inject `Nvl\Tasks\Contracts\ListTasksContract` in a host service. After supplying the trusted inputs described above, the first public call is:
@@ -34,7 +34,7 @@ See the [installation and publishing guide](https://github.com/nvl-laravel-suite
 
 | Item | Value |
 |---|---|
-| Installed through | `composer require nvl/tasks:^5.0` |
+| Installed through | `composer require nvl/tasks:^6.0` |
 | Module identifier | `nvl/tasks` |
 | PHP namespace | `Nvl\Tasks` |
 | Service provider | `Nvl\Tasks\Providers\TasksServiceProvider` |
@@ -55,7 +55,7 @@ When Activity integration is active, Tasks registers an every-minute outbox corr
 Use PHP 8.4+ and Laravel 12–13. Install Tasks independently from Packagist. Publish configuration if you need different storage, limits, or an opt-in API:
 
 ```bash
-composer require nvl/tasks:^5.0
+composer require nvl/tasks:^6.0
 php artisan vendor:publish --tag=nvl-tasks-translations
 php artisan vendor:publish --tag=nvl-tasks-config
 php artisan vendor:publish --tag=nvl-tasks-skills

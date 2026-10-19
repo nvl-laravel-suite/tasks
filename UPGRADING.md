@@ -1,5 +1,12 @@
 # Upgrading NVL Tasks
 
+## Major 6 ownership rollout
+
+Integrate explicitly declared native Task roots and inherited children; fence attachments, outbox and worker work to the canonical Task owner. Preserve scheduling and authorization contracts.
+
+Upgrade the selected NVL dependency closure together to `^6.0`. Ordinary unowned hosts retain the default unscoped declarations and need no ownership context. For isolation, use the installed Ownership README and UPGRADING guide, exact configured subclasses and reviewed adoption before accepting traffic. Disabling or removing Ownership is not rollback; Core retains durable denial guards. Keep existing tenant IDs and migration history. The explicit Tenancy bridge remains deprecated through major 6; its retirement is a separate reviewed migration no earlier than major 7.
+
+
 ## Consumer contracts, committed events and runtime policy (5.x)
 
 Prefer focused public interfaces in constructor injection; native implementations remain container defaults and host prebindings win. Returned models are documented identity/data handles: use package contracts for reads/writes and capability-specific batch readers instead of direct package queries. Enable the shipped Core PHPStan include in your host; do not invoke the suite workbench static audit command in a consumer.

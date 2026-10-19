@@ -5,6 +5,13 @@ All notable changes to `nvl/tasks` are documented here.
 
 ## [Unreleased]
 
+## [6.0.0] - 2026-10-20
+
+### Changed
+
+- Integrate explicitly declared native Task roots and inherited children; fence attachments, outbox and worker work to the canonical Task owner. Preserve scheduling and authorization contracts.
+- Align required/development NVL peers on `^6.0`, optional peer conflicts on major 6, and `dev-main` on `6.x-dev`. Review [UPGRADING.md](UPGRADING.md) before rollout.
+
 ## [5.0.1] - 2026-10-08
 
 ### Changed

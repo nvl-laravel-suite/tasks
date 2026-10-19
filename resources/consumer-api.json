@@ -948,7 +948,8 @@
             "file": "database/factories/TaskFactory.php",
             "methods": [
                 "definition",
-                "forOwner"
+                "forOwner",
+                "modelName"
             ],
             "properties": [],
             "constants": []
@@ -1165,6 +1166,7 @@
             "file": "src/Events/TaskChanged.php",
             "methods": [
                 "__construct",
+                "ownershipJobEnvelope",
                 "schemaVersion",
                 "tenantJobEnvelope"
             ],
@@ -1317,6 +1319,16 @@
                 "is",
                 "isNot",
                 "relationLoaded"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Services\\TaskModelRegistry": {
+            "kind": "class",
+            "file": "src/Services/TaskModelRegistry.php",
+            "methods": [
+                "__construct",
+                "taskClass"
             ],
             "properties": [],
             "constants": []

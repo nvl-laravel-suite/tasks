@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\UpdateTaskContract;
 use Nvl\Tasks\Data\Mutations\UpdateTaskData;
@@ -13,6 +13,7 @@ use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Services\TaskMutationValues;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
@@ -27,7 +28,7 @@ final readonly class UpdateTaskAction implements UpdateTaskContract
     /** Construct the task replacement workflow. */
     public function __construct(
         private TaskAuthorization $authorization,
-        private TenantBoundary $boundary,
+        private OwnershipBoundary $boundary,
         private TaskMutationValues $values,
         private TasksActivity $activity,
     ) {}
@@ -38,7 +39,7 @@ final readonly class UpdateTaskAction implements UpdateTaskContract
         $id = $task instanceof Task ? $task->getKey() : $task;
 
         $updated = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $data, $id): Task {
-            $current = $this->boundary->query(Task::query(), Task::TENANT_RESOURCE)
+            $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
                 ->whereKey($id)->lockForUpdate()->firstOrFail();
             $this->authorization->authorize(TaskAbility::Update, $actor, $current);
 

@@ -7,7 +7,7 @@ namespace Nvl\Tasks\Actions;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use LogicException;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\AddTaskTimeEntryContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\Mutations\TimeEntryData;
@@ -16,6 +16,8 @@ use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskTimeEntry;
+use Nvl\Tasks\Services\TaskModelRegistry;
+use Nvl\Tasks\Services\TaskRecordWriter;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -27,7 +29,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
 final readonly class AddTaskTimeEntryAction implements AddTaskTimeEntryContract
 {
     /** Construct the manual time-entry workflow. */
-    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}
+    public function __construct(private TaskAuthorization $authorization, private OwnershipBoundary $boundary, private TasksActivity $activity, private TaskRecordWriter $records) {}
 
     /** Store a server-calculated interval against an exact task revision. */
     public function execute(Task|string $task, TimeEntryData $data, TaskActorData $actor): TaskTimeEntry
@@ -39,7 +41,7 @@ final readonly class AddTaskTimeEntryAction implements AddTaskTimeEntryContract
         $id = $task instanceof Task ? $task->getKey() : $task;
 
         $entry = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $data, $id): TaskTimeEntry {
-            $current = $this->boundary->query(Task::query(), Task::TENANT_RESOURCE)
+            $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
                 ->whereKey($id)->lockForUpdate()->firstOrFail();
             $this->authorization->authorize(TaskAbility::Update, $actor, $current);
 
@@ -47,14 +49,13 @@ final readonly class AddTaskTimeEntryAction implements AddTaskTimeEntryContract
                 throw new TaskRevisionConflict;
             }
 
-            $entry = new TaskTimeEntry;
-            $entry->forceFill([
+            $entry = $this->records->timeEntry([
                 ...$data->interval(),
                 'task_id' => $current->id,
                 'tenant_id' => $current->tenant_id,
                 'performer_type' => $actor->type,
                 'performer_id' => (string) $actor->id,
-            ])->save();
+            ]);
             $current->forceFill(['revision' => $current->revision + 1])->save();
 
             $durationSeconds = $entry->duration_seconds

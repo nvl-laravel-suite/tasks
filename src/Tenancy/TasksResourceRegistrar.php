@@ -15,15 +15,19 @@ use Nvl\Tasks\Models\TaskDependency;
 use Nvl\Tasks\Models\TaskRelationship;
 use Nvl\Tasks\Models\TaskTag;
 use Nvl\Tasks\Models\TaskTimeEntry;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tenancy\Services\TenantAdoptionRegistry;
 
 /** Registers task ownership and the records inherited from canonical tasks. */
 final readonly class TasksResourceRegistrar
 {
+    /** Retain the exact configured root before resource compilation. */
+    public function __construct(private TaskModelRegistry $models) {}
+
     /** Register task resources and the standalone-to-tenant adopter. */
     public function register(TenantResourceRegistry $resources, ?TenantAdoptionRegistry $adoption = null): void
     {
-        $resources->register(new TenantResourceDefinition('tasks.tasks', 'tasks', Task::class));
+        $resources->register(new TenantResourceDefinition('tasks.tasks', 'tasks', $this->models->prepare()));
         $resources->register(new TenantResourceDefinition(TaskActivityOutbox::TENANT_RESOURCE, 'tasks', TaskActivityOutbox::class));
 
         foreach ([

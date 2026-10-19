@@ -6,7 +6,7 @@ namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\AddTaskTagContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\Mutations\TaskTagMutationData;
@@ -15,6 +15,8 @@ use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskTag;
+use Nvl\Tasks\Services\TaskModelRegistry;
+use Nvl\Tasks\Services\TaskRecordWriter;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -26,7 +28,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
 final readonly class AddTaskTagAction implements AddTaskTagContract
 {
     /** Construct the task-tag addition workflow. */
-    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}
+    public function __construct(private TaskAuthorization $authorization, private OwnershipBoundary $boundary, private TasksActivity $activity, private TaskRecordWriter $records) {}
 
     /** Add a tag once and advance the task revision only for a new row. */
     public function execute(Task|string $task, TaskTagMutationData $data, TaskActorData $actor): TaskTag
@@ -34,7 +36,7 @@ final readonly class AddTaskTagAction implements AddTaskTagContract
         $id = $task instanceof Task ? $task->getKey() : $task;
 
         $record = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $data, $id): TaskTag {
-            $current = $this->boundary->query(Task::query(), Task::TENANT_RESOURCE)
+            $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
                 ->whereKey($id)->lockForUpdate()->firstOrFail();
             $this->authorization->authorize(TaskAbility::Update, $actor, $current);
 
@@ -53,12 +55,11 @@ final readonly class AddTaskTagAction implements AddTaskTagContract
                 throw ValidationException::withMessages(['tag' => 'A task may have at most twenty tags.']);
             }
 
-            $record = new TaskTag;
-            $record->forceFill([
+            $record = $this->records->tag([
                 'task_id' => $current->id,
                 'tenant_id' => $current->tenant_id,
                 'tag' => $tag,
-            ])->save();
+            ]);
             $current->forceFill(['revision' => $current->revision + 1])->save();
             $this->activity->tagAdded($current, $tag, $actor);
 

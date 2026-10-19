@@ -11,9 +11,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 use Nvl\Tasks\Database\Factories\TaskAssignmentFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TasksConfiguration;
+use Nvl\Tasks\Traits\HasTasksOwnership;
 
 /** One durable assignment of a task to a host application's principal.
  *
@@ -32,11 +35,12 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final class TaskAssignment extends Model
+final class TaskAssignment extends Model implements Ownable
 {
     /** @use HasFactory<TaskAssignmentFactory> */
     use HasFactory;
 
+    use HasTasksOwnership;
     use HasUuids;
 
     /** @var list<string> */
@@ -57,7 +61,7 @@ final class TaskAssignment extends Model
     /** Return the configured Tasks database connection. */
     public function getConnectionName(): ?string
     {
-        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('tasks') ?? parent::getConnectionName());
+        return PackageStorage::connectionName($this->connection ?? TaskModelRegistry::newInstance()->getConnectionName());
     }
 
     /** Return the assignment's canonical task.
@@ -66,7 +70,7 @@ final class TaskAssignment extends Model
      */
     public function task(): BelongsTo
     {
-        return $this->belongsTo(Task::class, 'task_id');
+        return $this->belongsTo(TaskModelRegistry::modelClass(), 'task_id');
     }
 
     /** Resolve the host-owned assignee.

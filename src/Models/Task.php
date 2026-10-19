@@ -15,10 +15,12 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 use Nvl\Tasks\Database\Factories\TaskFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TaskEnumConfiguration;
 use Nvl\Tasks\Support\TasksConfiguration;
+use Nvl\Tasks\Traits\HasTasksOwnership;
 
 /** A tenant-owned task with app-agnostic actors and optional package-owned extensions.
  *
@@ -51,11 +53,12 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final class Task extends Model
+class Task extends Model implements Ownable
 {
     /** @use HasFactory<TaskFactory> */
     use HasFactory;
 
+    use HasTasksOwnership;
     use HasUuids;
     use SoftDeletes;
 

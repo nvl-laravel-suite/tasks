@@ -10,11 +10,14 @@ use Illuminate\Support\ServiceProvider;
 use Nvl\Activity\Providers\ActivityServiceProvider;
 use Nvl\Data\Services\TypeScriptSourceRegistry;
 use Nvl\Media\Providers\MediaServiceProvider;
+use Nvl\Ownership\Services\OwnershipAdoptionRegistry;
 use Nvl\Support\Bindings\RequiredBindingDefinition;
 use Nvl\Support\Bindings\RequiredBindings;
 use Nvl\Support\Doctor\PackageDoctorContributor;
 use Nvl\Support\Globals\GlobalNames;
 use Nvl\Support\Integrations\OptionalIntegration;
+use Nvl\Support\Ownership\Contracts\OwnershipIntegratedProvider;
+use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
 use Nvl\Support\Providers\SupportServiceProvider;
 use Nvl\Support\Providers\TenantServiceProvider;
 use Nvl\Support\Tenancy\Services\TenantResourceRegistry;
@@ -90,15 +93,18 @@ use Nvl\Tasks\Integrations\EmptyTaskActivityWorklist;
 use Nvl\Tasks\Integrations\InactiveTaskActivityPublisher;
 use Nvl\Tasks\Integrations\MediaTaskAttachments;
 use Nvl\Tasks\Integrations\UnavailableTaskAttachments;
+use Nvl\Tasks\Ownership\TasksAdoptionAdapter as NativeTasksAdoptionAdapter;
+use Nvl\Tasks\Ownership\TasksResourceRegistrar as NativeTasksResourceRegistrar;
 use Nvl\Tasks\Services\CachedTaskSchedulerReadiness;
 use Nvl\Tasks\Services\ConfiguredTaskAuthorization;
 use Nvl\Tasks\Services\ConfiguredTaskPrincipalResolver;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Services\TasksDoctor;
 use Nvl\Tasks\Tenancy\TasksResourceRegistrar;
 use Nvl\Tenancy\Services\TenantAdoptionRegistry;
 
 /** Registers the headless Tasks runtime and package-owned integrations. */
-final class TasksServiceProvider extends ServiceProvider
+final class TasksServiceProvider extends ServiceProvider implements OwnershipIntegratedProvider
 {
     use MergesPackageConfiguration;
     use RegistersNamespacedResources;
@@ -144,6 +150,14 @@ final class TasksServiceProvider extends ServiceProvider
 
         $this->mergePackageConfiguration(__DIR__.'/../../config/nvl-tasks.php', 'tasks');
         $this->app->register(TenantServiceProvider::class);
+        $this->app->singleton(TaskModelRegistry::class);
+        $this->app->booting(fn () => $this->app->make(TaskModelRegistry::class)->prepare());
+        $this->app->booted(function (): void {
+            $this->app->make(NativeTasksResourceRegistrar::class)->register($this->app->make(OwnershipResourceRegistry::class));
+            if ($this->app->bound(OwnershipAdoptionRegistry::class)) {
+                $this->app->make(OwnershipAdoptionRegistry::class)->register('tasks', NativeTasksAdoptionAdapter::class);
+            }
+        });
         $this->app->bindIf(TaskAttachments::class, static function (Application $app): TaskAttachments {
             $active = $app->make(OptionalIntegration::class)->enabled('tasks.media.enabled', MediaServiceProvider::class);
 
@@ -167,7 +181,7 @@ final class TasksServiceProvider extends ServiceProvider
                 }
             }
 
-            (new TasksResourceRegistrar)->register(
+            $this->app->make(TasksResourceRegistrar::class)->register(
                 $this->app->make(TenantResourceRegistry::class),
                 $this->app->bound(TenantAdoptionRegistry::class) ? $this->app->make(TenantAdoptionRegistry::class) : null,
             );

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Services;
 
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
@@ -18,14 +18,14 @@ final readonly class TaskChecklistMutationGuard
     /** Construct the checklist write boundary. */
     public function __construct(
         private TaskAuthorization $authorization,
-        private TenantBoundary $boundary,
+        private OwnershipBoundary $boundary,
     ) {}
 
     /** Lock the active tenant's task and require update permission and revision. */
     public function lock(Task|string $task, int $expectedRevision, TaskActorData $actor): Task
     {
         $id = $task instanceof Task ? $task->getKey() : $task;
-        $current = $this->boundary->query(Task::query(), Task::TENANT_RESOURCE)
+        $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
             ->whereKey($id)->lockForUpdate()->firstOrFail();
 
         $this->authorization->authorize(TaskAbility::Update, $actor, $current);

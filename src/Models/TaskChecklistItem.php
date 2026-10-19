@@ -12,9 +12,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 use Nvl\Tasks\Database\Factories\TaskChecklistItemFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TasksConfiguration;
+use Nvl\Tasks\Traits\HasTasksOwnership;
 
 /** One ordered, independently completable item in a task checklist.
  *
@@ -33,11 +36,12 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final class TaskChecklistItem extends Model
+final class TaskChecklistItem extends Model implements Ownable
 {
     /** @use HasFactory<TaskChecklistItemFactory> */
     use HasFactory;
 
+    use HasTasksOwnership;
     use HasUuids;
 
     /** @var list<string> */
@@ -55,7 +59,7 @@ final class TaskChecklistItem extends Model
     /** Return the configured Tasks database connection. */
     public function getConnectionName(): ?string
     {
-        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('tasks') ?? parent::getConnectionName());
+        return PackageStorage::connectionName($this->connection ?? TaskModelRegistry::newInstance()->getConnectionName());
     }
 
     /** Return the canonical parent task.
@@ -64,7 +68,7 @@ final class TaskChecklistItem extends Model
      */
     public function task(): BelongsTo
     {
-        return $this->belongsTo(Task::class, 'task_id');
+        return $this->belongsTo(TaskModelRegistry::modelClass(), 'task_id');
     }
 
     /** Return the host principal who completed this item.

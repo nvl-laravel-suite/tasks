@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Services;
 
 use InvalidArgumentException;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
+use Nvl\Tasks\Compatibility\LegacyTaskGraphGuard;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
@@ -20,7 +21,8 @@ final readonly class TaskGraphGuard
     /** Construct the task graph boundary. */
     public function __construct(
         private TaskAuthorization $authorization,
-        private TenantBoundary $boundary,
+        private OwnershipBoundary $boundary,
+        private LegacyTaskGraphGuard $legacy,
     ) {}
 
     /** Lock and authorize two canonical task endpoints in stable key order.
@@ -51,16 +53,13 @@ final readonly class TaskGraphGuard
         $locked = [];
 
         foreach ($ids as $id) {
-            $locked[$id] = $this->boundary->query(Task::query(), Task::TENANT_RESOURCE)
+            $locked[$id] = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
                 ->whereKey($id)->lockForUpdate()->firstOrFail();
         }
 
         $canonicalFirst = $locked[$firstId];
         $canonicalSecond = $locked[$secondId];
-
-        if ($canonicalFirst->tenant_id !== $canonicalSecond->tenant_id) {
-            throw new InvalidArgumentException('Linked tasks must belong to the same tenant.');
-        }
+        $this->legacy->assertPair($canonicalFirst, $canonicalSecond);
 
         $this->authorization->authorize(TaskAbility::Update, $actor, $canonicalFirst);
         $this->authorization->authorize(TaskAbility::Update, $actor, $canonicalSecond);
@@ -85,9 +84,8 @@ final readonly class TaskGraphGuard
             }
 
             $seen[$ancestorId] = true;
-            $relationship = TaskRelationship::query()
+            $relationship = $this->legacy->restrict(TaskRelationship::query(), $child)
                 ->where('child_task_id', $ancestorId)
-                ->where('tenant_id', $child->tenant_id)
                 ->first();
 
             if ($relationship === null) {
@@ -120,9 +118,8 @@ final readonly class TaskGraphGuard
             }
 
             $seen[$candidate] = true;
-            $dependencies = TaskDependency::query()
+            $dependencies = $this->legacy->restrict(TaskDependency::query(), $task)
                 ->where('task_id', $candidate)
-                ->where('tenant_id', $task->tenant_id)
                 ->pluck('blocker_task_id');
 
             foreach ($dependencies as $blockerId) {

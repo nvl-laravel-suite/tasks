@@ -8,7 +8,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\StartTaskTimerContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\TaskActorData;
@@ -16,6 +16,8 @@ use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskTimeEntry;
+use Nvl\Tasks\Services\TaskModelRegistry;
+use Nvl\Tasks\Services\TaskRecordWriter;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -27,7 +29,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
 final readonly class StartTaskTimerAction implements StartTaskTimerContract
 {
     /** Construct the timer start workflow. */
-    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}
+    public function __construct(private TaskAuthorization $authorization, private OwnershipBoundary $boundary, private TasksActivity $activity, private TaskRecordWriter $records) {}
 
     /** Start a timer at server time if the performer has none running. */
     public function execute(Task|string $task, int $expectedRevision, TaskActorData $actor): TaskTimeEntry
@@ -39,7 +41,7 @@ final readonly class StartTaskTimerAction implements StartTaskTimerContract
         $id = $task instanceof Task ? $task->getKey() : $task;
 
         $entry = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $expectedRevision, $id): TaskTimeEntry {
-            $current = $this->boundary->query(Task::query(), Task::TENANT_RESOURCE)
+            $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
                 ->whereKey($id)->lockForUpdate()->firstOrFail();
             $this->authorization->authorize(TaskAbility::Update, $actor, $current);
 
@@ -56,14 +58,13 @@ final readonly class StartTaskTimerAction implements StartTaskTimerContract
                 throw ValidationException::withMessages(['timer' => 'This performer already has a running timer for the task.']);
             }
 
-            $entry = new TaskTimeEntry;
-            $entry->forceFill([
+            $entry = $this->records->timeEntry([
                 'task_id' => $current->id,
                 'tenant_id' => $current->tenant_id,
                 'performer_type' => $actor->type,
                 'performer_id' => (string) $actor->id,
                 'started_at' => CarbonImmutable::now(),
-            ])->save();
+            ]);
             $current->forceFill(['revision' => $current->revision + 1])->save();
             $this->activity->timerStarted($current, $entry->id, $actor);
 

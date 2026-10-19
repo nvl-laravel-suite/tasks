@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Events;
 
 use Nvl\Support\Contracts\DomainEvent;
+use Nvl\Support\Ownership\Contracts\OwnershipQueuedJob;
+use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
+use Nvl\Support\Ownership\ValueObjects\OwnershipJobEnvelope;
 use Nvl\Support\Tenancy\Contracts\TenantQueuedJob;
 use Nvl\Support\Tenancy\Exceptions\TenantBoundaryViolation;
 use Nvl\Support\Tenancy\ValueObjects\TenantJobEnvelope;
@@ -15,7 +18,7 @@ use Nvl\Tasks\Enums\TaskChangeOperation;
  *
  * @api
  */
-final readonly class TaskChanged implements DomainEvent, TenantQueuedJob
+final readonly class TaskChanged implements DomainEvent, OwnershipQueuedJob, TenantQueuedJob
 {
     /**
      * Capture task revision and safe operation-specific scalar context.
@@ -30,7 +33,14 @@ final readonly class TaskChanged implements DomainEvent, TenantQueuedJob
         public array $context = [],
         private ?TenantJobEnvelope $envelope = null,
         public int $schemaVersion = 1,
+        private ?OwnershipJobEnvelope $ownership = null,
     ) {}
+
+    /** Return native authority captured at the source, never the later dispatch scope. */
+    public function ownershipJobEnvelope(): OwnershipJobEnvelope
+    {
+        return $this->ownership ?? throw new OwnershipViolation('This legacy task payload must be drained before ownership cutover.');
+    }
 
     /** Return ownership captured by the writer before commit. */
     public function tenantJobEnvelope(): TenantJobEnvelope

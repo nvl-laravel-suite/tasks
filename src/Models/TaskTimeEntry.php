@@ -12,9 +12,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 use Nvl\Tasks\Database\Factories\TaskTimeEntryFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TasksConfiguration;
+use Nvl\Tasks\Traits\HasTasksOwnership;
 
 /** A manual interval or running timer belonging to a canonical task and performer.
  *
@@ -34,11 +37,12 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final class TaskTimeEntry extends Model
+final class TaskTimeEntry extends Model implements Ownable
 {
     /** @use HasFactory<TaskTimeEntryFactory> */
     use HasFactory;
 
+    use HasTasksOwnership;
     use HasUuids;
 
     /** @var list<string> */
@@ -61,7 +65,7 @@ final class TaskTimeEntry extends Model
     /** Return the configured Tasks database connection. */
     public function getConnectionName(): ?string
     {
-        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('tasks') ?? parent::getConnectionName());
+        return PackageStorage::connectionName($this->connection ?? TaskModelRegistry::newInstance()->getConnectionName());
     }
 
     /** Return the canonical parent task.
@@ -70,7 +74,7 @@ final class TaskTimeEntry extends Model
      */
     public function task(): BelongsTo
     {
-        return $this->belongsTo(Task::class, 'task_id');
+        return $this->belongsTo(TaskModelRegistry::modelClass(), 'task_id');
     }
 
     /** Resolve the host-owned performer.

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskTimeEntry;
+use Nvl\Tasks\Services\TaskModelRegistry;
 
 /**
  * Builds TaskTimeEntry fixture rows and their declared package parents.
@@ -18,6 +19,9 @@ use Nvl\Tasks\Models\TaskTimeEntry;
  */
 final class TaskTimeEntryFactory extends Factory
 {
+    /** @use PersistsTaskOwnership<TaskTimeEntry> */
+    use PersistsTaskOwnership;
+
     protected $model = TaskTimeEntry::class;
 
     /**
@@ -40,7 +44,7 @@ final class TaskTimeEntryFactory extends Factory
 
             $owner = FactoryGuard::owner($model, 'performer_type', 'performer_id');
             if ($model->getAttribute('task_id') !== null) {
-                $parent = Task::query()->findOrFail(FactoryGuard::identifier($model->getAttribute('task_id')));
+                $parent = TaskModelRegistry::query()->findOrFail(FactoryGuard::identifier($model->getAttribute('task_id')));
                 FactoryGuard::parent($parent, $model);
                 FactoryGuard::inherit($model, $parent);
             }

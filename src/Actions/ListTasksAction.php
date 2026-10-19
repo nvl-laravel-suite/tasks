@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\ListTasksContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskQueryScope;
@@ -22,6 +22,7 @@ use Nvl\Tasks\Enums\TaskStatus;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskAssignment;
 use Nvl\Tasks\Models\TaskTag;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TaskEnumConfiguration;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -33,7 +34,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
 final readonly class ListTasksAction implements ListTasksContract
 {
     /** Construct the task listing boundary. */
-    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary) {}
+    public function __construct(private TaskAuthorization $authorization, private OwnershipBoundary $boundary) {}
 
     /** Return a bounded task page with optional classification, actor, tag and date filters.
      *
@@ -62,7 +63,7 @@ final readonly class ListTasksAction implements ListTasksContract
             throw new InvalidArgumentException('The task page size is outside the configured bounds.');
         }
 
-        $query = Task::query()->withCount('assignments');
+        $query = TaskModelRegistry::query()->withCount('assignments');
 
         if ($this->authorization instanceof TaskQueryScope) {
             $this->authorization->scopeTasks($query, $actor);

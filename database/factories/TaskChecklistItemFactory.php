@@ -7,6 +7,7 @@ namespace Nvl\Tasks\Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskChecklistItem;
+use Nvl\Tasks\Services\TaskModelRegistry;
 
 /**
  * Builds TaskChecklistItem fixture rows and their declared package parents.
@@ -17,6 +18,9 @@ use Nvl\Tasks\Models\TaskChecklistItem;
  */
 final class TaskChecklistItemFactory extends Factory
 {
+    /** @use PersistsTaskOwnership<TaskChecklistItem> */
+    use PersistsTaskOwnership;
+
     protected $model = TaskChecklistItem::class;
 
     /**
@@ -38,7 +42,7 @@ final class TaskChecklistItemFactory extends Factory
             }
 
             if ($model->getAttribute('task_id') !== null) {
-                $parent = Task::query()->findOrFail(FactoryGuard::identifier($model->getAttribute('task_id')));
+                $parent = TaskModelRegistry::query()->findOrFail(FactoryGuard::identifier($model->getAttribute('task_id')));
                 FactoryGuard::parent($parent, $model);
                 FactoryGuard::inherit($model, $parent);
             }

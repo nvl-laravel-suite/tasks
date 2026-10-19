@@ -8,9 +8,11 @@ use Nvl\Tasks\Enums\TaskImportance;
 use Nvl\Tasks\Enums\TaskPriority;
 use Nvl\Tasks\Enums\TaskStatus;
 use Nvl\Tasks\Enums\TaskType;
+use Nvl\Tasks\Models\Task;
 
 /** Complete runtime defaults; publication sections are declared in ../resources/config/sections.json. */
 return [
+    'models' => ['task' => Task::class],
     'queue' => ['connection' => null, 'name' => null],
     'connection' => null,
 

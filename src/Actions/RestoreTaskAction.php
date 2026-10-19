@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\RestoreTaskContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\TaskActorData;
@@ -23,7 +23,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
 final readonly class RestoreTaskAction implements RestoreTaskContract
 {
     /** Construct the task-restoration workflow. */
-    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}
+    public function __construct(private TaskAuthorization $authorization, private OwnershipBoundary $boundary, private TasksActivity $activity) {}
 
     /** Restore a tenant-visible task only at its exact deleted revision. */
     public function execute(Task|string $task, int $expectedRevision, TaskActorData $actor): Task

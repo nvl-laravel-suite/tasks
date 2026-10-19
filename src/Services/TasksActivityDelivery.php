@@ -12,7 +12,7 @@ use Nvl\Activity\Providers\ActivityServiceProvider;
 use Nvl\Activity\Support\ActivityRecordEnvelope;
 use Nvl\Support\Integrations\OptionalIntegration;
 use Nvl\Support\Logging\PackageLogger;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Models\TaskActivityOutbox;
 use Nvl\Tasks\Support\TasksConfiguration;
 use Throwable;
@@ -23,7 +23,7 @@ final readonly class TasksActivityDelivery
     private const int LEASE_SECONDS = 120;
 
     /** Construct the tenant-bounded delivery service. */
-    public function __construct(private TenantBoundary $boundary, private OptionalIntegration $integrations, private PackageLogger $packageLogger) {}
+    public function __construct(private OwnershipBoundary $boundary, private OptionalIntegration $integrations, private PackageLogger $packageLogger) {}
 
     /** Attempt one due event; another worker may already hold its lease. */
     public function deliver(string $id): bool

@@ -10,9 +10,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 use Nvl\Tasks\Database\Factories\TaskDependencyFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TasksConfiguration;
+use Nvl\Tasks\Traits\HasTasksOwnership;
 
 /** One blocker edge from a task to the task it waits for.
  *
@@ -27,11 +30,12 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final class TaskDependency extends Model
+final class TaskDependency extends Model implements Ownable
 {
     /** @use HasFactory<TaskDependencyFactory> */
     use HasFactory;
 
+    use HasTasksOwnership;
     use HasUuids;
 
     /** @var list<string> */
@@ -49,7 +53,7 @@ final class TaskDependency extends Model
     /** Return the configured Tasks database connection. */
     public function getConnectionName(): ?string
     {
-        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('tasks') ?? parent::getConnectionName());
+        return PackageStorage::connectionName($this->connection ?? TaskModelRegistry::newInstance()->getConnectionName());
     }
 
     /** Return the blocked task.
@@ -58,7 +62,7 @@ final class TaskDependency extends Model
      */
     public function task(): BelongsTo
     {
-        return $this->belongsTo(Task::class, 'task_id');
+        return $this->belongsTo(TaskModelRegistry::modelClass(), 'task_id');
     }
 
     /** Return the task that blocks this one.
@@ -67,7 +71,7 @@ final class TaskDependency extends Model
      */
     public function blocker(): BelongsTo
     {
-        return $this->belongsTo(Task::class, 'blocker_task_id');
+        return $this->belongsTo(TaskModelRegistry::modelClass(), 'blocker_task_id');
     }
 
     /**

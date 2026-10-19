@@ -12,6 +12,7 @@ use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskChecklistItem;
 use Nvl\Tasks\Services\TaskChecklistMutationGuard;
+use Nvl\Tasks\Services\TaskRecordWriter;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -23,7 +24,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
 final readonly class AddTaskChecklistItemAction implements AddTaskChecklistItemContract
 {
     /** Construct the checklist addition workflow. */
-    public function __construct(private TaskChecklistMutationGuard $guard, private TasksActivity $activity) {}
+    public function __construct(private TaskChecklistMutationGuard $guard, private TasksActivity $activity, private TaskRecordWriter $records) {}
 
     /** Append a validated item and advance the task revision. */
     public function execute(Task|string $task, AddTaskChecklistItemData $data, TaskActorData $actor): TaskChecklistItem
@@ -41,13 +42,12 @@ final readonly class AddTaskChecklistItemAction implements AddTaskChecklistItemC
                 ->where('tenant_id', $current->tenant_id)
                 ->count();
 
-            $item = new TaskChecklistItem;
-            $item->forceFill([
+            $item = $this->records->checklistItem([
                 'task_id' => $current->id,
                 'tenant_id' => $current->tenant_id,
                 'title' => $title,
                 'position' => $count + 1,
-            ])->save();
+            ]);
             $this->guard->increment($current);
 
             $this->activity->checklistItemAdded($current, $item->id, $actor);

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\DeleteTaskTimeEntryContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\TaskActorData;
@@ -13,6 +13,7 @@ use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskTimeEntry;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -24,7 +25,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
 final readonly class DeleteTaskTimeEntryAction implements DeleteTaskTimeEntryContract
 {
     /** Construct the time-entry removal workflow. */
-    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}
+    public function __construct(private TaskAuthorization $authorization, private OwnershipBoundary $boundary, private TasksActivity $activity) {}
 
     /** Remove one entry and advance the exact task revision. */
     public function execute(Task|string $task, TaskTimeEntry|string $entry, int $expectedRevision, TaskActorData $actor): bool
@@ -33,7 +34,7 @@ final readonly class DeleteTaskTimeEntryAction implements DeleteTaskTimeEntryCon
         $entryId = $entry instanceof TaskTimeEntry ? $entry->id : $entry;
 
         $changedTask = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $entryId, $expectedRevision, $taskId): ?Task {
-            $current = $this->boundary->query(Task::query(), Task::TENANT_RESOURCE)
+            $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
                 ->whereKey($taskId)->lockForUpdate()->firstOrFail();
             $this->authorization->authorize(TaskAbility::Update, $actor, $current);
 

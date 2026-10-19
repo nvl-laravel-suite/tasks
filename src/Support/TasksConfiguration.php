@@ -6,6 +6,7 @@ namespace Nvl\Tasks\Support;
 
 use InvalidArgumentException;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
+use Nvl\Tasks\Services\TaskModelRegistry;
 
 /** Provides validated access to package-owned persistence and limits. */
 final class TasksConfiguration
@@ -13,17 +14,7 @@ final class TasksConfiguration
     /** Return the optional package database connection. */
     public static function connection(): ?string
     {
-        $connection = config('nvl-tasks.connection');
-
-        if ($connection === null || $connection === '') {
-            return null;
-        }
-
-        if (! is_string($connection)) {
-            throw new InvalidArgumentException('tasks.connection must be a connection name or null.');
-        }
-
-        return $connection;
+        return TaskModelRegistry::newInstance()->getConnectionName();
     }
 
     /** Return one configured package table. */

@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\DeleteTaskContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -22,7 +23,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
 final readonly class DeleteTaskAction implements DeleteTaskContract
 {
     /** Construct the task deletion workflow. */
-    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}
+    public function __construct(private TaskAuthorization $authorization, private OwnershipBoundary $boundary, private TasksActivity $activity) {}
 
     /** Delete one authorized task in the active tenant. */
     public function execute(Task|string $task, TaskActorData $actor): bool
@@ -30,7 +31,7 @@ final readonly class DeleteTaskAction implements DeleteTaskContract
         $id = $task instanceof Task ? $task->getKey() : $task;
 
         $deleted = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $id): ?Task {
-            $current = $this->boundary->query(Task::query(), Task::TENANT_RESOURCE)
+            $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
                 ->whereKey($id)->lockForUpdate()->firstOrFail();
             $this->authorization->authorize(TaskAbility::Delete, $actor, $current);
 

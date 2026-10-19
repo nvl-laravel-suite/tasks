@@ -7,6 +7,7 @@ namespace Nvl\Tasks\Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Nvl\Tasks\Models\Task;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TaskEnumConfiguration;
 
 /**
@@ -18,7 +19,16 @@ use Nvl\Tasks\Support\TaskEnumConfiguration;
  */
 final class TaskFactory extends Factory
 {
+    /** @use PersistsTaskOwnership<Task> */
+    use PersistsTaskOwnership;
+
     protected $model = Task::class;
+
+    /** Resolve the one frozen configured Task class. */
+    public function modelName(): string
+    {
+        return TaskModelRegistry::modelClass();
+    }
 
     /**
      * Prepare native parent and owner facts after Laravel expands relationships.
@@ -67,7 +77,7 @@ final class TaskFactory extends Factory
      */
     public function forOwner(Model $owner): static
     {
-        FactoryGuard::parent($owner, new Task);
+        FactoryGuard::parent($owner, TaskModelRegistry::newInstance());
 
         return $this->state([
             'creator_type' => $owner->getMorphClass(),

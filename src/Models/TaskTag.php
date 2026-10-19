@@ -10,9 +10,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 use Nvl\Tasks\Database\Factories\TaskTagFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TasksConfiguration;
+use Nvl\Tasks\Traits\HasTasksOwnership;
 
 /** One normalized label attached to a canonical task.
  *
@@ -26,11 +29,12 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final class TaskTag extends Model
+final class TaskTag extends Model implements Ownable
 {
     /** @use HasFactory<TaskTagFactory> */
     use HasFactory;
 
+    use HasTasksOwnership;
     use HasUuids;
 
     /** @var list<string> */
@@ -45,7 +49,7 @@ final class TaskTag extends Model
     /** Return the configured Tasks database connection. */
     public function getConnectionName(): ?string
     {
-        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('tasks') ?? parent::getConnectionName());
+        return PackageStorage::connectionName($this->connection ?? TaskModelRegistry::newInstance()->getConnectionName());
     }
 
     /** Return the canonical parent task.
@@ -54,7 +58,7 @@ final class TaskTag extends Model
      */
     public function task(): BelongsTo
     {
-        return $this->belongsTo(Task::class, 'task_id');
+        return $this->belongsTo(TaskModelRegistry::modelClass(), 'task_id');
     }
 
     /**

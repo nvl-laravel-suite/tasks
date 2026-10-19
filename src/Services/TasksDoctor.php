@@ -10,7 +10,7 @@ use InvalidArgumentException;
 use Nvl\Activity\Providers\ActivityServiceProvider;
 use Nvl\Media\Providers\MediaServiceProvider;
 use Nvl\Support\Integrations\OptionalIntegration;
-use Nvl\Support\Tenancy\Services\TenantResourceRegistry;
+use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
 use Nvl\Tasks\Contracts\TaskActivityWorklist;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskPrincipalResolver;
@@ -28,7 +28,7 @@ final class TasksDoctor
     public function __construct(
         private TaskAuthorization $authorization,
         private TaskPrincipalResolver $principals,
-        private TenantResourceRegistry $tenancyResources,
+        private OwnershipResourceRegistry $resources,
         private TaskActivityWorklist $activityTenants,
         private OptionalIntegration $integrations,
         private TaskSchedulerDiagnostics $scheduler,
@@ -43,11 +43,10 @@ final class TasksDoctor
     {
         $authorization = $this->authorization;
         $principals = $this->principals;
-        $tenancyResources = $this->tenancyResources;
         $activityTenants = $this->activityTenants;
 
         $schema = Schema::connection(TasksConfiguration::connection());
-        $tasks = TasksConfiguration::table(TasksTables::get(TasksTables::Tasks));
+        $tasks = TaskModelRegistry::newInstance()->getTable();
         $assignments = TasksConfiguration::table(TasksTables::get(TasksTables::Assignments));
         $routesEnabled = config('nvl-tasks.routes.management.enabled', false) === true;
         $checks = [
@@ -56,7 +55,7 @@ final class TasksDoctor
             'authorization.bound' => ! $authorization instanceof ConfiguredTaskAuthorization,
             'routes.management.principals' => ! $routesEnabled || ! $principals instanceof ConfiguredTaskPrincipalResolver,
             'routes.management.registered' => Route::has(TasksRouteConfiguration::name().'index') === $routesEnabled,
-            'tenancy.resource' => $tenancyResources->get(Task::TENANT_RESOURCE)->model === Task::class,
+            'ownership.resource' => $this->resources->get(Task::TENANT_RESOURCE)->model === TaskModelRegistry::modelClass(),
         ];
 
         try {

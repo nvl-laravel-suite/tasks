@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskAssignment;
+use Nvl\Tasks\Services\TaskModelRegistry;
 
 /**
  * Builds TaskAssignment fixture rows and their declared package parents.
@@ -18,6 +19,9 @@ use Nvl\Tasks\Models\TaskAssignment;
  */
 final class TaskAssignmentFactory extends Factory
 {
+    /** @use PersistsTaskOwnership<TaskAssignment> */
+    use PersistsTaskOwnership;
+
     protected $model = TaskAssignment::class;
 
     /**
@@ -40,7 +44,7 @@ final class TaskAssignmentFactory extends Factory
 
             $owner = FactoryGuard::owner($model, 'assignee_type', 'assignee_id');
             if ($model->getAttribute('task_id') !== null) {
-                $parent = Task::query()->findOrFail(FactoryGuard::identifier($model->getAttribute('task_id')));
+                $parent = TaskModelRegistry::query()->findOrFail(FactoryGuard::identifier($model->getAttribute('task_id')));
                 FactoryGuard::parent($parent, $model);
                 FactoryGuard::inherit($model, $parent);
             }

@@ -10,9 +10,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 use Nvl\Tasks\Database\Factories\TaskRelationshipFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TasksConfiguration;
+use Nvl\Tasks\Traits\HasTasksOwnership;
 
 /** One child-to-parent edge in the task hierarchy.
  *
@@ -27,11 +30,12 @@ use Nvl\Tasks\Support\TasksConfiguration;
  *
  * @api
  */
-final class TaskRelationship extends Model
+final class TaskRelationship extends Model implements Ownable
 {
     /** @use HasFactory<TaskRelationshipFactory> */
     use HasFactory;
 
+    use HasTasksOwnership;
     use HasUuids;
 
     /** @var list<string> */
@@ -49,7 +53,7 @@ final class TaskRelationship extends Model
     /** Return the configured Tasks database connection. */
     public function getConnectionName(): ?string
     {
-        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('tasks') ?? parent::getConnectionName());
+        return PackageStorage::connectionName($this->connection ?? TaskModelRegistry::newInstance()->getConnectionName());
     }
 
     /** Return the child task.
@@ -58,7 +62,7 @@ final class TaskRelationship extends Model
      */
     public function child(): BelongsTo
     {
-        return $this->belongsTo(Task::class, 'child_task_id');
+        return $this->belongsTo(TaskModelRegistry::modelClass(), 'child_task_id');
     }
 
     /** Return the parent task.
@@ -67,7 +71,7 @@ final class TaskRelationship extends Model
      */
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(Task::class, 'parent_task_id');
+        return $this->belongsTo(TaskModelRegistry::modelClass(), 'parent_task_id');
     }
 
     /**

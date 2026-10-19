@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use InvalidArgumentException;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskDependency;
+use Nvl\Tasks\Services\TaskModelRegistry;
 
 /**
  * Builds TaskDependency fixture rows and their declared package parents.
@@ -18,6 +19,9 @@ use Nvl\Tasks\Models\TaskDependency;
  */
 final class TaskDependencyFactory extends Factory
 {
+    /** @use PersistsTaskOwnership<TaskDependency> */
+    use PersistsTaskOwnership;
+
     protected $model = TaskDependency::class;
 
     /**
@@ -39,12 +43,12 @@ final class TaskDependencyFactory extends Factory
             }
 
             if ($model->getAttribute('task_id') !== null) {
-                $parent = Task::query()->findOrFail(FactoryGuard::identifier($model->getAttribute('task_id')));
+                $parent = TaskModelRegistry::query()->findOrFail(FactoryGuard::identifier($model->getAttribute('task_id')));
                 FactoryGuard::parent($parent, $model);
                 FactoryGuard::inherit($model, $parent);
             }
             if ($model->getAttribute('blocker_task_id') !== null) {
-                $parent = Task::query()->findOrFail(FactoryGuard::identifier($model->getAttribute('blocker_task_id')));
+                $parent = TaskModelRegistry::query()->findOrFail(FactoryGuard::identifier($model->getAttribute('blocker_task_id')));
                 FactoryGuard::parent($parent, $model);
                 FactoryGuard::inherit($model, $parent);
             }

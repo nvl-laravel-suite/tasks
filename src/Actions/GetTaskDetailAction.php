@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Actions;
 
 use Illuminate\Auth\Access\AuthorizationException;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\GetTaskDetailContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskQueryScope;
@@ -13,6 +13,7 @@ use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Data\TaskDetailData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Services\TaskReadGuard;
 use Nvl\Tasks\Support\TasksConfiguration;
 use UnexpectedValueException;
@@ -27,7 +28,7 @@ final readonly class GetTaskDetailAction implements GetTaskDetailContract
     /** Construct the task detail read boundary. */
     public function __construct(
         private TaskAuthorization $authorization,
-        private TenantBoundary $boundary,
+        private OwnershipBoundary $boundary,
         private TaskReadGuard $guard,
     ) {}
 
@@ -91,10 +92,10 @@ final readonly class GetTaskDetailAction implements GetTaskDetailContract
             return [];
         }
 
-        $query = $this->boundary->query(Task::query(), Task::TENANT_RESOURCE)->whereKey($ids);
+        $query = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)->whereKey($ids);
 
         if ($this->authorization instanceof TaskQueryScope) {
-            $scope = Task::query();
+            $scope = TaskModelRegistry::query();
             $this->authorization->scopeTasks($scope, $actor);
             $query->whereIn('id', $this->boundary->query($scope, Task::TENANT_RESOURCE)->select('id'));
         }

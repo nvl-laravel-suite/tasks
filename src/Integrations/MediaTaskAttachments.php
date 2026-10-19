@@ -18,7 +18,7 @@ use Nvl\Media\Models\MediaAssociation;
 use Nvl\Media\Services\MediaMutationLock;
 use Nvl\Media\Services\MediaStagingPolicy;
 use Nvl\Media\Slots\MediaSlot;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\TaskAttachments;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Data\TaskActorData;
@@ -32,7 +32,7 @@ final readonly class MediaTaskAttachments implements TaskAttachments
     /** Create the optional attachment policy and lifecycle adapter. */
     public function __construct(
         private TaskAuthorization $tasks,
-        private TenantBoundary $boundary,
+        private OwnershipBoundary $boundary,
         private MediaAuthorization $authorization,
         private MediaStagingPolicy $policy,
         private MediaMutationLock $locks,

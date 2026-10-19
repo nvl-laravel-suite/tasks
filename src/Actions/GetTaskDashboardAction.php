@@ -7,7 +7,7 @@ namespace Nvl\Tasks\Actions;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use InvalidArgumentException;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\GetTaskDashboardContract;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskQueryScope;
@@ -18,6 +18,7 @@ use Nvl\Tasks\Enums\TaskStatus;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskAssignment;
 use Nvl\Tasks\Models\TaskTimeEntry;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use stdClass;
 use UnexpectedValueException;
 
@@ -31,7 +32,7 @@ final readonly class GetTaskDashboardAction implements GetTaskDashboardContract
     /** Construct the authorized dashboard reader. */
     public function __construct(
         private TaskAuthorization $authorization,
-        private TenantBoundary $boundary,
+        private OwnershipBoundary $boundary,
     ) {}
 
     /** Return fixed-query task and effort aggregates for a bounded deadline window. */
@@ -53,7 +54,7 @@ final readonly class GetTaskDashboardAction implements GetTaskDashboardContract
         $now = CarbonImmutable::now();
         $soonEnd = $now->addDays($days);
 
-        $query = Task::query();
+        $query = TaskModelRegistry::query();
 
         if ($this->authorization instanceof TaskQueryScope) {
             $this->authorization->scopeTasks($query, $actor);

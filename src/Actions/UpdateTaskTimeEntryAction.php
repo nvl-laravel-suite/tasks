@@ -6,7 +6,7 @@ namespace Nvl\Tasks\Actions;
 
 use Illuminate\Support\Facades\DB;
 use LogicException;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\UpdateTaskTimeEntryContract;
 use Nvl\Tasks\Data\Mutations\TimeEntryData;
@@ -15,6 +15,7 @@ use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskTimeEntry;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -26,7 +27,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
 final readonly class UpdateTaskTimeEntryAction implements UpdateTaskTimeEntryContract
 {
     /** Construct the manual interval replacement workflow. */
-    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}
+    public function __construct(private TaskAuthorization $authorization, private OwnershipBoundary $boundary, private TasksActivity $activity) {}
 
     /** Update one manual entry and advance the exact task revision. */
     public function execute(Task|string $task, TaskTimeEntry|string $entry, TimeEntryData $data, TaskActorData $actor): TaskTimeEntry
@@ -35,7 +36,7 @@ final readonly class UpdateTaskTimeEntryAction implements UpdateTaskTimeEntryCon
         $entryId = $entry instanceof TaskTimeEntry ? $entry->getKey() : $entry;
 
         $updated = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $data, $entryId, $taskId): TaskTimeEntry {
-            $current = $this->boundary->query(Task::query(), Task::TENANT_RESOURCE)
+            $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
                 ->whereKey($taskId)->lockForUpdate()->firstOrFail();
             $this->authorization->authorize(TaskAbility::Update, $actor, $current);
 

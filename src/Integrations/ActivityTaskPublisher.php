@@ -9,13 +9,19 @@ use Illuminate\Support\Str;
 use LogicException;
 use Nvl\Activity\Facades\ActivityLog;
 use Nvl\Activity\Models\ActivityLog as ActivityLogModel;
+use Nvl\Activity\Ownership\ActivityOwnershipGuard;
 use Nvl\Activity\Support\ActivityCauserReference;
 use Nvl\Activity\Support\ActivityRecordEnvelope;
 use Nvl\Activity\Support\ActivitySubjectReference;
 use Nvl\Activity\Support\TimelineActivityRules;
-use Nvl\Activity\Tenancy\ActivityOwnershipGuard;
+use Nvl\Support\Events\ConnectionCommitCallbacks;
 use Nvl\Support\Facades\PackageLog;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipContext;
+use Nvl\Support\Ownership\Enums\OwnershipContextMode;
+use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
+use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
+use Nvl\Support\Ownership\ValueObjects\OwnershipJobEnvelope;
 use Nvl\Support\Tenancy\Contracts\TenantContext;
 use Nvl\Support\Tenancy\Exceptions\TenantBoundaryViolation;
 use Nvl\Support\Tenancy\ValueObjects\TenantJobEnvelope;
@@ -31,9 +37,12 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
 {
     /** Construct the task activity staging boundary. */
     public function __construct(
-        private readonly TenantBoundary $boundary,
+        private readonly OwnershipBoundary $boundary,
         private readonly TenantContext $tenantContext,
         private readonly ActivityOwnershipGuard $activityOwnership,
+        private readonly OwnershipContext $context,
+        private readonly OwnershipResourceRegistry $resources,
+        private readonly ConnectionCommitCallbacks $commits,
     ) {}
 
     /** Stage one immutable event within the task transaction.
@@ -64,10 +73,14 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
             throw new LogicException('Task activity must be staged inside the task mutation transaction.');
         }
 
+        $native = $this->resources->get(Task::TENANT_RESOURCE)->ownership->strategy !== 'unscoped';
+        if ($native && $this->resources->get('activity.events')->ownership->strategy === 'unscoped') {
+            throw new OwnershipViolation('Owned task activity requires independently owned audit storage.');
+        }
         $ownership = $this->boundary->attributes(TaskActivityOutbox::TENANT_RESOURCE);
         $tenantId = $ownership['tenant_id'] ?? $task->tenant_id;
 
-        if ($tenantId !== $task->tenant_id) {
+        if (! $native && $tenantId !== $task->tenant_id) {
             throw new TenantBoundaryViolation('Task activity ownership differs from its task.');
         }
 
@@ -114,9 +127,10 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
         }
 
         $tenantEnvelope = TenantJobEnvelope::capture($this->tenantContext);
-        $taskConnection->afterCommit(static function () use ($eventId, $tenantEnvelope): void {
+        $ownershipEnvelope = $this->context->snapshot()->mode === OwnershipContextMode::Unresolved ? null : OwnershipJobEnvelope::capture($this->context);
+        $this->commits->afterCommit($taskConnection, static function () use ($eventId, $tenantEnvelope, $ownershipEnvelope): void {
             try {
-                ProcessTaskActivityOutboxJob::dispatch($eventId, $tenantEnvelope);
+                ProcessTaskActivityOutboxJob::dispatch($eventId, $tenantEnvelope, $ownershipEnvelope);
             } catch (Throwable $exception) {
                 PackageLog::log('tasks', 'error', 'nvl.tasks.activity_dispatch.failed', [
                     'event_id' => $eventId,

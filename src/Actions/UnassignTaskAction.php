@@ -7,12 +7,13 @@ namespace Nvl\Tasks\Actions;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Nvl\Support\Tenancy\Contracts\TenantBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\UnassignTaskContract;
 use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -24,7 +25,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
 final readonly class UnassignTaskAction implements UnassignTaskContract
 {
     /** Construct the assignment-removal workflow. */
-    public function __construct(private TaskAuthorization $authorization, private TenantBoundary $boundary, private TasksActivity $activity) {}
+    public function __construct(private TaskAuthorization $authorization, private OwnershipBoundary $boundary, private TasksActivity $activity) {}
 
     /** Remove an assignee and report whether an assignment changed. */
     public function execute(Task|string $task, Model&Authenticatable $assignee, TaskActorData $actor): bool
@@ -33,7 +34,7 @@ final readonly class UnassignTaskAction implements UnassignTaskContract
         $id = $task instanceof Task ? $task->getKey() : $task;
 
         $changed = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $assignee, $id, $identity): ?Task {
-            $current = $this->boundary->query(Task::query(), Task::TENANT_RESOURCE)
+            $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
                 ->whereKey($id)->lockForUpdate()->firstOrFail();
             $this->authorization->authorize(TaskAbility::Assign, $actor, $current, $assignee);
             $assignment = $current->assignments()

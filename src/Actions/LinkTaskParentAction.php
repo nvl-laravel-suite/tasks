@@ -11,6 +11,7 @@ use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskRelationship;
 use Nvl\Tasks\Services\TaskGraphGuard;
+use Nvl\Tasks\Services\TaskRecordWriter;
 use Nvl\Tasks\Services\TasksActivity;
 use Nvl\Tasks\Support\TasksConfiguration;
 
@@ -22,7 +23,7 @@ use Nvl\Tasks\Support\TasksConfiguration;
 final readonly class LinkTaskParentAction implements LinkTaskParentContract
 {
     /** Construct the parent-link workflow. */
-    public function __construct(private TaskGraphGuard $guard, private TasksActivity $activity) {}
+    public function __construct(private TaskGraphGuard $guard, private TasksActivity $activity, private TaskRecordWriter $records) {}
 
     /** Link canonical tasks after checking both expected revisions. */
     public function execute(
@@ -41,8 +42,7 @@ final readonly class LinkTaskParentAction implements LinkTaskParentContract
             $existing = TaskRelationship::query()->where('child_task_id', $canonicalChild->id)->first();
 
             if ($existing !== null) {
-                if ($existing->parent_task_id !== $canonicalParent->id
-                    || $existing->tenant_id !== $canonicalChild->tenant_id) {
+                if ($existing->parent_task_id !== $canonicalParent->id) {
                     throw new InvalidArgumentException('The child already has another parent.');
                 }
 
@@ -50,13 +50,11 @@ final readonly class LinkTaskParentAction implements LinkTaskParentContract
             }
 
             $this->guard->assertAcyclicParent($canonicalChild, $canonicalParent);
-            $relationship = new TaskRelationship;
-            $relationship->forceFill([
+            $relationship = $this->records->relationship([
                 'tenant_id' => $canonicalChild->tenant_id,
                 'child_task_id' => $canonicalChild->id,
                 'parent_task_id' => $canonicalParent->id,
             ]);
-            $relationship->save();
             $this->guard->advanceRevisions($canonicalChild, $canonicalParent);
             $this->activity->parentLinked($canonicalChild, $canonicalParent->id, $actor);
 

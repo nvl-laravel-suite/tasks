@@ -10,8 +10,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use LogicException;
 use Nvl\Support\Config\PackageStorage;
+use Nvl\Support\Ownership\Contracts\Ownable;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TasksConfiguration;
+use Nvl\Tasks\Traits\HasTasksOwnership;
 
 /** A durable, immutable activity payload with independent tenant ownership.
  *
@@ -28,8 +31,9 @@ use Nvl\Tasks\Support\TasksConfiguration;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  */
-final class TaskActivityOutbox extends Model
+final class TaskActivityOutbox extends Model implements Ownable
 {
+    use HasTasksOwnership;
     use HasUuids;
 
     public const string TENANT_RESOURCE = 'tasks.activity_outbox';
@@ -54,7 +58,7 @@ final class TaskActivityOutbox extends Model
     /** Return the configured Tasks database connection. */
     public function getConnectionName(): ?string
     {
-        return PackageStorage::connectionName($this->connection ?? PackageStorage::connection('tasks') ?? parent::getConnectionName());
+        return PackageStorage::connectionName($this->connection ?? TaskModelRegistry::newInstance()->getConnectionName());
     }
 
     /** Prevent an activity envelope from changing after it is staged. */

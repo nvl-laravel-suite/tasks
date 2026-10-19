@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Services;
 
 use Nvl\Support\Events\DomainEventDispatcher;
+use Nvl\Support\Ownership\Contracts\OwnershipQueueContext;
 use Nvl\Support\Ownership\Enums\OwnershipContextMode;
 use Nvl\Support\Ownership\Services\OwnershipContextResolver;
 use Nvl\Support\Ownership\ValueObjects\OwnershipJobEnvelope;
@@ -20,7 +21,7 @@ use Nvl\Tasks\Models\Task;
 final readonly class TaskEvents
 {
     /** Retain the source-aware dispatcher and current ownership boundary. */
-    public function __construct(private DomainEventDispatcher $events, private TenantContext $tenantContext, private OwnershipContextResolver $ownership) {}
+    public function __construct(private DomainEventDispatcher $events, private TenantContext $tenantContext, private OwnershipContextResolver $ownership, private OwnershipQueueContext $queues) {}
 
     /**
      * Publish the persisted task revision without retaining a model or private field values.
@@ -36,7 +37,7 @@ final readonly class TaskEvents
             TaskEventActorData::fromActor($actor),
             $context,
             TenantJobEnvelope::capture($this->tenantContext),
-            ownership: $this->ownership->current()->snapshot()->mode === OwnershipContextMode::Unresolved ? null : OwnershipJobEnvelope::capture($this->ownership->current()),
+            ownership: $this->ownership->current()->snapshot()->mode === OwnershipContextMode::Unresolved ? $this->queues->captureUnowned() : OwnershipJobEnvelope::capture($this->ownership->current()),
         ), $task->getConnection());
     }
 }

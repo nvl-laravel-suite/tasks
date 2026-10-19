@@ -12,6 +12,7 @@ use Nvl\Tasks\Models\Task;
 
 /** Complete runtime defaults; publication sections are declared in ../resources/config/sections.json. */
 return [
+    'ownership' => ['scoped' => true],
     'models' => ['task' => Task::class],
     'queue' => ['connection' => null, 'name' => null],
     'connection' => null,

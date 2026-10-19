@@ -17,9 +17,9 @@ use Nvl\Activity\Support\TimelineActivityRules;
 use Nvl\Support\Events\ConnectionCommitCallbacks;
 use Nvl\Support\Facades\PackageLog;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
-use Nvl\Support\Ownership\Contracts\OwnershipContext;
 use Nvl\Support\Ownership\Enums\OwnershipContextMode;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
+use Nvl\Support\Ownership\Services\OwnershipContextResolver;
 use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
 use Nvl\Support\Ownership\ValueObjects\OwnershipJobEnvelope;
 use Nvl\Support\Tenancy\Contracts\TenantContext;
@@ -40,7 +40,7 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
         private readonly OwnershipBoundary $boundary,
         private readonly TenantContext $tenantContext,
         private readonly ActivityOwnershipGuard $activityOwnership,
-        private readonly OwnershipContext $context,
+        private readonly OwnershipContextResolver $context,
         private readonly OwnershipResourceRegistry $resources,
         private readonly ConnectionCommitCallbacks $commits,
     ) {}
@@ -127,7 +127,7 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
         }
 
         $tenantEnvelope = TenantJobEnvelope::capture($this->tenantContext);
-        $ownershipEnvelope = $this->context->snapshot()->mode === OwnershipContextMode::Unresolved ? null : OwnershipJobEnvelope::capture($this->context);
+        $ownershipEnvelope = $this->context->current()->snapshot()->mode === OwnershipContextMode::Unresolved ? null : OwnershipJobEnvelope::capture($this->context->current());
         $this->commits->afterCommit($taskConnection, static function () use ($eventId, $tenantEnvelope, $ownershipEnvelope): void {
             try {
                 ProcessTaskActivityOutboxJob::dispatch($eventId, $tenantEnvelope, $ownershipEnvelope);

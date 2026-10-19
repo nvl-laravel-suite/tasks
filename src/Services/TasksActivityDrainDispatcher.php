@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Services;
 
-use Nvl\Support\Ownership\Contracts\OwnershipContext;
 use Nvl\Support\Ownership\Contracts\OwnershipSystemRunner;
 use Nvl\Support\Ownership\Enums\OwnershipContextMode;
+use Nvl\Support\Ownership\Services\OwnershipContextResolver;
 use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
 use Nvl\Tasks\Compatibility\LegacyTaskActivityDrainDispatcher;
 use Nvl\Tasks\Ownership\TaskOutboxOwnerWorklist;
@@ -17,7 +17,7 @@ final readonly class TasksActivityDrainDispatcher
     /** Retain only neutral admission contracts and the bounded task recovery capability. */
     public function __construct(
         private OwnershipResourceRegistry $resources,
-        private OwnershipContext $context,
+        private OwnershipContextResolver $context,
         private OwnershipSystemRunner $owners,
         private TaskOutboxOwnerWorklist $worklist,
         private TasksActivityDelivery $delivery,
@@ -30,7 +30,7 @@ final readonly class TasksActivityDrainDispatcher
         if ($this->resources->get('tasks.activity_outbox')->ownership->strategy === 'unscoped') {
             return $this->legacy->drain($limit);
         }
-        if ($this->context->snapshot()->mode === OwnershipContextMode::Owner) {
+        if ($this->context->current()->snapshot()->mode === OwnershipContextMode::Owner) {
             return $this->delivery->drain($limit);
         }
         $delivered = 0;

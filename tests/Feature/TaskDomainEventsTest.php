@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Nvl\Support\Events\DomainEventDispatcher;
-use Nvl\Support\Ownership\Services\DisabledOwnershipContext;
+use Nvl\Support\Ownership\Services\OwnershipContextResolver;
 use Nvl\Support\Tenancy\Enums\TenantContextMode;
 use Nvl\Support\Tenancy\Services\DisabledTenantContext;
 use Nvl\Tasks\Contracts\TaskActivityPublisher;
@@ -30,7 +30,7 @@ it('publishes all 23 semantic task operations before the optional activity adapt
     $publisher->shouldReceive('record')->times(23)->andReturnUsing(function () use (&$published): void {
         expect($published)->not->toBeEmpty();
     });
-    $activity = new TasksActivity($publisher, new TaskEvents($this->app->make(DomainEventDispatcher::class), new DisabledTenantContext, new DisabledOwnershipContext));
+    $activity = new TasksActivity($publisher, new TaskEvents($this->app->make(DomainEventDispatcher::class), new DisabledTenantContext, app(OwnershipContextResolver::class)));
     $task = (new Task)->setConnection('c4-task-events');
     $task->setRawAttributes(['id' => 'task-id', 'revision' => 7, 'description' => 'private-description'], true);
     $actor = TaskActorData::system();
@@ -75,7 +75,7 @@ it('omits domain publication for no changes and technical-only task updates', fu
     });
     $publisher = Mockery::mock(TaskActivityPublisher::class);
     $publisher->shouldReceive('record')->once();
-    $activity = new TasksActivity($publisher, new TaskEvents($this->app->make(DomainEventDispatcher::class), new DisabledTenantContext, new DisabledOwnershipContext));
+    $activity = new TasksActivity($publisher, new TaskEvents($this->app->make(DomainEventDispatcher::class), new DisabledTenantContext, app(OwnershipContextResolver::class)));
     $task = (new Task)->setConnection('c4-task-events');
     $task->setRawAttributes(['id' => 'task-id', 'revision' => 1], true);
     $activity->updated($task, TaskActorData::system());

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Nvl\Ownership\Services\OwnershipRunner;
 use Nvl\Ownership\Tests\Fixtures\Actor;
@@ -15,6 +16,9 @@ use Nvl\Tasks\Actions\GetTaskAction;
 use Nvl\Tasks\Actions\LinkTaskParentAction;
 use Nvl\Tasks\Data\Mutations\CreateTaskData;
 use Nvl\Tasks\Data\TaskActorData;
+use Nvl\Tasks\Enums\TaskChangeOperation;
+use Nvl\Tasks\Events\TaskChanged;
+use Nvl\Tasks\Services\TaskEvents;
 use Nvl\Tasks\Tests\Fixtures\OwnedTask;
 use Nvl\Tasks\Tests\OwnerScopeTestCase;
 
@@ -100,4 +104,19 @@ it('does not expose adopted tasks when their runtime is disabled', function (): 
     app(OwnershipRunner::class)->run(Company::query()->findOrFail(7), $actor, fn () => app(CreateTaskAction::class)->execute(new CreateTaskData('Protected'), TaskActorData::fromAuthenticatable($actor)));
     config(['nvl-ownership.enabled' => false]);
     expect(fn () => OwnedTask::query()->get())->toThrow(OwnershipException::class);
+});
+
+it('captures the current owner when a task event publisher survives scoped-container cleanup', function (): void {
+    $events = app(TaskEvents::class);
+    $this->app->forgetScopedInstances();
+    Event::fake([TaskChanged::class]);
+    app(OwnershipRunner::class)->run(Company::query()->findOrFail(7), Actor::query()->findOrFail(1), function () use ($events): void {
+        $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Current lifecycle'), TaskActorData::system());
+        $events->record($task, TaskChangeOperation::Created, TaskActorData::system());
+        Event::assertDispatched(TaskChanged::class, function ($event): bool {
+            expect($event->ownershipJobEnvelope()->context()->owner?->key)->toBe('7');
+
+            return true;
+        });
+    });
 });

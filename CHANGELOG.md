@@ -7,6 +7,10 @@ All notable changes to `nvl/tasks` are documented here.
 
 ## [6.0.0] - 2026-10-20
 
+### Release fixes
+
+- Include the existing native ownership default in published common configuration.
+
 ### Changed
 
 - Integrate explicitly declared native Task roots and inherited children; fence attachments, outbox and worker work to the canonical Task owner. Preserve scheduling and authorization contracts.

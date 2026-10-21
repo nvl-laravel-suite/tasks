@@ -12,7 +12,7 @@
         "ext-json": "*",
         "laravel/framework": "^12.0 || ^13.0",
         "nesbot/carbon": "^2.72 || ^3.0",
-        "nvl/core": "^6.0",
+        "nvl/core": "^6.0.1",
         "php": "^8.4",
         "spatie/laravel-data": "^4.23"
     },
@@ -23,7 +23,7 @@
         "nvl/activity": "^6.0",
         "nvl/filterable": "^6.0",
         "nvl/media": "^6.0",
-        "nvl/ownership": "^6.0",
+        "nvl/ownership": "^6.0.1",
         "nvl/tenancy": "^6.0",
         "nvl/translatable": "^6.0",
         "orchestra/testbench": "^10.0 || ^11.0",
@@ -102,7 +102,7 @@
     "conflict": {
         "nvl/activity": "<6.0 || >=7.0",
         "nvl/media": "<6.0 || >=7.0",
-        "nvl/ownership": "<6.0 || >=7.0",
+        "nvl/ownership": "<6.0.1 || >=7.0",
         "nvl/tenancy": "<6.0 || >=7.0"
     },
     "homepage": "https://github.com/nvl-laravel-suite/tasks",

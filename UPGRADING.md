@@ -1,5 +1,11 @@
 # Upgrading NVL Tasks
 
+## 6.0.1 consolidation patch
+
+This package requires Core 6.0.1 or later and, when installed, Ownership 6.0.1 or later. Ownership remains optional. Update the installed NVL dependency closure together so Composer can select compatible patches.
+
+This patch introduces no schema migration or data conversion. Keep existing model subclasses, ownership declarations, adoption cursors and queued payloads. Existing source transactions, immutable owner checks and legacy exception contracts are retained. Deploy with the normal configuration-cache rebuild and worker restart; a completed adoption does not need to be repeated.
+
 ## Major 6 ownership rollout
 
 Integrate explicitly declared native Task roots and inherited children; fence attachments, outbox and worker work to the canonical Task owner. Preserve scheduling and authorization contracts.

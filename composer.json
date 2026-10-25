@@ -10,11 +10,10 @@
     ],
     "require": {
         "ext-json": "*",
-        "laravel/framework": "^12.0 || ^13.0",
+        "laravel/framework": "^13.0",
         "nesbot/carbon": "^2.72 || ^3.0",
         "nvl/core": "^6.0.1",
-        "php": "^8.4",
-        "spatie/laravel-data": "^4.23"
+        "php": "^8.4"
     },
     "require-dev": {
         "larastan/larastan": "^3.10",
@@ -24,13 +23,11 @@
         "nvl/filterable": "^6.0",
         "nvl/media": "^6.0",
         "nvl/ownership": "^6.0.1",
-        "nvl/tenancy": "^6.0",
         "nvl/translatable": "^6.0",
-        "orchestra/testbench": "^10.0 || ^11.0",
+        "orchestra/testbench": "^11.0",
         "pestphp/pest": "^4.0",
         "pestphp/pest-plugin-laravel": "^4.0",
         "spatie/laravel-activitylog": "^5.0",
-        "spatie/typescript-transformer": "^3.3",
         "symfony/process": "^7.0 || ^8.0"
     },
     "autoload": {
@@ -95,15 +92,12 @@
     "suggest": {
         "nvl/activity": "Enables canonical task history and durable Activity delivery.",
         "nvl/media": "Enables explicit private task attachments through the loaded Media provider.",
-        "nvl/ownership": "Adds optional model-declared ownership, isolation, adoption and captured worker contexts.",
-        "nvl/tenancy": "Temporary legacy tenancy bridge for existing tenant installations; native ownership does not require it.",
-        "spatie/typescript-transformer": "Consume the declared TypeScript attributes and metadata (^3.3); Core retains the runtime transformation engine."
+        "nvl/ownership": "Adds optional model-declared ownership, isolation, adoption and captured worker contexts."
     },
     "conflict": {
         "nvl/activity": "<6.0 || >=7.0",
         "nvl/media": "<6.0 || >=7.0",
-        "nvl/ownership": "<6.0.1 || >=7.0",
-        "nvl/tenancy": "<6.0 || >=7.0"
+        "nvl/ownership": "<6.0.1 || >=7.0"
     },
     "homepage": "https://github.com/nvl-laravel-suite/tasks",
     "authors": [

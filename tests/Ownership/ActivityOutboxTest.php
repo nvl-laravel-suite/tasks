@@ -10,17 +10,16 @@ use Nvl\Ownership\Contracts\OwnerSystemAccess;
 use Nvl\Ownership\Services\OwnershipRunner;
 use Nvl\Ownership\Tests\Fixtures\Actor;
 use Nvl\Ownership\Tests\Fixtures\Company;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Support\Ownership\Contracts\OwnershipContext;
 use Nvl\Support\Ownership\Contracts\OwnershipQueueContext;
 use Nvl\Support\Ownership\Contracts\OwnershipQueuedJob;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
 use Nvl\Support\Ownership\ValueObjects\OwnershipJobEnvelope;
-use Nvl\Tasks\Actions\CreateTaskAction;
-use Nvl\Tasks\Data\Mutations\CreateTaskData;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Events\TaskChanged;
 use Nvl\Tasks\Jobs\ProcessTaskActivityOutboxJob;
 use Nvl\Tasks\Models\TaskActivityOutbox;
+use Nvl\Tasks\Services\TaskLifecycle;
 use Nvl\Tasks\Services\TasksActivityDelivery;
 use Nvl\Tasks\Services\TasksActivityDrainDispatcher;
 use Nvl\Tasks\Tests\ActivityOwnerScopeTestCase;
@@ -31,7 +30,7 @@ it('commits exactly one owned audit fact and preserves immutable outbox replay',
     $actor = Actor::query()->findOrFail(1);
     $runner = app(OwnershipRunner::class);
     $id = $runner->run(Company::query()->findOrFail(7), $actor, function (): string {
-        app(CreateTaskAction::class)->execute(new CreateTaskData('Audit'), TaskActorData::system());
+        app(TaskLifecycle::class)->create(['title' => 'Audit'], SystemActor::Background);
         $record = TaskActivityOutbox::query()->sole();
         expect(ActivityLog::query()->count())->toBe(1)
             ->and($record->delivered_at)->not->toBeNull()
@@ -52,7 +51,7 @@ it('captures the committed task event and outbox job before later ambient owner 
     Event::fake([TaskChanged::class]);
     $actor = Actor::query()->findOrFail(1);
     $job = app(OwnershipRunner::class)->run(Company::query()->findOrFail(7), $actor, function (): ProcessTaskActivityOutboxJob {
-        app(CreateTaskAction::class)->execute(new CreateTaskData('Capture'), TaskActorData::system());
+        app(TaskLifecycle::class)->create(['title' => 'Capture'], SystemActor::Background);
         Event::assertDispatched(TaskChanged::class, function (TaskChanged $event): bool {
             expect($event)->toBeInstanceOf(OwnershipQueuedJob::class);
             expect($event->ownershipJobEnvelope()->context()->owner?->key)->toBe('7');
@@ -78,7 +77,7 @@ it('rolls back both the audit and captured outbox when a task source transaction
     app(OwnershipRunner::class)->run(Company::query()->findOrFail(7), $actor, function (): void {
         $connection = (new TaskActivityOutbox)->getConnection();
         expect(fn () => $connection->transaction(function (): void {
-            app(CreateTaskAction::class)->execute(new CreateTaskData('Rolled back'), TaskActorData::system());
+            app(TaskLifecycle::class)->create(['title' => 'Rolled back'], SystemActor::Background);
             throw new RuntimeException('rollback');
         }))->toThrow(RuntimeException::class, 'rollback');
         expect(TaskActivityOutbox::query()->count())->toBe(0)->and(ActivityLog::query()->count())->toBe(0);
@@ -90,7 +89,7 @@ it('recovers durable activity one authorized native owner at a time without a te
     $actor = Actor::query()->findOrFail(1);
     foreach ([7, 8] as $key) {
         app(OwnershipRunner::class)->run(Company::query()->findOrFail($key), $actor, function (): void {
-            app(CreateTaskAction::class)->execute(new CreateTaskData('Recovery'), TaskActorData::system());
+            app(TaskLifecycle::class)->create(['title' => 'Recovery'], SystemActor::Background);
             $outbox = TaskActivityOutbox::query()->sole();
             $outbox->forceFill(['delivered_at' => null])->save();
         });

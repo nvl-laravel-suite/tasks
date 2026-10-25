@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Route;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Tasks\Contracts\TaskAuthorization;
-use Nvl\Tasks\Contracts\TaskPrincipalResolver;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
-use Nvl\Tasks\Http\Controllers\TasksManagementController;
 use Nvl\Tasks\Models\Task;
+use Nvl\Tasks\Services\ConfiguredTaskAuthorization;
+use Nvl\Tasks\Tests\Fixtures\Consumer\TaskPrincipalResolver;
+use Nvl\Tasks\Tests\Fixtures\Consumer\TasksManagementController;
 
 function taskHttpUser(string $name): User
 {
@@ -28,6 +30,7 @@ function taskHttpUser(string $name): User
 }
 
 it('keeps management routes behind consumer authorization', function (): void {
+    app()->bind(TaskAuthorization::class, ConfiguredTaskAuthorization::class);
     expect(Route::has('nvl.tasks.management.index'))->toBeTrue();
 
     $this->actingAs(taskHttpUser('Owner'))
@@ -36,11 +39,16 @@ it('keeps management routes behind consumer authorization', function (): void {
 
     app()->bind(TaskAuthorization::class, static fn () => new class implements TaskAuthorization
     {
-        public function authorize(TaskAbility $ability, TaskActorData $actor, ?Task $task = null, ?Model $subject = null): void
+        public function authorize(TaskAbility $ability, Authenticatable|SystemActor $actor, ?Task $task = null, ?Model $subject = null): void
         {
             throw new AuthorizationException('Host denied the authenticated actor.');
         }
+
+        public function scopeTasks(Builder $query, Authenticatable|SystemActor $actor): void {}
     });
+    foreach (Route::getRoutes() as $route) {
+        $route->flushController();
+    }
     $this->postJson('/nvl/api/v1/tasks', ['title' => 'Review draft'])->assertForbidden();
 });
 
@@ -56,12 +64,14 @@ it('rejects unauthenticated actor resolution before looking up host principals',
 it('exposes bounded task rows, exact-revision writes, and host-resolved assignment', function (): void {
     app()->bind(TaskAuthorization::class, static fn () => new class implements TaskAuthorization
     {
-        public function authorize(TaskAbility $ability, TaskActorData $actor, ?Task $task = null, ?Model $subject = null): void
+        public function authorize(TaskAbility $ability, Authenticatable|SystemActor $actor, ?Task $task = null, ?Model $subject = null): void
         {
-            if ($actor->system) {
+            if (($actor instanceof SystemActor)) {
                 throw new AuthorizationException;
             }
         }
+
+        public function scopeTasks(Builder $query, Authenticatable|SystemActor $actor): void {}
     });
     app()->bind(TaskPrincipalResolver::class, static fn () => new class implements TaskPrincipalResolver
     {
@@ -70,6 +80,9 @@ it('exposes bounded task rows, exact-revision writes, and host-resolved assignme
             return User::query()->findOrFail($identifier);
         }
     });
+    foreach (Route::getRoutes() as $route) {
+        $route->flushController();
+    }
 
     $owner = taskHttpUser('Owner');
     $assignee = taskHttpUser('Assignee');

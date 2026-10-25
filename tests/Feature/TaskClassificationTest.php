@@ -2,32 +2,20 @@
 
 declare(strict_types=1);
 
-use Nvl\Tasks\Actions\CreateTaskAction;
-use Nvl\Tasks\Actions\UpdateTaskAction;
-use Nvl\Tasks\Data\Mutations\CreateTaskData;
-use Nvl\Tasks\Data\Mutations\UpdateTaskData;
-use Nvl\Tasks\Data\TaskActorData;
-use Nvl\Tasks\Data\TaskData;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Tasks\Enums\TaskCategory;
 use Nvl\Tasks\Enums\TaskImportance;
 use Nvl\Tasks\Enums\TaskPriority;
 use Nvl\Tasks\Enums\TaskType;
 use Nvl\Tasks\Models\Task;
+use Nvl\Tasks\Services\TaskLifecycle;
 use Nvl\Tasks\Support\TaskEnumConfiguration;
 use Nvl\Tasks\Tests\Fixtures\ConsumerTaskStatus;
 use Nvl\Tasks\Tests\Fixtures\ConsumerTaskType;
 use Nvl\Tasks\Tests\Fixtures\EmptyNumericTaskType;
 
 it('casts the built-in task classification and scheduling fields', function (): void {
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData(
-        title: 'Prepare release',
-        type: TaskType::Review,
-        category: TaskCategory::Project,
-        importance: TaskImportance::High,
-        targetAt: '2026-10-01T09:00:00+00:00',
-        dueAt: '2026-10-03T09:00:00+00:00',
-        estimatedSeconds: 3600,
-    ), TaskActorData::system());
+    $task = app(TaskLifecycle::class)->create(['title' => 'Prepare release', 'type' => TaskType::Review, 'category' => TaskCategory::Project, 'importance' => TaskImportance::High, 'target_at' => '2026-10-01T09:00:00+00:00', 'due_at' => '2026-10-03T09:00:00+00:00', 'estimated_seconds' => 3600], SystemActor::Background);
 
     expect($task->fresh()->type)->toBe(TaskType::Review)
         ->and($task->category)->toBe(TaskCategory::Project)
@@ -36,12 +24,12 @@ it('casts the built-in task classification and scheduling fields', function (): 
         ->and($task->due_at?->toISOString())->toBe('2026-10-03T09:00:00.000000Z')
         ->and($task->estimated_seconds)->toBe(3600);
 
-    $data = TaskData::fromModel($task)->toArray();
+    $data = $task->toArray();
 
     expect($data['type'])->toBe('review')
         ->and($data['category'])->toBe('project')
         ->and($data['importance'])->toBe('high')
-        ->and($data['estimatedSeconds'])->toBe(3600);
+        ->and($data['estimated_seconds'])->toBe(3600);
 });
 
 it('uses configured enum classes for model casts and completion semantics', function (): void {
@@ -52,27 +40,17 @@ it('uses configured enum classes for model casts and completion semantics', func
         'nvl-tasks.lifecycle.completed_status' => ConsumerTaskStatus::Done->value,
     ]);
 
-    $actor = TaskActorData::system();
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData(
-        title: 'Team meeting',
-        type: ConsumerTaskType::Meeting,
-        status: ConsumerTaskStatus::InQueue,
-    ), $actor);
+    $actor = SystemActor::Background;
+    $task = app(TaskLifecycle::class)->create(['title' => 'Team meeting', 'type' => ConsumerTaskType::Meeting, 'status' => ConsumerTaskStatus::InQueue], $actor);
 
     expect($task->fresh()->type)->toBe(ConsumerTaskType::Meeting)
         ->and($task->status)->toBe(ConsumerTaskStatus::InQueue);
 
-    $updated = app(UpdateTaskAction::class)->execute($task, new UpdateTaskData(
-        title: 'Team meeting',
-        priority: TaskPriority::Normal,
-        status: ConsumerTaskStatus::Done,
-        expectedRevision: 1,
-        type: ConsumerTaskType::Meeting,
-    ), $actor);
+    $updated = app(TaskLifecycle::class)->update($task, ['title' => 'Team meeting', 'priority' => TaskPriority::Normal, 'status' => ConsumerTaskStatus::Done, 'type' => ConsumerTaskType::Meeting], 1, $actor);
 
     expect($updated->status)->toBe(ConsumerTaskStatus::Done)
         ->and($updated->completed_at)->not->toBeNull()
-        ->and(TaskData::fromModel($updated)->toArray()['status'])->toBe('done');
+        ->and($updated->toArray()['status'])->toBe('done');
 });
 
 it('rejects an empty numeric enum in task configuration', function (): void {
@@ -83,7 +61,7 @@ it('rejects an empty numeric enum in task configuration', function (): void {
 });
 
 it('uses configured enum defaults when adding fields to existing tasks', function (): void {
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Existing task'), TaskActorData::system());
+    $task = app(TaskLifecycle::class)->create(['title' => 'Existing task'], SystemActor::Background);
     $migration = require __DIR__.'/../../database/migrations/2026_09_28_080128_nvl_tasks_add_task_management_fields_to_nvl_tasks_table.php';
     $migration->down();
     config()->set([

@@ -23,6 +23,8 @@ final class TasksTables
 
     public const string Tags = 'nvl_tasks_tags';
 
+    public const string GraphLock = 'nvl_tasks_graph_lock';
+
     public const string ActivityOutbox = 'nvl_tasks_activity_outbox';
 
     /** Return a configured package table name. */

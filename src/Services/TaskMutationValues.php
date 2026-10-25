@@ -6,132 +6,141 @@ namespace Nvl\Tasks\Services;
 
 use BackedEnum;
 use Carbon\CarbonImmutable;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
-use Nvl\Tasks\Data\Mutations\CreateTaskData;
-use Nvl\Tasks\Data\Mutations\UpdateTaskData;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Support\TaskEnumConfiguration;
-use Spatie\LaravelData\Optional;
+use Throwable;
 
-/** Validates and maps task DTOs without rewriting application metadata keys. */
+/** Validates native task edits and preserves omitted fields. @internal */
 final class TaskMutationValues
 {
-    /** Produce a create payload without caller-controlled ownership fields.
-     *
+    /** @param array<string, mixed> $attributes
      * @return array<string, mixed>
      */
-    public function create(CreateTaskData $data): array
+    public function create(array $attributes): array
     {
-        $this->validate($data);
-        $status = $this->enumValue('status', $data->status);
-
-        return [
-            ...$data->except('metadata')->toModelFiltered(),
-            'title' => trim($data->title),
-            'status' => $status,
-            'priority' => $this->enumValue('priority', $data->priority),
-            'type' => $this->enumValue('type', $data->type),
-            'category' => $this->enumValue('category', $data->category),
-            'importance' => $this->enumValue('importance', $data->importance),
-            'metadata' => $data->metadata,
-            'completed_at' => $this->completedAt($status),
-        ];
+        return $this->normalize($attributes, null);
     }
 
-    /** Produce a replacement payload that retains omitted fields and honors explicit clears.
-     *
+    /** @param array<string, mixed> $changes
      * @return array<string, mixed>
      */
-    public function replace(UpdateTaskData $data, Task $current): array
+    public function replace(array $changes, Task $current): array
     {
-        $this->validate($data);
-        $status = $this->enumValue('status', $data->status);
-        $patch = $data->except('expectedRevision')->toModelPatch();
-        $this->validateFinalSchedule($patch, $current);
-
-        return [
-            ...$patch,
-            'title' => trim($data->title),
-            'status' => $status,
-            'priority' => $this->enumValue('priority', $data->priority),
-            'type' => $this->replacementEnumValue('type', $data->type, $current->type),
-            'category' => $this->replacementEnumValue('category', $data->category, $current->category),
-            'importance' => $this->replacementEnumValue('importance', $data->importance, $current->importance),
-            'completed_at' => $this->completedAt($status, $current->completed_at),
-        ];
+        return $this->normalize($changes, $current);
     }
 
-    /** Normalize an optional classification using its current value or explicit default. */
-    private function replacementEnumValue(string $field, BackedEnum|string|Optional|null $value, BackedEnum $current): string
+    /** Reject unknown fields, including caller-authored ownership and attribution.
+     * @param  array<string, mixed>  $values
+     * @param  list<string>  $allowed
+     */
+    public static function keys(array $values, array $allowed): void
     {
-        return $this->enumValue($field, $value instanceof Optional ? $current : $value);
+        foreach (array_keys($values) as $key) {
+            if (! in_array($key, $allowed, true)) {
+                throw ValidationException::withMessages([(string) $key => 'This field is not writable.']);
+            }
+        }
     }
 
-    /** Normalize one configured enum case into its persisted string value. */
-    private function enumValue(string $field, BackedEnum|string|null $value): string
+    /** Parse a real instant, reject impossible dates, and store its UTC representation. */
+    public static function date(mixed $value, string $field): ?CarbonImmutable
     {
         if ($value === null) {
-            return TaskEnumConfiguration::defaultValue($field);
+            return null;
         }
-
-        $candidate = $value instanceof BackedEnum ? $value->value : $value;
-        $enum = TaskEnumConfiguration::enumClass($field);
-
-        if (! is_string($candidate) || $enum::tryFrom($candidate) === null) {
-            throw ValidationException::withMessages([$field => ["The selected {$field} is invalid."]]);
+        if ($value instanceof DateTimeInterface) {
+            return CarbonImmutable::instance($value)->utc();
         }
-
-        return $candidate;
-    }
-
-    /** Validate a DTO even when a PHP consumer constructs it directly. */
-    private function validate(CreateTaskData|UpdateTaskData $data): void
-    {
-        $values = $data->toArray();
-        $values['title'] = trim($data->title);
-        Validator::make($values, $data::rules())->validate();
-
-        if ($data->metadata instanceof Optional) {
-            return;
+        if (! is_string($value) || trim($value) === '') {
+            throw ValidationException::withMessages([$field => 'Expected a date string or DateTimeInterface.']);
         }
+        try {
+            $date = new DateTimeImmutable($value);
+            $errors = DateTimeImmutable::getLastErrors();
+            if ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) {
+                throw new \InvalidArgumentException('Invalid date.');
+            }
 
-        $encoded = json_encode($data->metadata, JSON_THROW_ON_ERROR);
-
-        if (strlen($encoded) > 65_536) {
-            throw ValidationException::withMessages([
-                'metadata' => ['Task metadata must be at most 64 KiB.'],
-            ]);
+            return CarbonImmutable::instance($date)->utc();
+        } catch (Throwable) {
+            throw ValidationException::withMessages([$field => 'The date is invalid.']);
         }
     }
 
-    /** Validate the persisted schedule after applying an optional update patch.
-     *
-     * @param  array<string, mixed>  $patch
+    /** @param array<string, mixed> $values
+     * @return array<string, mixed>
      */
-    private function validateFinalSchedule(array $patch, Task $current): void
+    private function normalize(array $values, ?Task $current): array
     {
-        $targetAt = array_key_exists('target_at', $patch)
-            ? $patch['target_at']
-            : $current->target_at?->toISOString();
-        $dueAt = array_key_exists('due_at', $patch)
-            ? $patch['due_at']
-            : $current->due_at?->toISOString();
-
-        Validator::make([
-            'targetAt' => $targetAt,
-            'dueAt' => $dueAt,
-        ], [
-            'targetAt' => ['nullable', 'date'],
-            'dueAt' => ['nullable', 'date', 'after_or_equal:targetAt'],
+        self::keys($values, ['title', 'description', 'status', 'priority', 'type', 'category', 'importance', 'due_at', 'target_at', 'estimated_seconds', 'metadata']);
+        if ($current === null && ! array_key_exists('title', $values)) {
+            throw ValidationException::withMessages(['title' => 'A title is required.']);
+        }
+        foreach (['title', 'description'] as $field) {
+            if (! array_key_exists($field, $values)) {
+                continue;
+            }
+            if (! is_string($values[$field]) && ! ($field === 'description' && $values[$field] === null)) {
+                throw ValidationException::withMessages([$field => 'Expected a string.']);
+            }
+        }
+        if (isset($values['title']) && is_string($values['title'])) {
+            $values['title'] = trim($values['title']);
+        }
+        if (array_key_exists('metadata', $values)) {
+            if (! is_array($values['metadata']) || ($values['metadata'] !== [] && array_is_list($values['metadata']))) {
+                throw ValidationException::withMessages(['metadata' => 'Expected an object.']);
+            }
+            try {
+                $encoded = json_encode($values['metadata'], JSON_THROW_ON_ERROR);
+            } catch (Throwable) {
+                throw ValidationException::withMessages(['metadata' => 'Expected JSON-compatible metadata.']);
+            }
+            if (strlen($encoded) > 65536) {
+                throw ValidationException::withMessages(['metadata' => 'Task metadata must be at most 64 KiB.']);
+            }
+        }
+        if (isset($values['estimated_seconds']) && ! is_int($values['estimated_seconds'])) {
+            throw ValidationException::withMessages(['estimated_seconds' => 'Expected an integer.']);
+        }
+        Validator::make($values, [
+            'title' => ['sometimes', 'required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:10000'],
+            'metadata' => ['sometimes', 'array', 'max:64'],
+            'estimated_seconds' => ['nullable', 'integer', 'min:1', 'max:31536000'],
         ])->validate();
-    }
+        foreach (['status', 'priority', 'type', 'category', 'importance'] as $field) {
+            if ($current !== null && ! array_key_exists($field, $values)) {
+                continue;
+            }
+            $value = $values[$field] ?? null;
+            $candidate = $value instanceof BackedEnum ? $value->value : $value;
+            $enum = TaskEnumConfiguration::enumClass($field);
+            if ($candidate === null) {
+                $candidate = TaskEnumConfiguration::defaultValue($field);
+            }
+            if (! is_string($candidate) || $enum::tryFrom($candidate) === null) {
+                throw ValidationException::withMessages([$field => 'The selected classification is invalid.']);
+            }
+            $values[$field] = $candidate;
+        }
+        foreach (['target_at', 'due_at'] as $field) {
+            if (array_key_exists($field, $values)) {
+                $values[$field] = self::date($values[$field], $field);
+            }
+        }
+        $target = array_key_exists('target_at', $values) ? $values['target_at'] : $current?->target_at;
+        $due = array_key_exists('due_at', $values) ? $values['due_at'] : $current?->due_at;
+        if ($target !== null && $due !== null && $due < $target) {
+            throw ValidationException::withMessages(['due_at' => 'The due date precedes the target date.']);
+        }
+        $status = $values['status'] ?? $current?->status->value;
+        $values['completed_at'] = $status === TaskEnumConfiguration::completedStatus() ? ($current->completed_at ?? CarbonImmutable::now('UTC')) : null;
 
-    /** Keep the original completion instant until a task is reopened. */
-    private function completedAt(string $status, ?CarbonImmutable $existing = null): ?CarbonImmutable
-    {
-        return $status === TaskEnumConfiguration::completedStatus()
-            ? ($existing ?? CarbonImmutable::now())
-            : null;
+        return $values;
     }
 }

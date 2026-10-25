@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Schema\Blueprint;
@@ -11,25 +13,20 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Nvl\Activity\Definitions\Tables\ActivityTables;
-use Nvl\Activity\Facades\ActivityLog as ActivityWriter;
 use Nvl\Activity\Models\ActivityLog;
+use Nvl\Activity\Services\ActivityRecorder;
 use Nvl\Activity\Support\ActivityRecordEnvelope;
-use Nvl\Tasks\Actions\AssignTaskAction;
-use Nvl\Tasks\Actions\CreateTaskAction;
-use Nvl\Tasks\Actions\DeleteTaskAction;
-use Nvl\Tasks\Actions\RestoreTaskAction;
-use Nvl\Tasks\Actions\UnassignTaskAction;
-use Nvl\Tasks\Actions\UpdateTaskAction;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Tasks\Contracts\TaskAuthorization;
-use Nvl\Tasks\Data\Mutations\CreateTaskData;
-use Nvl\Tasks\Data\Mutations\UpdateTaskData;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Enums\TaskPriority;
 use Nvl\Tasks\Enums\TaskStatus;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskActivityOutbox;
+use Nvl\Tasks\Services\TaskAssignments;
+use Nvl\Tasks\Services\TaskLifecycle;
+use Nvl\Tasks\Services\TaskPrincipalGuard;
 use Nvl\Tasks\Services\TasksActivityDelivery;
 
 function activityTestUser(string $name): User
@@ -49,7 +46,9 @@ function allowTaskActivityMutations(): void
 {
     app()->bind(TaskAuthorization::class, static fn () => new class implements TaskAuthorization
     {
-        public function authorize(TaskAbility $ability, TaskActorData $actor, ?Task $task = null, ?Model $subject = null): void {}
+        public function authorize(TaskAbility $ability, Authenticatable|SystemActor $actor, ?Task $task = null, ?Model $subject = null): void {}
+
+        public function scopeTasks(Builder $query, Authenticatable|SystemActor $actor): void {}
     });
 }
 
@@ -73,25 +72,20 @@ function createTaskActivityAuditTable(): void
 
 it('records one attributed activity for each task lifecycle mutation', function (): void {
     allowTaskActivityMutations();
-    $actor = TaskActorData::fromAuthenticatable(activityTestUser('Owner'));
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Draft'), $actor);
-    $updated = app(UpdateTaskAction::class)->execute($task, new UpdateTaskData(
-        title: 'Reviewed',
-        priority: TaskPriority::Normal,
-        status: TaskStatus::Open,
-        expectedRevision: 1,
-    ), $actor);
-    app(DeleteTaskAction::class)->execute($task, $actor);
-    app(RestoreTaskAction::class)->execute($task, $updated->revision, $actor);
+    $actor = activityTestUser('Owner');
+    $task = app(TaskLifecycle::class)->create(['title' => 'Draft'], $actor);
+    $updated = app(TaskLifecycle::class)->update($task, ['title' => 'Reviewed', 'priority' => TaskPriority::Normal, 'status' => TaskStatus::Open], 1, $actor);
+    app(TaskLifecycle::class)->delete($task, $actor);
+    app(TaskLifecycle::class)->restore($task, $updated->revision, $actor);
 
     $activities = ActivityLog::query()->where('subject_type', $task->getMorphClass())
         ->where('subject_id', $task->id)->orderBy('id')->get();
 
     expect($activities->pluck('event')->all())->toEqualCanonicalizing(['created', 'updated', 'deleted', 'restored'])
         ->and($activities)->toHaveCount(4)
-        ->and($activities->every(static fn (ActivityLog $activity): bool => $activity->causer_type === $actor->type
+        ->and($activities->every(static fn (ActivityLog $activity): bool => $activity->causer_type === TaskPrincipalGuard::type($actor)
             && (string) $activity->causer_id === (string) $actor->id
-            && $activity->properties?->get('context')['actor_type'] === $actor->type
+            && $activity->properties?->get('context')['actor_type'] === TaskPrincipalGuard::type($actor)
         ))->toBeTrue();
 
     $update = $activities->firstWhere('event', 'updated');
@@ -101,14 +95,14 @@ it('records one attributed activity for each task lifecycle mutation', function 
 
 it('records assignment changes once and skips idempotent repeats', function (): void {
     allowTaskActivityMutations();
-    $actor = TaskActorData::fromAuthenticatable(activityTestUser('Owner'));
+    $actor = activityTestUser('Owner');
     $assignee = activityTestUser('Assignee');
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Draft'), $actor);
+    $task = app(TaskLifecycle::class)->create(['title' => 'Draft'], $actor);
 
-    app(AssignTaskAction::class)->execute($task, $assignee, $actor);
-    app(AssignTaskAction::class)->execute($task, $assignee, $actor);
-    app(UnassignTaskAction::class)->execute($task, $assignee, $actor);
-    app(UnassignTaskAction::class)->execute($task, $assignee, $actor);
+    app(TaskAssignments::class)->assign($task, $assignee, $actor);
+    app(TaskAssignments::class)->assign($task, $assignee, $actor);
+    app(TaskAssignments::class)->unassign($task, $assignee, $actor);
+    app(TaskAssignments::class)->unassign($task, $assignee, $actor);
 
     $activities = ActivityLog::query()->where('subject_id', $task->id)->get();
 
@@ -122,14 +116,9 @@ it('records assignment changes once and skips idempotent repeats', function (): 
 
 it('does not record activity for rejected stale writes', function (): void {
     allowTaskActivityMutations();
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Draft'), TaskActorData::system());
+    $task = app(TaskLifecycle::class)->create(['title' => 'Draft'], SystemActor::Background);
 
-    expect(fn () => app(UpdateTaskAction::class)->execute($task, new UpdateTaskData(
-        title: 'Rejected',
-        priority: TaskPriority::Normal,
-        status: TaskStatus::Open,
-        expectedRevision: 2,
-    ), TaskActorData::system()))->toThrow(TaskRevisionConflict::class);
+    expect(fn () => app(TaskLifecycle::class)->update($task, ['title' => 'Rejected', 'priority' => TaskPriority::Normal, 'status' => TaskStatus::Open], 2, SystemActor::Background))->toThrow(TaskRevisionConflict::class);
 
     $activities = ActivityLog::query()->where('subject_id', $task->id)->get();
 
@@ -139,45 +128,36 @@ it('does not record activity for rejected stale writes', function (): void {
 
 it('omits update activity when only technical revision fields changed', function (): void {
     allowTaskActivityMutations();
-    $actor = TaskActorData::fromAuthenticatable(activityTestUser('Owner'));
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Draft'), $actor);
+    $actor = activityTestUser('Owner');
+    $task = app(TaskLifecycle::class)->create(['title' => 'Draft'], $actor);
 
-    app(UpdateTaskAction::class)->execute($task, new UpdateTaskData(
-        title: 'Draft',
-        priority: TaskPriority::Normal,
-        status: TaskStatus::Open,
-        expectedRevision: 1,
-    ), $actor);
+    app(TaskLifecycle::class)->update($task, ['title' => 'Draft', 'priority' => TaskPriority::Normal, 'status' => TaskStatus::Open], 1, $actor);
 
     expect(ActivityLog::query()->where('subject_id', $task->id)->pluck('event')->all())->toBe(['created']);
 });
 
 it('keeps manually supplied actor identity as structured scalar attribution', function (): void {
-    allowTaskActivityMutations();
-    $actor = new TaskActorData('external-principal', 'person-42');
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Draft'), $actor);
-    $activity = ActivityLog::query()->where('subject_id', $task->id)->firstOrFail();
-
-    expect($activity->causer_type)->toBeNull()
-        ->and($activity->properties?->get('actor_id'))->toBe('person-42')
-        ->and($activity->properties?->get('context')['actor_type'])->toBe('external-principal');
+    $actor = activityTestUser('Attribution');
+    $task = app(TaskLifecycle::class)->create(['title' => 'Draft'], $actor);
+    $event = TaskActivityOutbox::query()->where('task_id', $task->id)->firstOrFail();
+    $id = (string) $actor->id;
+    $actor->delete();
+    $event->forceFill(['delivered_at' => null])->save();
+    expect(app(TasksActivityDelivery::class)->deliver($event->id))->toBeTrue();
+    expect(ActivityLog::query()->where('subject_id', $task->id)->firstOrFail()->causer_id)->toBe($id);
 });
 
 it('keeps authenticated principal models out of actor payloads and rejects mismatches', function (): void {
     $user = activityTestUser('Owner');
-    $actor = TaskActorData::fromAuthenticatable($user);
-
-    expect($actor->principal())->toBe($user)
-        ->and($actor->toArray())->not->toHaveKey('principal');
-
-    expect(fn () => new TaskActorData($user->getMorphClass(), 'different-id', principal: $user))
-        ->toThrow(InvalidArgumentException::class);
+    $user->forceFill(['id' => 999]);
+    expect(fn () => app(TaskLifecycle::class)->create(['title' => 'Forged'], $user))->toThrow(InvalidArgumentException::class);
+    expect(Task::query()->count())->toBe(0);
 });
 
 it('rolls back a task when atomic same-connection activity cannot be recorded', function (): void {
     config()->set('nvl-activity.storage.table', 'missing_activity_table');
 
-    expect(fn () => app(CreateTaskAction::class)->execute(new CreateTaskData('Rejected task'), TaskActorData::system()))
+    expect(fn () => app(TaskLifecycle::class)->create(['title' => 'Rejected task'], SystemActor::Background))
         ->toThrow(QueryException::class);
 
     expect(Task::query()->where('title', 'Rejected task')->exists())->toBeFalse()
@@ -196,7 +176,7 @@ it('retains and retries a committed task event while Activity uses another conne
     CarbonImmutable::setTestNow($occurredAt);
 
     try {
-        $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Kept task'), TaskActorData::system());
+        $task = app(TaskLifecycle::class)->create(['title' => 'Kept task'], SystemActor::Background);
         $pending = TaskActivityOutbox::query()->where('task_id', $task->id)->firstOrFail();
 
         expect($pending->delivered_at)->toBeNull()
@@ -229,7 +209,7 @@ it('does not write Activity on another connection before an outer task transacti
     createTaskActivityAuditTable();
 
     expect(fn () => DB::transaction(function (): void {
-        app(CreateTaskAction::class)->execute(new CreateTaskData('Rolled back'), TaskActorData::system());
+        app(TaskLifecycle::class)->create(['title' => 'Rolled back'], SystemActor::Background);
 
         throw new RuntimeException('Rollback outer task transaction');
     }))->toThrow(RuntimeException::class);
@@ -247,11 +227,11 @@ it('replays a written but unacknowledged event through the recovery command exac
     ]);
     config()->set('nvl-activity.storage.connection', 'task_activity_audit');
 
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Recoverable task'), TaskActorData::system());
+    $task = app(TaskLifecycle::class)->create(['title' => 'Recoverable task'], SystemActor::Background);
     $pending = TaskActivityOutbox::query()->where('task_id', $task->id)->firstOrFail();
     createTaskActivityAuditTable();
     $pending->forceFill(['available_at' => CarbonImmutable::now()->subSecond()])->save();
-    ActivityWriter::recordEnvelope(ActivityRecordEnvelope::fromArray($pending->payload));
+    app(ActivityRecorder::class)->recordEnvelope(ActivityRecordEnvelope::fromArray($pending->payload));
 
     expect($pending->delivered_at)->toBeNull()
         ->and(Artisan::call('nvl:tasks:activity:drain'))->toBe(0)
@@ -280,7 +260,7 @@ it('keeps a committed event when immediate queue dispatch is unavailable', funct
     config()->set('nvl-activity.storage.connection', 'task_activity_audit');
     config()->set('queue.default', 'unavailable_task_activity_queue');
 
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Committed despite queue outage'), TaskActorData::system());
+    $task = app(TaskLifecycle::class)->create(['title' => 'Committed despite queue outage'], SystemActor::Background);
     $pending = TaskActivityOutbox::query()->where('task_id', $task->id)->firstOrFail();
 
     expect($task->exists)->toBeTrue()

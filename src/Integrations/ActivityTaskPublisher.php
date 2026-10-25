@@ -5,31 +5,32 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Integrations;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use LogicException;
-use Nvl\Activity\Facades\ActivityLog;
 use Nvl\Activity\Models\ActivityLog as ActivityLogModel;
 use Nvl\Activity\Ownership\ActivityOwnershipGuard;
+use Nvl\Activity\Services\ActivityRecorder;
 use Nvl\Activity\Support\ActivityCauserReference;
 use Nvl\Activity\Support\ActivityRecordEnvelope;
 use Nvl\Activity\Support\ActivitySubjectReference;
 use Nvl\Activity\Support\TimelineActivityRules;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Support\Events\ConnectionCommitCallbacks;
 use Nvl\Support\Facades\PackageLog;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
+use Nvl\Support\Ownership\Contracts\OwnershipQueueContext;
 use Nvl\Support\Ownership\Enums\OwnershipContextMode;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
 use Nvl\Support\Ownership\Services\OwnershipContextResolver;
 use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
 use Nvl\Support\Ownership\ValueObjects\OwnershipJobEnvelope;
-use Nvl\Support\Tenancy\Contracts\TenantContext;
-use Nvl\Support\Tenancy\Exceptions\TenantBoundaryViolation;
-use Nvl\Support\Tenancy\ValueObjects\TenantJobEnvelope;
 use Nvl\Tasks\Contracts\TaskActivityPublisher;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Jobs\ProcessTaskActivityOutboxJob;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskActivityOutbox;
+use Nvl\Tasks\Services\TaskPrincipalGuard;
 use Throwable;
 
 /** Stages and delivers canonical Activity envelopes for active Tasks integration. */
@@ -38,11 +39,12 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
     /** Construct the task activity staging boundary. */
     public function __construct(
         private readonly OwnershipBoundary $boundary,
-        private readonly TenantContext $tenantContext,
         private readonly ActivityOwnershipGuard $activityOwnership,
         private readonly OwnershipContextResolver $context,
         private readonly OwnershipResourceRegistry $resources,
         private readonly ConnectionCommitCallbacks $commits,
+        private readonly ActivityRecorder $recorder,
+        private readonly OwnershipQueueContext $queues,
     ) {}
 
     /** Stage one immutable event within the task transaction.
@@ -54,7 +56,7 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
     public function record(
         Task $task,
         string $event,
-        TaskActorData $actor,
+        Authenticatable|SystemActor $actor,
         array $context = [],
         ?array $attributes = null,
         ?array $old = null,
@@ -80,13 +82,9 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
         $ownership = $this->boundary->attributes(TaskActivityOutbox::TENANT_RESOURCE);
         $tenantId = $ownership['tenant_id'] ?? $task->tenant_id;
 
-        if (! $native && $tenantId !== $task->tenant_id) {
-            throw new TenantBoundaryViolation('Task activity ownership differs from its task.');
-        }
-
         $this->activityOwnership->assertSubject($task);
-        $principal = $actor->principal();
-        $canonicalCauser = $principal === null ? null : $this->activityOwnership->canonicalCauser($principal);
+        $principal = ($actor instanceof Model ? $actor : null);
+        $canonicalCauser = $principal;
         $causerId = $canonicalCauser?->getKey();
 
         if ($canonicalCauser !== null && ! is_string($causerId) && ! is_int($causerId)) {
@@ -105,10 +103,10 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
             event: $eventName,
             logName: 'tasks',
             occurredAt: CarbonImmutable::now(),
-            context: ['actor_type' => $actor->type, ...$context],
+            context: ['actor_type' => TaskPrincipalGuard::type($actor), ...$context],
             attributes: $attributes,
             old: $old,
-            scalarActorId: $causer === null && ! $actor->system && $actor->id !== null ? (string) $actor->id : null,
+            scalarActorId: $causer === null && ! ($actor instanceof SystemActor) && TaskPrincipalGuard::id($actor) !== null ? (string) TaskPrincipalGuard::id($actor) : null,
         );
         $outbox = new TaskActivityOutbox;
         $outbox->forceFill([
@@ -120,17 +118,16 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
         ])->save();
 
         if ($taskConnection === (new ActivityLogModel)->getConnection()) {
-            ActivityLog::recordEnvelope($envelope);
+            $this->recorder->recordEnvelope($envelope);
             $outbox->forceFill(['delivered_at' => CarbonImmutable::now()])->save();
 
             return;
         }
 
-        $tenantEnvelope = TenantJobEnvelope::capture($this->tenantContext);
-        $ownershipEnvelope = $this->context->current()->snapshot()->mode === OwnershipContextMode::Unresolved ? null : OwnershipJobEnvelope::capture($this->context->current());
-        $this->commits->afterCommit($taskConnection, static function () use ($eventId, $tenantEnvelope, $ownershipEnvelope): void {
+        $ownershipEnvelope = $this->context->current()->snapshot()->mode === OwnershipContextMode::Unresolved ? $this->queues->captureUnowned() : OwnershipJobEnvelope::capture($this->context->current());
+        $this->commits->afterCommit($taskConnection, static function () use ($eventId, $ownershipEnvelope): void {
             try {
-                ProcessTaskActivityOutboxJob::dispatch($eventId, $tenantEnvelope, $ownershipEnvelope);
+                ProcessTaskActivityOutboxJob::dispatch($eventId, $ownershipEnvelope);
             } catch (Throwable $exception) {
                 PackageLog::log('tasks', 'error', 'nvl.tasks.activity_dispatch.failed', [
                     'event_id' => $eventId,

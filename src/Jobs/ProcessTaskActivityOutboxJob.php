@@ -12,13 +12,10 @@ use Nvl\Support\Config\PackageOptions;
 use Nvl\Support\Ownership\Contracts\OwnershipQueuedJob;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
 use Nvl\Support\Ownership\ValueObjects\OwnershipJobEnvelope;
-use Nvl\Support\Tenancy\Contracts\TenantQueuedJob;
-use Nvl\Support\Tenancy\Exceptions\TenantBoundaryViolation;
-use Nvl\Support\Tenancy\ValueObjects\TenantJobEnvelope;
 use Nvl\Tasks\Services\TasksActivityDelivery;
 
-/** Deliver one committed task activity event in its captured tenant scope. */
-final class ProcessTaskActivityOutboxJob implements OwnershipQueuedJob, ShouldQueue, TenantQueuedJob
+/** Deliver one committed task activity event in its captured ownership scope. */
+final class ProcessTaskActivityOutboxJob implements OwnershipQueuedJob, ShouldQueue
 {
     use Dispatchable;
     use InteractsWithQueue;
@@ -27,8 +24,8 @@ final class ProcessTaskActivityOutboxJob implements OwnershipQueuedJob, ShouldQu
     /** Limit queue attempts for infrastructure failures; the outbox remains retryable. */
     public int $tries = 5;
 
-    /** Construct an immutable outbox reference and tenant envelope. */
-    public function __construct(public readonly string $eventId, private readonly ?TenantJobEnvelope $envelope = null, private readonly ?OwnershipJobEnvelope $ownership = null)
+    /** Construct an immutable outbox reference and native ownership envelope. */
+    public function __construct(public readonly string $eventId, private readonly ?OwnershipJobEnvelope $ownership = null)
     {
         $this->onConnection(PackageOptions::queueConnection('tasks'));
         $this->onQueue(PackageOptions::queueName('tasks'));
@@ -39,12 +36,6 @@ final class ProcessTaskActivityOutboxJob implements OwnershipQueuedJob, ShouldQu
     public function ownershipJobEnvelope(): OwnershipJobEnvelope
     {
         return $this->ownership ?? throw new OwnershipViolation('This legacy task payload must be drained before ownership cutover.');
-    }
-
-    /** Return the producer tenant captured before dispatch. */
-    public function tenantJobEnvelope(): TenantJobEnvelope
-    {
-        return $this->envelope ?? throw new TenantBoundaryViolation('Native ownership work cannot enter the legacy worker.');
     }
 
     /** Attempt delivery; persistent failures remain available to the scheduled drain. */

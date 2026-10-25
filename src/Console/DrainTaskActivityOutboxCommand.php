@@ -10,7 +10,7 @@ use Nvl\Tasks\Services\TasksActivityDrainDispatcher;
 /** Recover task activity delivery when dispatch or prior attempts failed. */
 final class DrainTaskActivityOutboxCommand extends Command
 {
-    protected $signature = 'nvl:tasks:activity:drain {--limit= : Maximum events to inspect per tenant}';
+    protected $signature = 'nvl:tasks:activity:drain {--limit= : Maximum events to inspect per owner}';
 
     protected $description = 'Deliver due task Activity events from the durable outbox';
 

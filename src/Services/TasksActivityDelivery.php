@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Services;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Nvl\Activity\Facades\ActivityLog;
 use Nvl\Activity\Providers\ActivityServiceProvider;
+use Nvl\Activity\Services\ActivityRecorder;
 use Nvl\Activity\Support\ActivityRecordEnvelope;
-use Nvl\Support\Integrations\OptionalIntegration;
 use Nvl\Support\Logging\PackageLogger;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Models\TaskActivityOutbox;
+use Nvl\Tasks\Support\TaskIntegrations;
 use Nvl\Tasks\Support\TasksConfiguration;
 use Throwable;
 
@@ -22,8 +23,8 @@ final readonly class TasksActivityDelivery
 {
     private const int LEASE_SECONDS = 120;
 
-    /** Construct the tenant-bounded delivery service. */
-    public function __construct(private OwnershipBoundary $boundary, private OptionalIntegration $integrations, private PackageLogger $packageLogger) {}
+    /** Construct the ownership-bounded delivery service. */
+    public function __construct(private OwnershipBoundary $boundary, private TaskIntegrations $integrations, private Container $container, private PackageLogger $packageLogger) {}
 
     /** Attempt one due event; another worker may already hold its lease. */
     public function deliver(string $id): bool
@@ -61,7 +62,7 @@ final readonly class TasksActivityDelivery
         }
 
         try {
-            ActivityLog::recordEnvelope(ActivityRecordEnvelope::fromArray($claim['payload']));
+            $this->container->make(ActivityRecorder::class)->recordEnvelope(ActivityRecordEnvelope::fromArray($claim['payload']));
         } catch (Throwable $exception) {
             $this->releaseAfterFailure($id, $claim['token'], $claim['attempts'], $exception);
 
@@ -85,7 +86,7 @@ final readonly class TasksActivityDelivery
         return true;
     }
 
-    /** Deliver a bounded page of due events within the current tenant scope. */
+    /** Deliver a bounded page of due events within the current ownership scope. */
     public function drain(int $limit): int
     {
         if (! $this->integrations->enabled('tasks.activity.enabled', ActivityServiceProvider::class)) {

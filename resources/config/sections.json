@@ -8,13 +8,8 @@
                 "connection",
                 "media.enabled",
                 "migrations.enabled",
-                "ownership.scoped",
                 "queue.connection",
                 "queue.name",
-                "routes.management.enabled",
-                "routes.management.middleware",
-                "routes.management.name",
-                "routes.management.prefix",
                 "tables.nvl_tasks_activity_outbox",
                 "tables.nvl_tasks_assignments",
                 "tables.nvl_tasks_dependencies",
@@ -46,7 +41,8 @@
                 "media.maximum_attachments",
                 "media.maximum_file_bytes",
                 "models.task",
-                "tables.nvl_tasks_checklist_items"
+                "tables.nvl_tasks_checklist_items",
+                "tables.nvl_tasks_graph_lock"
             ]
         }
     }

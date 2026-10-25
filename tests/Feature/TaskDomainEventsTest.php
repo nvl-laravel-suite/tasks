@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Support\Events\DomainEventDispatcher;
 use Nvl\Support\Ownership\Contracts\OwnershipQueueContext;
+use Nvl\Support\Ownership\Enums\OwnershipContextMode;
 use Nvl\Support\Ownership\Services\OwnershipContextResolver;
-use Nvl\Support\Tenancy\Enums\TenantContextMode;
-use Nvl\Support\Tenancy\Services\DisabledTenantContext;
 use Nvl\Tasks\Contracts\TaskActivityPublisher;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskChangeOperation;
 use Nvl\Tasks\Events\TaskChanged;
 use Nvl\Tasks\Models\Task;
@@ -31,11 +30,11 @@ it('publishes all 23 semantic task operations before the optional activity adapt
     $publisher->shouldReceive('record')->times(23)->andReturnUsing(function () use (&$published): void {
         expect($published)->not->toBeEmpty();
     });
-    $activity = new TasksActivity($publisher, new TaskEvents($this->app->make(DomainEventDispatcher::class), new DisabledTenantContext, app(OwnershipContextResolver::class), app(OwnershipQueueContext::class)));
+    $activity = new TasksActivity($publisher, new TaskEvents($this->app->make(DomainEventDispatcher::class), app(OwnershipContextResolver::class), app(OwnershipQueueContext::class)));
     $task = (new Task)->setConnection('c4-task-events');
     $task->setRawAttributes(['id' => 'task-id', 'revision' => 7, 'description' => 'private-description'], true);
-    $actor = TaskActorData::system();
-    $assignee = new TaskActorData('host', 42);
+    $actor = SystemActor::Background;
+    $assignee = nativeTaskUser('Assignee');
     $activity->created($task, $actor);
     $task->setRawAttributes(['id' => 'task-id', 'revision' => 8, 'description' => 'private-updated-description']);
     $task->syncChanges();
@@ -62,10 +61,10 @@ it('publishes all 23 semantic task operations before the optional activity adapt
     $activity->blockerAdded($task, 'blocker', $actor);
     $activity->blockerRemoved($task, 'blocker', $actor);
     expect(array_map(fn (TaskChanged $event) => $event->operation, $published))->toBe(TaskChangeOperation::cases())
-        ->and($published[4]->context)->toBe(['assignee_type' => 'host', 'assignee_id' => 42]);
+        ->and($published[4]->context)->toBe(['assignee_type' => $assignee->getMorphClass(), 'assignee_id' => $assignee->id]);
     foreach ($published as $event) {
         expect(serialize($event))->not->toContain('private-description', 'private-updated-description', 'private-tag')
-            ->and($event->tenantJobEnvelope()->context->mode)->toBe(TenantContextMode::Disabled);
+            ->and($event->ownershipJobEnvelope()->context()->mode)->toBe(OwnershipContextMode::Disabled);
     }
 });
 
@@ -76,12 +75,12 @@ it('omits domain publication for no changes and technical-only task updates', fu
     });
     $publisher = Mockery::mock(TaskActivityPublisher::class);
     $publisher->shouldReceive('record')->once();
-    $activity = new TasksActivity($publisher, new TaskEvents($this->app->make(DomainEventDispatcher::class), new DisabledTenantContext, app(OwnershipContextResolver::class), app(OwnershipQueueContext::class)));
+    $activity = new TasksActivity($publisher, new TaskEvents($this->app->make(DomainEventDispatcher::class), app(OwnershipContextResolver::class), app(OwnershipQueueContext::class)));
     $task = (new Task)->setConnection('c4-task-events');
     $task->setRawAttributes(['id' => 'task-id', 'revision' => 1], true);
-    $activity->updated($task, TaskActorData::system());
+    $activity->updated($task, SystemActor::Background);
     $task->setRawAttributes(['id' => 'task-id', 'revision' => 2, 'updated_at' => '2026-10-07 00:00:00']);
     $task->syncChanges();
-    $activity->updated($task, TaskActorData::system());
+    $activity->updated($task, SystemActor::Background);
     expect($count)->toBe(0);
 });

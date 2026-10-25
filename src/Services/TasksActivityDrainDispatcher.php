@@ -8,7 +8,6 @@ use Nvl\Support\Ownership\Contracts\OwnershipSystemRunner;
 use Nvl\Support\Ownership\Enums\OwnershipContextMode;
 use Nvl\Support\Ownership\Services\OwnershipContextResolver;
 use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
-use Nvl\Tasks\Compatibility\LegacyTaskActivityDrainDispatcher;
 use Nvl\Tasks\Ownership\TaskOutboxOwnerWorklist;
 
 /** Recovers task audit facts inside separately authorized canonical owner scopes. */
@@ -21,14 +20,13 @@ final readonly class TasksActivityDrainDispatcher
         private OwnershipSystemRunner $owners,
         private TaskOutboxOwnerWorklist $worklist,
         private TasksActivityDelivery $delivery,
-        private LegacyTaskActivityDrainDispatcher $legacy,
     ) {}
 
     /** Deliver a bounded page per owner without borrowing request or tenant authority. */
     public function drain(int $limit): int
     {
         if ($this->resources->get('tasks.activity_outbox')->ownership->strategy === 'unscoped') {
-            return $this->legacy->drain($limit);
+            return $this->delivery->drain($limit);
         }
         if ($this->context->current()->snapshot()->mode === OwnershipContextMode::Owner) {
             return $this->delivery->drain($limit);

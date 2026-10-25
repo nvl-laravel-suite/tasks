@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Tests;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Foundation\MaintenanceMode;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Schema\Blueprint;
-use Nvl\Data\Providers\DataServiceProvider;
 use Nvl\Ownership\Contracts\OwnershipAdoptionAccess;
 use Nvl\Ownership\Services\OwnershipAdoptionCoordinator;
 use Nvl\Ownership\Tests\OwnershipTestCase;
 use Nvl\Ownership\ValueObjects\OwnershipOperation;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Tasks\Contracts\TaskAuthorization;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Providers\TasksServiceProvider;
@@ -38,12 +39,26 @@ abstract class OwnerScopeTestCase extends OwnershipTestCase
 
     protected function getPackageProviders($app): array
     {
-        return [...parent::getPackageProviders($app), DataServiceProvider::class, TasksServiceProvider::class];
+        return [...parent::getPackageProviders($app),  TasksServiceProvider::class];
     }
 
     protected function defineEnvironment($app): void
     {
         parent::defineEnvironment($app);
+        if (getenv('NVL_OWNERSHIP_TEST_DRIVER') === 'pgsql' && getenv('NVL_OWNERSHIP_TEST_HOST') !== false) {
+            $host = getenv('NVL_OWNERSHIP_TEST_HOST');
+            $port = getenv('NVL_OWNERSHIP_TEST_PORT');
+            if (! in_array($host, ['127.0.0.1', 'localhost', '::1'], true) || ! is_string($port) || ! ctype_digit($port) || (int) $port < 1 || (int) $port > 65535) {
+                throw new \RuntimeException('Tasks PostgreSQL workers require an explicit loopback host and valid port.');
+            }
+            foreach (['sqlite', 'ownership_remote'] as $connection) {
+                $app['config']->set("database.connections.{$connection}.host", $host);
+                $app['config']->set("database.connections.{$connection}.port", $port);
+                $app['config']->set("database.connections.{$connection}.username", getenv('NVL_OWNERSHIP_TEST_USERNAME') ?: 'nvl');
+                $app['config']->set("database.connections.{$connection}.password", getenv('NVL_OWNERSHIP_TEST_PASSWORD') ?: '');
+            }
+        }
+
         $app['config']->set([
             'nvl-tasks.models.task' => OwnedTask::class,
             'nvl-tasks.migrations.enabled' => false,
@@ -68,7 +83,9 @@ abstract class OwnerScopeTestCase extends OwnershipTestCase
         (require __DIR__.'/../../ownership/database/migrations/ownership/2026_10_18_000001_nvl_ownership_create_adoption_tables.php')->up();
         $this->app->bind(TaskAuthorization::class, static fn () => new class implements TaskAuthorization
         {
-            public function authorize(TaskAbility $ability, TaskActorData $actor, ?Task $task = null, ?Model $subject = null): void {}
+            public function authorize(TaskAbility $ability, Authenticatable|SystemActor $actor, ?Task $task = null, ?Model $subject = null): void {}
+
+            public function scopeTasks(Builder $query, Authenticatable|SystemActor $actor): void {}
         });
         $this->app->bind(OwnershipAdoptionAccess::class, static fn () => new class implements OwnershipAdoptionAccess
         {
@@ -76,6 +93,9 @@ abstract class OwnerScopeTestCase extends OwnershipTestCase
         });
         $this->app->instance(MaintenanceMode::class, new TasksTestMaintenanceMode);
         $this->app->make(MaintenanceMode::class)->activate([]);
+        if (! $this->activateOwnership()) {
+            return;
+        }
         $coordinator = $this->app->make(OwnershipAdoptionCoordinator::class);
         $operation = new OwnershipOperation('tasks-adopt', 'operator', '1');
         $plan = $coordinator->prepare($this->adoptionPackages(), [], $operation);
@@ -84,6 +104,12 @@ abstract class OwnerScopeTestCase extends OwnershipTestCase
         $coordinator->activate($plan, $operation);
         $this->app->make(MaintenanceMode::class)->deactivate();
         $this->allowOwners();
+    }
+
+    /** Allow adoption fixtures to inspect historical rows before activation. */
+    protected function activateOwnership(): bool
+    {
+        return true;
     }
 
     /** Install optional integration fixtures before graph activation. */

@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Contracts;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
-use Nvl\Tasks\Data\TaskActorData;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Tasks\Models\Task;
 
 /**
@@ -15,9 +16,9 @@ use Nvl\Tasks\Models\Task;
  */
 interface TaskQueryScope
 {
-    /** Apply actor-owned visibility before tenant scoping, filters, and pagination.
+    /** Apply actor-owned visibility inside ownership scoping, before filters and pagination.
      *
      * @param  Builder<Task>  $query
      */
-    public function scopeTasks(Builder $query, TaskActorData $actor): void;
+    public function scopeTasks(Builder $query, Authenticatable|SystemActor $actor): void;
 }

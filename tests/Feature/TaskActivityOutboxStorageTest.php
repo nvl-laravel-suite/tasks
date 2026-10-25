@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskActivityOutbox;
+use Nvl\Tasks\Services\TaskLifecycle;
+use Nvl\Tasks\Services\TasksActivityDrainDispatcher;
 use Nvl\Tasks\Support\TasksConfiguration;
 
 it('retains a task activity payload after its task is hard deleted', function (): void {
@@ -42,22 +45,11 @@ it('reports the outbox table and required columns in Tasks Doctor', function ():
         ->and($result['checks']['activity_outbox.columns'])->toBeTrue();
 });
 
-it('reports a missing tenant recovery worklist before scheduled delivery is enabled', function (): void {
+it('recovers task facts without a legacy tenant worklist', function (): void {
     config()->set('nvl-tenancy.enabled', true);
-    config()->set('nvl-activity.tenancy.active_tenant_worklist', []);
-
-    expect(Artisan::call('nvl:tasks:doctor', ['--format' => 'json']))->toBe(0);
-
-    /** @var array{checks: array<string, bool>} $result */
-    $result = json_decode(Artisan::output(), true, 512, JSON_THROW_ON_ERROR);
-
-    expect($result['checks']['activity_outbox.recovery_worklist'])->toBeFalse();
-
-    config()->set('nvl-activity.tenancy.active_tenant_worklist', ['aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa']);
-    Artisan::call('nvl:tasks:doctor', ['--format' => 'json']);
-
-    /** @var array{checks: array<string, bool>} $result */
-    $result = json_decode(Artisan::output(), true, 512, JSON_THROW_ON_ERROR);
-
-    expect($result['checks']['activity_outbox.recovery_worklist'])->toBeTrue();
+    $task = app(TaskLifecycle::class)->create(['title' => 'Native recovery'], SystemActor::Background);
+    $outbox = TaskActivityOutbox::query()->where('task_id', $task->id)->firstOrFail();
+    $outbox->forceFill(['delivered_at' => null])->save();
+    expect(app(TasksActivityDrainDispatcher::class)->drain(10))->toBe(1);
+    expect($outbox->fresh()->delivered_at)->not->toBeNull();
 });

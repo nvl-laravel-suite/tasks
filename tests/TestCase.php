@@ -8,9 +8,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Nvl\Activity\Providers\ActivityServiceProvider;
-use Nvl\Data\Providers\DataServiceProvider;
 use Nvl\Filterable\Providers\FilterableServiceProvider;
-use Nvl\Media\Providers\MediaServiceProvider;
 use Nvl\Support\Providers\LocaleServiceProvider;
 use Nvl\Support\Providers\SupportServiceProvider;
 use Nvl\Tasks\Providers\TasksServiceProvider;
@@ -22,17 +20,22 @@ abstract class TestCase extends Orchestra
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        nativeTaskPolicy();
+    }
+
     /** @return list<class-string> */
     protected function getPackageProviders($app): array
     {
         return [
             LocaleServiceProvider::class,
             SupportServiceProvider::class,
-            DataServiceProvider::class,
+
             ...(class_exists(TranslatableServiceProvider::class) ? [TranslatableServiceProvider::class] : []),
             ...(class_exists(FilterableServiceProvider::class) ? [FilterableServiceProvider::class] : []),
             ...(class_exists(ActivityServiceProvider::class) ? [ActivityServiceProvider::class] : []),
-            ...(class_exists(MediaServiceProvider::class) ? [MediaServiceProvider::class] : []),
             TasksServiceProvider::class,
         ];
     }
@@ -41,6 +44,7 @@ abstract class TestCase extends Orchestra
     {
         $app['config']->set([
             'cache.default' => 'array',
+            'nvl-tasks.activity.enabled' => true,
             'filesystems.default' => 'local',
             'nvl-media.disk' => 'local',
             'nvl-media.routes.assets_enabled' => false,

@@ -3,25 +3,23 @@
 declare(strict_types=1);
 
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
-use Nvl\Tasks\Actions\AddTaskDependencyAction;
-use Nvl\Tasks\Actions\CreateTaskAction;
-use Nvl\Tasks\Actions\LinkTaskParentAction;
-use Nvl\Tasks\Actions\RemoveTaskDependencyAction;
-use Nvl\Tasks\Actions\UnlinkTaskParentAction;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Tasks\Contracts\TaskAuthorization;
-use Nvl\Tasks\Data\Mutations\CreateTaskData;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskDependency;
 use Nvl\Tasks\Models\TaskRelationship;
+use Nvl\Tasks\Services\TaskLifecycle;
+use Nvl\Tasks\Services\TaskRelationships;
 
 function relationshipTask(string $title, ?string $tenantId = null): Task
 {
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData($title), TaskActorData::system());
+    $task = app(TaskLifecycle::class)->create(['title' => $title], SystemActor::Background);
 
     if ($tenantId !== null) {
         $task->forceFill(['tenant_id' => $tenantId])->save();
@@ -33,9 +31,9 @@ function relationshipTask(string $title, ?string $tenantId = null): Task
 it('links and unlinks one parent while advancing both exact task revisions', function (): void {
     $child = relationshipTask('Child');
     $parent = relationshipTask('Parent');
-    $actor = TaskActorData::system();
+    $actor = SystemActor::Background;
 
-    $relation = app(LinkTaskParentAction::class)->execute($child, $parent, 1, 1, $actor);
+    $relation = app(TaskRelationships::class)->linkParent($child, $parent, 1, 1, $actor);
 
     expect($relation)->toBeInstanceOf(TaskRelationship::class)
         ->and($relation->child_task_id)->toBe($child->id)
@@ -43,25 +41,25 @@ it('links and unlinks one parent while advancing both exact task revisions', fun
         ->and($child->fresh()?->revision)->toBe(2)
         ->and($parent->fresh()?->revision)->toBe(2);
 
-    $same = app(LinkTaskParentAction::class)->execute($child, $parent, 2, 2, $actor);
+    $same = app(TaskRelationships::class)->linkParent($child, $parent, 2, 2, $actor);
 
     expect($same->id)->toBe($relation->id)
         ->and($child->fresh()?->revision)->toBe(2)
-        ->and(app(UnlinkTaskParentAction::class)->execute($child, $parent, 2, 2, $actor))->toBeTrue()
+        ->and(app(TaskRelationships::class)->unlinkParent($child, $parent, 2, 2, $actor))->toBeTrue()
         ->and(TaskRelationship::query()->count())->toBe(0)
         ->and($child->fresh()?->revision)->toBe(3)
         ->and($parent->fresh()?->revision)->toBe(3)
-        ->and(app(UnlinkTaskParentAction::class)->execute($child, $parent, 3, 3, $actor))->toBeFalse();
+        ->and(app(TaskRelationships::class)->unlinkParent($child, $parent, 3, 3, $actor))->toBeFalse();
 });
 
 it('requires unlinking before a child can acquire another parent', function (): void {
     $child = relationshipTask('Child');
     $first = relationshipTask('First');
     $second = relationshipTask('Second');
-    $actor = TaskActorData::system();
-    app(LinkTaskParentAction::class)->execute($child, $first, 1, 1, $actor);
+    $actor = SystemActor::Background;
+    app(TaskRelationships::class)->linkParent($child, $first, 1, 1, $actor);
 
-    expect(fn () => app(LinkTaskParentAction::class)->execute($child, $second, 2, 1, $actor))
+    expect(fn () => app(TaskRelationships::class)->linkParent($child, $second, 2, 1, $actor))
         ->toThrow(InvalidArgumentException::class);
     expect(TaskRelationship::query()->count())->toBe(1)
         ->and($child->fresh()?->revision)->toBe(2)
@@ -72,15 +70,15 @@ it('rejects self parent links and parent cycles', function (): void {
     $first = relationshipTask('First');
     $second = relationshipTask('Second');
     $third = relationshipTask('Third');
-    $actor = TaskActorData::system();
+    $actor = SystemActor::Background;
 
-    expect(fn () => app(LinkTaskParentAction::class)->execute($first, $first, 1, 1, $actor))
+    expect(fn () => app(TaskRelationships::class)->linkParent($first, $first, 1, 1, $actor))
         ->toThrow(InvalidArgumentException::class);
 
-    app(LinkTaskParentAction::class)->execute($first, $second, 1, 1, $actor);
-    app(LinkTaskParentAction::class)->execute($second, $third, 2, 1, $actor);
+    app(TaskRelationships::class)->linkParent($first, $second, 1, 1, $actor);
+    app(TaskRelationships::class)->linkParent($second, $third, 2, 1, $actor);
 
-    expect(fn () => app(LinkTaskParentAction::class)->execute($third, $first, 2, 2, $actor))
+    expect(fn () => app(TaskRelationships::class)->linkParent($third, $first, 2, 2, $actor))
         ->toThrow(InvalidArgumentException::class);
     expect(TaskRelationship::query()->count())->toBe(2);
 });
@@ -89,45 +87,37 @@ it('adds and removes blockers while rejecting dependency cycles', function (): v
     $first = relationshipTask('First');
     $second = relationshipTask('Second');
     $third = relationshipTask('Third');
-    $actor = TaskActorData::system();
+    $actor = SystemActor::Background;
 
-    expect(fn () => app(AddTaskDependencyAction::class)->execute($first, $first, 1, 1, $actor))
+    expect(fn () => app(TaskRelationships::class)->addDependency($first, $first, 1, 1, $actor))
         ->toThrow(InvalidArgumentException::class);
 
-    $dependency = app(AddTaskDependencyAction::class)->execute($first, $second, 1, 1, $actor);
-    $same = app(AddTaskDependencyAction::class)->execute($first, $second, 2, 2, $actor);
-    app(AddTaskDependencyAction::class)->execute($second, $third, 2, 1, $actor);
+    $dependency = app(TaskRelationships::class)->addDependency($first, $second, 1, 1, $actor);
+    $same = app(TaskRelationships::class)->addDependency($first, $second, 2, 2, $actor);
+    app(TaskRelationships::class)->addDependency($second, $third, 2, 1, $actor);
 
     expect($dependency)->toBeInstanceOf(TaskDependency::class)
         ->and($dependency->task_id)->toBe($first->id)
         ->and($dependency->blocker_task_id)->toBe($second->id)
         ->and($same->id)->toBe($dependency->id)
-        ->and(fn () => app(AddTaskDependencyAction::class)->execute($third, $first, 2, 2, $actor))
+        ->and(fn () => app(TaskRelationships::class)->addDependency($third, $first, 2, 2, $actor))
         ->toThrow(InvalidArgumentException::class);
 
-    expect(app(RemoveTaskDependencyAction::class)->execute($first, $second, 2, 3, $actor))->toBeTrue()
-        ->and(app(RemoveTaskDependencyAction::class)->execute($first, $second, 3, 4, $actor))->toBeFalse()
+    expect(app(TaskRelationships::class)->removeDependency($first, $second, 2, 3, $actor))->toBeTrue()
+        ->and(app(TaskRelationships::class)->removeDependency($first, $second, 3, 4, $actor))->toBeFalse()
         ->and(TaskDependency::query()->count())->toBe(1);
 });
 
-it('rejects stale revisions and tasks from different tenants', function (): void {
+it('rejects stale revisions independently of retained legacy tenant fields', function (): void {
     $tenantA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
     $tenantB = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
     $child = relationshipTask('Tenant A', $tenantA);
     $parent = relationshipTask('Tenant B', $tenantB);
-    $actor = TaskActorData::system();
+    $actor = SystemActor::Background;
 
-    expect(fn () => app(LinkTaskParentAction::class)->execute($child, $parent, 1, 1, $actor))
-        ->toThrow(InvalidArgumentException::class)
-        ->and(fn () => app(AddTaskDependencyAction::class)->execute($child, $parent, 1, 1, $actor))
-        ->toThrow(InvalidArgumentException::class);
-
-    $parent->forceFill(['tenant_id' => $tenantA])->save();
-    $parent->refresh();
-
-    expect(fn () => app(LinkTaskParentAction::class)->execute($child, $parent, 0, 1, $actor))
+    expect(fn () => app(TaskRelationships::class)->linkParent($child, $parent, 0, 1, $actor))
         ->toThrow(TaskRevisionConflict::class)
-        ->and(fn () => app(AddTaskDependencyAction::class)->execute($child, $parent, 1, 0, $actor))
+        ->and(fn () => app(TaskRelationships::class)->addDependency($child, $parent, 1, 0, $actor))
         ->toThrow(TaskRevisionConflict::class);
     expect(TaskRelationship::query()->count())->toBe(0)
         ->and(TaskDependency::query()->count())->toBe(0);
@@ -136,14 +126,14 @@ it('rejects stale revisions and tasks from different tenants', function (): void
 it('authorizes updates to both canonical endpoints and ignores forged model attributes', function (): void {
     $child = relationshipTask('Child');
     $parent = relationshipTask('Parent');
-    $actor = TaskActorData::system();
+    $actor = SystemActor::Background;
     $authorized = [];
     app()->instance(TaskAuthorization::class, new class($authorized) implements TaskAuthorization
     {
         /** @param list<string> $authorized */
         public function __construct(private array &$authorized) {}
 
-        public function authorize(TaskAbility $ability, TaskActorData $actor, ?Task $task = null, ?Model $subject = null): void
+        public function authorize(TaskAbility $ability, Authenticatable|SystemActor $actor, ?Task $task = null, ?Model $subject = null): void
         {
             $this->authorized[] = $task?->id;
 
@@ -151,12 +141,14 @@ it('authorizes updates to both canonical endpoints and ignores forged model attr
                 throw new AuthorizationException;
             }
         }
+
+        public function scopeTasks(Builder $query, Authenticatable|SystemActor $actor): void {}
     });
 
     $forged = clone $parent;
     $forged->forceFill(['revision' => 99, 'tenant_id' => 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb']);
 
-    app(LinkTaskParentAction::class)->execute($child, $forged, 1, 1, $actor);
+    app(TaskRelationships::class)->linkParent($child, $forged, 1, 1, $actor);
 
     expect($authorized)->toContain($child->id, $parent->id)
         ->and(TaskRelationship::query()->first()?->tenant_id)->toBeNull()
@@ -170,15 +162,17 @@ it('rejects a graph change when either endpoint update is unauthorized', functio
     {
         public function __construct(private string $deniedTaskId) {}
 
-        public function authorize(TaskAbility $ability, TaskActorData $actor, ?Task $task = null, ?Model $subject = null): void
+        public function authorize(TaskAbility $ability, Authenticatable|SystemActor $actor, ?Task $task = null, ?Model $subject = null): void
         {
             if ($ability !== TaskAbility::Update || $task?->id === $this->deniedTaskId) {
                 throw new AuthorizationException;
             }
         }
+
+        public function scopeTasks(Builder $query, Authenticatable|SystemActor $actor): void {}
     });
 
-    expect(fn () => app(LinkTaskParentAction::class)->execute($child, $parent, 1, 1, TaskActorData::system()))
+    expect(fn () => app(TaskRelationships::class)->linkParent($child, $parent, 1, 1, SystemActor::Background))
         ->toThrow(AuthorizationException::class);
     expect(TaskRelationship::query()->count())->toBe(0)
         ->and($child->fresh()?->revision)->toBe(1)
@@ -196,4 +190,20 @@ it('declares cascading task foreign keys for both graph tables', function (): vo
         ->and(collect([...$relationships, ...$dependencies])->every(
             static fn (array $foreignKey): bool => strtolower($foreignKey['on_delete']) === 'cascade',
         ))->toBeTrue();
+});
+
+it('retains cycle protection through soft-deleted intermediate tasks and restore', function (): void {
+    $actor = nativeTaskUser();
+    $lifecycle = app(TaskLifecycle::class);
+    $graphs = app(TaskRelationships::class);
+    $a = $lifecycle->create(['title' => 'A'], $actor);
+    $b = $lifecycle->create(['title' => 'B'], $actor);
+    $c = $lifecycle->create(['title' => 'C'], $actor);
+    $graphs->linkParent($a, $b, 1, 1, $actor);
+    $graphs->linkParent($b, $c, 2, 1, $actor);
+    $lifecycle->delete($b, $actor);
+    expect(fn () => $graphs->linkParent($c, $a, 2, 2, $actor))->toThrow(InvalidArgumentException::class);
+    $restored = $lifecycle->restore($b, 3, $actor);
+    expect($restored->trashed())->toBeFalse();
+    expect(fn () => $graphs->linkParent($c, $a, 2, 2, $actor))->toThrow(InvalidArgumentException::class);
 });

@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Integrations;
 
+use Illuminate\Contracts\Auth\Authenticatable;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Tasks\Contracts\TaskActivityPublisher;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
 
 /** Leaves new task events inactive while preserving any previously committed outbox data. */
@@ -18,5 +19,5 @@ final class InactiveTaskActivityPublisher implements TaskActivityPublisher
      * @param  array<string, mixed>|null  $attributes
      * @param  array<string, mixed>|null  $old
      */
-    public function record(Task $task, string $event, TaskActorData $actor, array $context = [], ?array $attributes = null, ?array $old = null): void {}
+    public function record(Task $task, string $event, Authenticatable|SystemActor $actor, array $context = [], ?array $attributes = null, ?array $old = null): void {}
 }

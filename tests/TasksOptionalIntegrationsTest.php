@@ -4,19 +4,21 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
-use Nvl\Tasks\Actions\CreateTaskAction;
+use Nvl\Activity\Providers\ActivityServiceProvider;
+use Nvl\Media\Providers\MediaServiceProvider;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Tasks\Contracts\TaskAttachments;
-use Nvl\Tasks\Data\Mutations\CreateTaskData;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskActivityOutbox;
+use Nvl\Tasks\Services\TaskLifecycle;
 use Nvl\Tasks\Services\TasksActivityDelivery;
+use Nvl\Tasks\Support\TaskIntegrations;
 use Nvl\Tasks\Tests\StandaloneTasksTestCase;
 
 uses(StandaloneTasksTestCase::class);
 
 it('creates ordinary tasks without optional Activity or Media providers', function (): void {
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Standalone work'), TaskActorData::system());
+    $task = app(TaskLifecycle::class)->create(['title' => 'Standalone work'], SystemActor::Background);
 
     expect($task->title)->toBe('Standalone work')
         ->and(TaskActivityOutbox::query()->count())->toBe(0)
@@ -25,7 +27,7 @@ it('creates ordinary tasks without optional Activity or Media providers', functi
 });
 
 it('retains legacy committed outbox rows when Activity delivery is unavailable', function (): void {
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Pending history'), TaskActorData::system());
+    $task = app(TaskLifecycle::class)->create(['title' => 'Pending history'], SystemActor::Background);
     $event = new TaskActivityOutbox;
     $event->forceFill(['id' => (string) Str::uuid(), 'task_id' => $task->id, 'tenant_id' => null,
         'payload' => ['legacy' => 'immutable'], 'available_at' => now()])->save();
@@ -37,7 +39,21 @@ it('retains legacy committed outbox rows when Activity delivery is unavailable',
 });
 
 it('fails clearly when an attachment is requested without a loaded Media adapter', function (): void {
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Unavailable files'), TaskActorData::system());
-    expect(fn () => app(TaskAttachments::class)->attach($task, (string) Str::uuid(), TaskActorData::system()))
+    $task = app(TaskLifecycle::class)->create(['title' => 'Unavailable files'], SystemActor::Background);
+    expect(fn () => app(TaskAttachments::class)->attach($task, (string) Str::uuid(), SystemActor::Background))
         ->toThrow(LogicException::class, 'Media adapter is unavailable');
+});
+
+it('requires explicit valid optional flags even when classes are installed', function (): void {
+    $integrations = app(TaskIntegrations::class);
+    config(['nvl-tasks.activity.enabled' => null]);
+    expect($integrations->enabled('tasks.activity.enabled', ActivityServiceProvider::class))->toBeFalse();
+    config(['nvl-tasks.activity.enabled' => 'true']);
+    expect(fn () => $integrations->enabled('tasks.activity.enabled', ActivityServiceProvider::class))->toThrow(InvalidArgumentException::class);
+});
+
+it('rejects explicitly enabled Media until its native adapter is available', function (): void {
+    app()->register(MediaServiceProvider::class);
+    config(['nvl-tasks.media.enabled' => true]);
+    expect(fn () => app(TaskAttachments::class))->toThrow(LogicException::class, 'native MediaAttachments adapter');
 });

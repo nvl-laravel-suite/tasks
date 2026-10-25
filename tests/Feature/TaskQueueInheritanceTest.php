@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-use Nvl\Support\Tenancy\Enums\TenantContextMode;
-use Nvl\Support\Tenancy\ValueObjects\TenantContextSnapshot;
-use Nvl\Support\Tenancy\ValueObjects\TenantJobEnvelope;
+use Nvl\Support\Ownership\Contracts\OwnershipQueueContext;
 use Nvl\Tasks\Jobs\ProcessTaskActivityOutboxJob;
 
 it('inherits task delivery queue selection without discarding its captured envelope', function (array $overrides, string $connection, string $queue): void {
@@ -13,10 +11,10 @@ it('inherits task delivery queue selection without discarding its captured envel
         'nvl-core.queue' => ['connection' => null, 'name' => null],
         'queue.default' => 'host', 'queue.connections.host.queue' => 'host-work', ...$overrides,
     ]);
-    $envelope = new TenantJobEnvelope(new TenantContextSnapshot(TenantContextMode::Disabled));
+    $envelope = app(OwnershipQueueContext::class)->captureUnowned();
     $job = new ProcessTaskActivityOutboxJob('event', $envelope);
     expect($job->connection)->toBe($connection)->and($job->queue)->toBe($queue)
-        ->and($job->tenantJobEnvelope())->toBe($envelope)->and($job->afterCommit)->toBeTrue();
+        ->and($job->ownershipJobEnvelope())->toBe($envelope)->and($job->afterCommit)->toBeTrue();
 })->with([
     'Laravel' => [[], 'host', 'host-work'],
     'Core' => [['nvl-core.queue' => ['connection' => 'suite', 'name' => 'suite-work']], 'suite', 'suite-work'],

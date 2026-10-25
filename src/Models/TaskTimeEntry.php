@@ -13,11 +13,12 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
 use Nvl\Support\Ownership\Contracts\Ownable;
+use Nvl\Support\Ownership\Traits\HasOwnership;
 use Nvl\Tasks\Database\Factories\TaskTimeEntryFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Services\TaskModelRegistry;
+use Nvl\Tasks\Support\TaskInstantCast;
 use Nvl\Tasks\Support\TasksConfiguration;
-use Nvl\Tasks\Traits\HasTasksOwnership;
 
 /** A manual interval or running timer belonging to a canonical task and performer.
  *
@@ -42,7 +43,7 @@ final class TaskTimeEntry extends Model implements Ownable
     /** @use HasFactory<TaskTimeEntryFactory> */
     use HasFactory;
 
-    use HasTasksOwnership;
+    use HasOwnership;
     use HasUuids;
 
     /** @var list<string> */
@@ -93,8 +94,8 @@ final class TaskTimeEntry extends Model implements Ownable
     protected function casts(): array
     {
         return [
-            'started_at' => 'immutable_datetime',
-            'stopped_at' => 'immutable_datetime',
+            'started_at' => TaskInstantCast::class,
+            'stopped_at' => TaskInstantCast::class,
             'duration_seconds' => 'integer',
         ];
     }

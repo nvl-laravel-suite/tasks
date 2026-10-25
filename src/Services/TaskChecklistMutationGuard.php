@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Services;
 
+use Illuminate\Contracts\Auth\Authenticatable;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
@@ -21,8 +22,8 @@ final readonly class TaskChecklistMutationGuard
         private OwnershipBoundary $boundary,
     ) {}
 
-    /** Lock the active tenant's task and require update permission and revision. */
-    public function lock(Task|string $task, int $expectedRevision, TaskActorData $actor): Task
+    /** Lock the active ownership scope's task and require update permission and revision. */
+    public function lock(Task|string $task, int $expectedRevision, Authenticatable|SystemActor $actor): Task
     {
         $id = $task instanceof Task ? $task->getKey() : $task;
         $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
@@ -37,14 +38,13 @@ final readonly class TaskChecklistMutationGuard
         return $current;
     }
 
-    /** Resolve one item owned by the locked task and its canonical tenant. */
+    /** Resolve one item owned by the locked task and its canonical owner. */
     public function item(Task $task, TaskChecklistItem|string $item): TaskChecklistItem
     {
         $id = $item instanceof TaskChecklistItem ? $item->getKey() : $item;
 
         return TaskChecklistItem::query()
             ->where('task_id', $task->id)
-            ->where('tenant_id', $task->tenant_id)
             ->whereKey($id)
             ->firstOrFail();
     }

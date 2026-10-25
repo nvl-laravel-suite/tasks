@@ -11,11 +11,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
 use Nvl\Support\Ownership\Contracts\Ownable;
+use Nvl\Support\Ownership\Traits\HasOwnership;
 use Nvl\Tasks\Database\Factories\TaskRelationshipFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TasksConfiguration;
-use Nvl\Tasks\Traits\HasTasksOwnership;
 
 /** One child-to-parent edge in the task hierarchy.
  *
@@ -35,7 +35,7 @@ final class TaskRelationship extends Model implements Ownable
     /** @use HasFactory<TaskRelationshipFactory> */
     use HasFactory;
 
-    use HasTasksOwnership;
+    use HasOwnership;
     use HasUuids;
 
     /** @var list<string> */

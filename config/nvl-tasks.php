@@ -12,7 +12,6 @@ use Nvl\Tasks\Models\Task;
 
 /** Complete runtime defaults; publication sections are declared in ../resources/config/sections.json. */
 return [
-    'ownership' => ['scoped' => true],
     'models' => ['task' => Task::class],
     'queue' => ['connection' => null, 'name' => null],
     'connection' => null,
@@ -25,6 +24,7 @@ return [
         TasksTables::Relationships => TasksTables::Relationships,
         TasksTables::Dependencies => TasksTables::Dependencies,
         TasksTables::Tags => TasksTables::Tags,
+        TasksTables::GraphLock => TasksTables::GraphLock,
         TasksTables::ActivityOutbox => TasksTables::ActivityOutbox,
     ],
 
@@ -53,7 +53,7 @@ return [
     ],
 
     'activity' => [
-        'enabled' => null,
+        'enabled' => false,
         'queue' => null,
         'schedule' => [
             'enabled' => true,
@@ -61,17 +61,8 @@ return [
         'drain_limit' => 100,
     ],
 
-    'routes' => [
-        'management' => [
-            'enabled' => false,
-            'prefix' => 'nvl/api/v1/tasks',
-            'name' => 'nvl.tasks.management.',
-            'middleware' => ['api', 'auth', 'throttle:60,1'],
-        ],
-    ],
-
     'media' => [
-        'enabled' => null,
+        'enabled' => false,
         'maximum_attachments' => 10,
         'maximum_file_bytes' => 20 * 1024 * 1024,
     ],

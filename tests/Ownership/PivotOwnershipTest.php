@@ -6,11 +6,10 @@ use Illuminate\Database\QueryException;
 use Nvl\Ownership\Services\OwnershipRunner;
 use Nvl\Ownership\Tests\Fixtures\Actor;
 use Nvl\Ownership\Tests\Fixtures\Company;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Support\Ownership\Exceptions\OwnershipException;
-use Nvl\Tasks\Actions\CreateTaskAction;
-use Nvl\Tasks\Data\Mutations\CreateTaskData;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Models\Task;
+use Nvl\Tasks\Services\TaskLifecycle;
 use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Tests\PivotOwnerScopeTestCase;
 
@@ -19,7 +18,7 @@ uses(PivotOwnerScopeTestCase::class);
 it('atomically writes the concrete primary pivot and forbids replacing or removing ownership', function (): void {
     $actor = Actor::query()->findOrFail(1);
     $task = app(OwnershipRunner::class)->run(Company::query()->findOrFail(7), $actor, function () {
-        $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Pivot'), TaskActorData::system());
+        $task = app(TaskLifecycle::class)->create(['title' => 'Pivot'], SystemActor::Background);
         $connection = $task->getConnection();
         expect($connection->table('consumer_task_owners')->where('task_id', $task->id)->value('company_id'))->toBe(7);
         expect(fn () => $connection->table('consumer_task_owners')->where('task_id', $task->id)->update(['company_id' => 8]))->toThrow(QueryException::class);

@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Tests;
 
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Nvl\Data\Providers\DataServiceProvider;
 use Nvl\Ownership\Tests\OwnershipTestCase;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Tasks\Contracts\TaskAuthorization;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Providers\TasksServiceProvider;
@@ -32,7 +33,7 @@ abstract class ConfiguredStorageTestCase extends OwnershipTestCase
 
     protected function getPackageProviders($app): array
     {
-        return [...parent::getPackageProviders($app), DataServiceProvider::class, TasksServiceProvider::class];
+        return [...parent::getPackageProviders($app),  TasksServiceProvider::class];
     }
 
     protected function defineEnvironment($app): void
@@ -58,7 +59,9 @@ abstract class ConfiguredStorageTestCase extends OwnershipTestCase
         }
         $this->app->bind(TaskAuthorization::class, static fn () => new class implements TaskAuthorization
         {
-            public function authorize(TaskAbility $ability, TaskActorData $actor, ?Task $task = null, ?Model $subject = null): void {}
+            public function authorize(TaskAbility $ability, Authenticatable|SystemActor $actor, ?Task $task = null, ?Model $subject = null): void {}
+
+            public function scopeTasks(Builder $query, Authenticatable|SystemActor $actor): void {}
         });
     }
 }

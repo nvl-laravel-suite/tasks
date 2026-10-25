@@ -9,16 +9,15 @@ use Illuminate\Support\Str;
 use Nvl\Ownership\Services\OwnershipRunner;
 use Nvl\Ownership\Tests\Fixtures\Actor;
 use Nvl\Ownership\Tests\Fixtures\Company;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Support\Ownership\Exceptions\OwnershipException;
-use Nvl\Tasks\Actions\AssignTaskAction;
-use Nvl\Tasks\Actions\CreateTaskAction;
-use Nvl\Tasks\Actions\GetTaskAction;
-use Nvl\Tasks\Actions\LinkTaskParentAction;
-use Nvl\Tasks\Data\Mutations\CreateTaskData;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskChangeOperation;
 use Nvl\Tasks\Events\TaskChanged;
+use Nvl\Tasks\Services\TaskAssignments;
 use Nvl\Tasks\Services\TaskEvents;
+use Nvl\Tasks\Services\TaskLifecycle;
+use Nvl\Tasks\Services\TaskReader;
+use Nvl\Tasks\Services\TaskRelationships;
 use Nvl\Tasks\Tests\Fixtures\OwnedTask;
 use Nvl\Tasks\Tests\OwnerScopeTestCase;
 
@@ -27,41 +26,41 @@ uses(OwnerScopeTestCase::class);
 it('creates and resolves the configured task only in its admitted native owner', function (): void {
     $actor = Actor::query()->findOrFail(1);
     $task = app(OwnershipRunner::class)->run(Company::query()->findOrFail(7), $actor, function () use ($actor) {
-        $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Owned task'), TaskActorData::fromAuthenticatable($actor));
+        $task = app(TaskLifecycle::class)->create(['title' => 'Owned task'], $actor);
         expect($task)->toBeInstanceOf(OwnedTask::class)->and($task->getAttribute('company_id'))->toBe(7);
-        expect(app(GetTaskAction::class)->execute($task, TaskActorData::fromAuthenticatable($actor))->id)->toBe($task->id);
+        expect(app(TaskReader::class)->get($task, $actor)->id)->toBe($task->id);
 
         return $task;
     });
     app(OwnershipRunner::class)->run(Company::query()->findOrFail(8), $actor, function () use ($actor, $task): void {
-        expect(fn () => app(GetTaskAction::class)->execute($task, TaskActorData::fromAuthenticatable($actor)))->toThrow(ModelNotFoundException::class);
+        expect(fn () => app(TaskReader::class)->get($task, $actor))->toThrow(ModelNotFoundException::class);
     });
 });
 
 it('keeps task graph endpoints and assignments inside the canonical owner', function (): void {
     $actor = Actor::query()->findOrFail(1);
-    $identity = TaskActorData::fromAuthenticatable($actor);
+    $identity = $actor;
     $runner = app(OwnershipRunner::class);
     $tasks = [];
     foreach ([7, 8] as $key) {
-        $tasks[$key] = $runner->run(Company::query()->findOrFail($key), $actor, fn () => app(CreateTaskAction::class)->execute(new CreateTaskData('Task '.$key), $identity));
+        $tasks[$key] = $runner->run(Company::query()->findOrFail($key), $actor, fn () => app(TaskLifecycle::class)->create(['title' => 'Task '.$key], $identity));
     }
     $runner->run(Company::query()->findOrFail(7), $actor, function () use ($actor, $identity, $tasks): void {
-        expect(fn () => app(LinkTaskParentAction::class)->execute($tasks[7], $tasks[8], 1, 1, $identity))->toThrow(ModelNotFoundException::class);
-        $assignment = app(AssignTaskAction::class)->execute($tasks[7], $actor, $identity);
+        expect(fn () => app(TaskRelationships::class)->linkParent($tasks[7], $tasks[8], 1, 1, $identity))->toThrow(ModelNotFoundException::class);
+        $assignment = app(TaskAssignments::class)->assign($tasks[7], $actor, $identity);
         expect($assignment->task->id)->toBe($tasks[7]->id);
-        expect(fn () => app(AssignTaskAction::class)->execute($tasks[8], $actor, $identity))->toThrow(ModelNotFoundException::class);
+        expect(fn () => app(TaskAssignments::class)->assign($tasks[8], $actor, $identity))->toThrow(ModelNotFoundException::class);
     });
 });
 
 it('links historical and newly created tasks by native ownership rather than retained tenant fields', function (): void {
     $actor = Actor::query()->findOrFail(1);
     app(OwnershipRunner::class)->run(Company::query()->findOrFail(7), $actor, function () use ($actor): void {
-        $identity = TaskActorData::fromAuthenticatable($actor);
-        $historical = app(CreateTaskAction::class)->execute(new CreateTaskData('Historical'), $identity);
-        $new = app(CreateTaskAction::class)->execute(new CreateTaskData('New'), $identity);
+        $identity = $actor;
+        $historical = app(TaskLifecycle::class)->create(['title' => 'Historical'], $identity);
+        $new = app(TaskLifecycle::class)->create(['title' => 'New'], $identity);
         $historical->getConnection()->table($historical->getTable())->where('id', $historical->id)->update(['tenant_id' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa']);
-        $edge = app(LinkTaskParentAction::class)->execute($historical, $new, 1, 1, $identity);
+        $edge = app(TaskRelationships::class)->linkParent($historical, $new, 1, 1, $identity);
         expect($edge->child_task_id)->toBe($historical->id)->and($edge->parent_task_id)->toBe($new->id);
     });
 });
@@ -71,20 +70,20 @@ it('rejects a forged or deleted assignee instead of persisting an unchecked prin
     $deleted = Actor::query()->create(['id' => 2, 'name' => 'Deleted']);
     Actor::query()->whereKey(2)->delete();
     app(OwnershipRunner::class)->run(Company::query()->findOrFail(7), $actor, function () use ($actor, $deleted): void {
-        $identity = TaskActorData::fromAuthenticatable($actor);
-        $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Canonical references'), $identity);
+        $identity = $actor;
+        $task = app(TaskLifecycle::class)->create(['title' => 'Canonical references'], $identity);
         $forged = $actor->fresh()->forceFill(['id' => 999]);
-        expect(fn () => app(AssignTaskAction::class)->execute($task, $forged, $identity))->toThrow(InvalidArgumentException::class);
-        expect(fn () => app(AssignTaskAction::class)->execute($task, $deleted, $identity))->toThrow(ModelNotFoundException::class);
+        expect(fn () => app(TaskAssignments::class)->assign($task, $forged, $identity))->toThrow(InvalidArgumentException::class);
+        expect(fn () => app(TaskAssignments::class)->assign($task, $deleted, $identity))->toThrow(ModelNotFoundException::class);
     });
 });
 
 it('rejects foreign task parent and blocker edges at the raw database boundary', function (): void {
     $actor = Actor::query()->findOrFail(1);
-    $identity = TaskActorData::fromAuthenticatable($actor);
+    $identity = $actor;
     $tasks = [];
     foreach ([7, 8] as $key) {
-        $tasks[$key] = app(OwnershipRunner::class)->run(Company::query()->findOrFail($key), $actor, fn () => app(CreateTaskAction::class)->execute(new CreateTaskData('Database '.$key), $identity));
+        $tasks[$key] = app(OwnershipRunner::class)->run(Company::query()->findOrFail($key), $actor, fn () => app(TaskLifecycle::class)->create(['title' => 'Database '.$key], $identity));
     }
     $connection = $tasks[7]->getConnection();
     foreach ([
@@ -101,7 +100,7 @@ it('rejects foreign task parent and blocker edges at the raw database boundary',
 
 it('does not expose adopted tasks when their runtime is disabled', function (): void {
     $actor = Actor::query()->findOrFail(1);
-    app(OwnershipRunner::class)->run(Company::query()->findOrFail(7), $actor, fn () => app(CreateTaskAction::class)->execute(new CreateTaskData('Protected'), TaskActorData::fromAuthenticatable($actor)));
+    app(OwnershipRunner::class)->run(Company::query()->findOrFail(7), $actor, fn () => app(TaskLifecycle::class)->create(['title' => 'Protected'], $actor));
     config(['nvl-ownership.enabled' => false]);
     expect(fn () => OwnedTask::query()->get())->toThrow(OwnershipException::class);
 });
@@ -111,8 +110,8 @@ it('captures the current owner when a task event publisher survives scoped-conta
     $this->app->forgetScopedInstances();
     Event::fake([TaskChanged::class]);
     app(OwnershipRunner::class)->run(Company::query()->findOrFail(7), Actor::query()->findOrFail(1), function () use ($events): void {
-        $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Current lifecycle'), TaskActorData::system());
-        $events->record($task, TaskChangeOperation::Created, TaskActorData::system());
+        $task = app(TaskLifecycle::class)->create(['title' => 'Current lifecycle'], SystemActor::Background);
+        $events->record($task, TaskChangeOperation::Created, SystemActor::Background);
         Event::assertDispatched(TaskChanged::class, function ($event): bool {
             expect($event->ownershipJobEnvelope()->context()->owner?->key)->toBe('7');
 

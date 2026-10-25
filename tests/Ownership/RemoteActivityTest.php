@@ -10,12 +10,11 @@ use Nvl\Ownership\Services\OwnershipRunner;
 use Nvl\Ownership\Tests\Fixtures\Actor;
 use Nvl\Ownership\Tests\Fixtures\Company;
 use Nvl\Ownership\Tests\Fixtures\Queue\QueueScenario;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Support\Ownership\Contracts\OwnershipContext;
-use Nvl\Tasks\Actions\CreateTaskAction;
-use Nvl\Tasks\Data\Mutations\CreateTaskData;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Jobs\ProcessTaskActivityOutboxJob;
 use Nvl\Tasks\Models\TaskActivityOutbox;
+use Nvl\Tasks\Services\TaskLifecycle;
 use Nvl\Tasks\Services\TasksActivityDelivery;
 use Nvl\Tasks\Tests\RemoteActivityOwnerScopeTestCase;
 use Symfony\Component\Process\Process;
@@ -27,7 +26,7 @@ beforeEach(fn () => QueueScenario::install());
 it('captures and retries remote audit delivery without recapturing the serialization owner', function (): void {
     $actor = Actor::query()->findOrFail(1);
     $job = app(OwnershipRunner::class)->run(Company::query()->findOrFail(7), $actor, function (): ProcessTaskActivityOutboxJob {
-        app(CreateTaskAction::class)->execute(new CreateTaskData('Remote'), TaskActorData::system());
+        app(TaskLifecycle::class)->create(['title' => 'Remote'], SystemActor::Background);
         $payload = json_decode(DB::table('jobs')->sole()->payload, true, flags: JSON_THROW_ON_ERROR);
         expect($payload['data']['nvl_ownership']['owner']['key'])->toBe('7')
             ->and(ActivityLog::query()->count())->toBe(0);
@@ -53,7 +52,7 @@ it('delivers captured task outboxes through an independent worker and quarantine
     $actor = Actor::query()->findOrFail(1);
     foreach ([7, 8] as $key) {
         app(OwnershipRunner::class)->run(Company::query()->findOrFail($key), $actor, function (): void {
-            $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Worker'), TaskActorData::system());
+            $task = app(TaskLifecycle::class)->create(['title' => 'Worker'], SystemActor::Background);
             $task->forceDelete();
         });
     }

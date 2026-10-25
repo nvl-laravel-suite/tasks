@@ -3,15 +3,13 @@
 declare(strict_types=1);
 
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Artisan;
-use Nvl\Tasks\Actions\CreateTaskAction;
-use Nvl\Tasks\Actions\GetTaskDetailAction;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskQueryScope;
-use Nvl\Tasks\Data\Mutations\CreateTaskData;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskChecklistItem;
@@ -19,13 +17,16 @@ use Nvl\Tasks\Models\TaskDependency;
 use Nvl\Tasks\Models\TaskRelationship;
 use Nvl\Tasks\Models\TaskTag;
 use Nvl\Tasks\Models\TaskTimeEntry;
+use Nvl\Tasks\Services\TaskLifecycle;
+use Nvl\Tasks\Services\TaskReader;
+use Nvl\Tasks\Tests\Fixtures\Consumer\TaskProjection;
 
 it('projects a task with its bounded management details', function (): void {
-    $actor = TaskActorData::system();
-    $action = app(CreateTaskAction::class);
-    $task = $action->execute(new CreateTaskData(title: 'Publish release'), $actor);
-    $parent = $action->execute(new CreateTaskData(title: 'Release'), $actor);
-    $blocker = $action->execute(new CreateTaskData(title: 'Review release'), $actor);
+    $actor = SystemActor::Background;
+    $action = app(TaskLifecycle::class);
+    $task = $action->create(['title' => 'Publish release'], $actor);
+    $parent = $action->create(['title' => 'Release'], $actor);
+    $blocker = $action->create(['title' => 'Review release'], $actor);
 
     TaskChecklistItem::query()->forceCreate(['task_id' => $task->id, 'title' => 'Proofread', 'position' => 1]);
     TaskTag::query()->forceCreate(['task_id' => $task->id, 'tag' => 'release']);
@@ -40,7 +41,7 @@ it('projects a task with its bounded management details', function (): void {
     TaskRelationship::query()->forceCreate(['child_task_id' => $task->id, 'parent_task_id' => $parent->id]);
     TaskDependency::query()->forceCreate(['task_id' => $task->id, 'blocker_task_id' => $blocker->id]);
 
-    $detail = app(GetTaskDetailAction::class)->execute($task, $actor)->toArray();
+    $detail = TaskProjection::detail(app(TaskReader::class)->get($task, $actor));
 
     expect($detail['task']['id'])->toBe($task->id)
         ->and($detail['checklist'][0]['title'])->toBe('Proofread')
@@ -52,30 +53,30 @@ it('projects a task with its bounded management details', function (): void {
 });
 
 it('does not expose links to tasks hidden by host visibility or view policy', function (): void {
-    $actor = TaskActorData::system();
-    $action = app(CreateTaskAction::class);
-    $task = $action->execute(new CreateTaskData('Visible'), $actor);
-    $hiddenByScope = $action->execute(new CreateTaskData('Hidden by scope'), $actor);
-    $hiddenByPolicy = $action->execute(new CreateTaskData('Hidden by policy'), $actor);
+    $actor = SystemActor::Background;
+    $action = app(TaskLifecycle::class);
+    $task = $action->create(['title' => 'Visible'], $actor);
+    $hiddenByScope = $action->create(['title' => 'Hidden by scope'], $actor);
+    $hiddenByPolicy = $action->create(['title' => 'Hidden by policy'], $actor);
     TaskRelationship::query()->forceCreate(['child_task_id' => $task->id, 'parent_task_id' => $hiddenByScope->id]);
     TaskDependency::query()->forceCreate(['task_id' => $task->id, 'blocker_task_id' => $hiddenByPolicy->id]);
 
     app()->bind(TaskAuthorization::class, static fn () => new class implements TaskAuthorization, TaskQueryScope
     {
-        public function authorize(TaskAbility $ability, TaskActorData $actor, ?Task $task = null, ?Model $subject = null): void
+        public function authorize(TaskAbility $ability, Authenticatable|SystemActor $actor, ?Task $task = null, ?Model $subject = null): void
         {
             if ($ability === TaskAbility::View && $task?->title === 'Hidden by policy') {
                 throw new AuthorizationException;
             }
         }
 
-        public function scopeTasks(Builder $query, TaskActorData $actor): void
+        public function scopeTasks(Builder $query, Authenticatable|SystemActor $actor): void
         {
             $query->where('title', '!=', 'Hidden by scope');
         }
     });
 
-    $detail = app(GetTaskDetailAction::class)->execute($task, $actor)->toArray();
+    $detail = TaskProjection::detail(app(TaskReader::class)->get($task, $actor));
 
     expect($detail['parentId'])->toBeNull()
         ->and($detail['blockerIds'])->toBe([]);

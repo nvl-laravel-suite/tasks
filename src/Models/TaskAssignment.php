@@ -12,11 +12,11 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
 use Nvl\Support\Ownership\Contracts\Ownable;
+use Nvl\Support\Ownership\Traits\HasOwnership;
 use Nvl\Tasks\Database\Factories\TaskAssignmentFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TasksConfiguration;
-use Nvl\Tasks\Traits\HasTasksOwnership;
 
 /** One durable assignment of a task to a host application's principal.
  *
@@ -40,7 +40,7 @@ final class TaskAssignment extends Model implements Ownable
     /** @use HasFactory<TaskAssignmentFactory> */
     use HasFactory;
 
-    use HasTasksOwnership;
+    use HasOwnership;
     use HasUuids;
 
     /** @var list<string> */

@@ -16,13 +16,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
 use Nvl\Support\Ownership\Contracts\Ownable;
+use Nvl\Support\Ownership\Traits\HasOwnership;
 use Nvl\Tasks\Database\Factories\TaskFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Support\TaskEnumConfiguration;
+use Nvl\Tasks\Support\TaskInstantCast;
 use Nvl\Tasks\Support\TasksConfiguration;
-use Nvl\Tasks\Traits\HasTasksOwnership;
 
-/** A tenant-owned task with app-agnostic actors and optional package-owned extensions.
+/** An ownership-aware task with app-agnostic actors and optional package-owned extensions.
  *
  * @property string $id
  * @property string|null $tenant_id
@@ -58,7 +59,7 @@ class Task extends Model implements Ownable
     /** @use HasFactory<TaskFactory> */
     use HasFactory;
 
-    use HasTasksOwnership;
+    use HasOwnership;
     use HasUuids;
     use SoftDeletes;
 
@@ -170,10 +171,10 @@ class Task extends Model implements Ownable
             'type' => TaskEnumConfiguration::enumClass('type'),
             'category' => TaskEnumConfiguration::enumClass('category'),
             'importance' => TaskEnumConfiguration::enumClass('importance'),
-            'due_at' => 'immutable_datetime',
-            'target_at' => 'immutable_datetime',
+            'due_at' => TaskInstantCast::class,
+            'target_at' => TaskInstantCast::class,
             'estimated_seconds' => 'integer',
-            'completed_at' => 'immutable_datetime',
+            'completed_at' => TaskInstantCast::class,
             'metadata' => 'array',
             'revision' => 'integer',
         ];

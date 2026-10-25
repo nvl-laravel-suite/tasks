@@ -11,12 +11,13 @@ use Illuminate\Support\Carbon;
 use LogicException;
 use Nvl\Support\Config\PackageStorage;
 use Nvl\Support\Ownership\Contracts\Ownable;
+use Nvl\Support\Ownership\Traits\HasOwnership;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Services\TaskModelRegistry;
+use Nvl\Tasks\Support\TaskInstantCast;
 use Nvl\Tasks\Support\TasksConfiguration;
-use Nvl\Tasks\Traits\HasTasksOwnership;
 
-/** A durable, immutable activity payload with independent tenant ownership.
+/** A durable, immutable activity payload with independent native ownership.
  *
  * @property string $id
  * @property string $task_id
@@ -33,7 +34,7 @@ use Nvl\Tasks\Traits\HasTasksOwnership;
  */
 final class TaskActivityOutbox extends Model implements Ownable
 {
-    use HasTasksOwnership;
+    use HasOwnership;
     use HasUuids;
 
     public const string TENANT_RESOURCE = 'tasks.activity_outbox';
@@ -80,9 +81,9 @@ final class TaskActivityOutbox extends Model implements Ownable
         return [
             'payload' => 'array',
             'attempts' => 'integer',
-            'available_at' => 'immutable_datetime',
-            'leased_until' => 'immutable_datetime',
-            'delivered_at' => 'immutable_datetime',
+            'available_at' => TaskInstantCast::class,
+            'leased_until' => TaskInstantCast::class,
+            'delivered_at' => TaskInstantCast::class,
         ];
     }
 }

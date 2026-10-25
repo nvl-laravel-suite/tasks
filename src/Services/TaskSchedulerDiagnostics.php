@@ -7,20 +7,20 @@ namespace Nvl\Tasks\Services;
 use Illuminate\Contracts\Cache\Factory;
 use Illuminate\Contracts\Cache\LockProvider;
 use Nvl\Activity\Providers\ActivityServiceProvider;
-use Nvl\Support\Integrations\OptionalIntegration;
 use Nvl\Tasks\Contracts\TaskSchedulerReadiness;
+use Nvl\Tasks\Support\TaskIntegrations;
 use Throwable;
 
 /** Checks observable schedule execution and the native scheduler's lock backend. */
 final readonly class TaskSchedulerDiagnostics
 {
     /** Resolve integrations lazily while retaining host-replaceable health evidence. */
-    public function __construct(private Factory $cache, private TaskSchedulerReadiness $readiness, private OptionalIntegration $integrations) {}
+    public function __construct(private Factory $cache, private TaskSchedulerReadiness $readiness, private TaskIntegrations $integrations) {}
 
     /** @return list<array{key: string, severity: string, passed: bool, message: string}> */
     public function inspect(): array
     {
-        if (! $this->integrations->enabled('nvl-tasks.activity.enabled', ActivityServiceProvider::class)
+        if (! $this->integrations->enabled('tasks.activity.enabled', ActivityServiceProvider::class)
             || config('nvl-tasks.activity.schedule.enabled', true) !== true) {
             return [['key' => 'scheduler.enabled', 'severity' => 'info', 'passed' => true, 'message' => 'The Tasks activity correctness schedule is inactive.']];
         }

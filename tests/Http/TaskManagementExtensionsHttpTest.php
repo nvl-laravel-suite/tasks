@@ -3,14 +3,17 @@
 declare(strict_types=1);
 
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User;
-use Nvl\Tasks\Actions\CreateTaskAction;
+use Illuminate\Support\Facades\Route;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Tasks\Contracts\TaskAuthorization;
-use Nvl\Tasks\Data\Mutations\CreateTaskData;
-use Nvl\Tasks\Data\TaskActorData;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
+use Nvl\Tasks\Services\ConfiguredTaskAuthorization;
+use Nvl\Tasks\Services\TaskLifecycle;
 
 function taskExtensionsUser(string $name): User
 {
@@ -29,12 +32,18 @@ function allowTaskExtensions(): void
 {
     app()->bind(TaskAuthorization::class, static fn () => new class implements TaskAuthorization
     {
-        public function authorize(TaskAbility $ability, TaskActorData $actor, ?Task $task = null, ?Model $subject = null): void {}
+        public function authorize(TaskAbility $ability, Authenticatable|SystemActor $actor, ?Task $task = null, ?Model $subject = null): void {}
+
+        public function scopeTasks(Builder $query, Authenticatable|SystemActor $actor): void {}
     });
+    foreach (Route::getRoutes() as $route) {
+        $route->flushController();
+    }
 }
 
 it('authorizes dashboard and detail and forwards search filters', function (): void {
-    $task = app(CreateTaskAction::class)->execute(new CreateTaskData('Private'), TaskActorData::system());
+    $task = app(TaskLifecycle::class)->create(['title' => 'Private'], SystemActor::Background);
+    app()->bind(TaskAuthorization::class, ConfiguredTaskAuthorization::class);
     $this->actingAs(taskExtensionsUser('Visitor'));
     $this->getJson('/nvl/api/v1/tasks/dashboard')->assertStatus(500);
     $this->getJson("/nvl/api/v1/tasks/{$task->id}/detail")->assertStatus(500);

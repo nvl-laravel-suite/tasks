@@ -13,11 +13,12 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 use Nvl\Support\Config\PackageStorage;
 use Nvl\Support\Ownership\Contracts\Ownable;
+use Nvl\Support\Ownership\Traits\HasOwnership;
 use Nvl\Tasks\Database\Factories\TaskChecklistItemFactory;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Services\TaskModelRegistry;
+use Nvl\Tasks\Support\TaskInstantCast;
 use Nvl\Tasks\Support\TasksConfiguration;
-use Nvl\Tasks\Traits\HasTasksOwnership;
 
 /** One ordered, independently completable item in a task checklist.
  *
@@ -41,7 +42,7 @@ final class TaskChecklistItem extends Model implements Ownable
     /** @use HasFactory<TaskChecklistItemFactory> */
     use HasFactory;
 
-    use HasTasksOwnership;
+    use HasOwnership;
     use HasUuids;
 
     /** @var list<string> */
@@ -88,7 +89,7 @@ final class TaskChecklistItem extends Model implements Ownable
     {
         return [
             'position' => 'integer',
-            'completed_at' => 'immutable_datetime',
+            'completed_at' => TaskInstantCast::class,
         ];
     }
 

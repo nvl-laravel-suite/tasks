@@ -4,25 +4,27 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Services;
 
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
-use Nvl\Tasks\Compatibility\LegacyTaskGraphGuard;
 use Nvl\Tasks\Contracts\TaskAuthorization;
-use Nvl\Tasks\Data\TaskActorData;
+use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskDependency;
 use Nvl\Tasks\Models\TaskRelationship;
+use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Protects task graph mutations with canonical endpoint, tenant, revision and cycle checks. */
+/** Protects task graph mutations with canonical endpoint, ownership, revision and cycle checks. */
 final readonly class TaskGraphGuard
 {
     /** Construct the task graph boundary. */
     public function __construct(
         private TaskAuthorization $authorization,
         private OwnershipBoundary $boundary,
-        private LegacyTaskGraphGuard $legacy,
     ) {}
 
     /** Lock and authorize two canonical task endpoints in stable key order.
@@ -34,7 +36,7 @@ final readonly class TaskGraphGuard
         Task|string $second,
         int $expectedFirstRevision,
         int $expectedSecondRevision,
-        TaskActorData $actor,
+        Authenticatable|SystemActor $actor,
     ): array {
         $firstId = $first instanceof Task ? $first->getKey() : $first;
         $secondId = $second instanceof Task ? $second->getKey() : $second;
@@ -48,6 +50,14 @@ final readonly class TaskGraphGuard
             throw new InvalidArgumentException('A task cannot link to itself.');
         }
 
+        $lock = DB::connection(TasksConfiguration::connection())
+            ->table(TasksTables::get(TasksTables::GraphLock))
+            ->where('id', '00000000-0000-4000-8000-000000000001')
+            ->lockForUpdate()->first();
+        if ($lock === null) {
+            throw new \LogicException('Tasks graph lock is missing; apply the Tasks graph-lock migration before graph mutations.');
+        }
+
         $ids = [$firstId, $secondId];
         sort($ids, SORT_STRING);
         $locked = [];
@@ -59,7 +69,6 @@ final readonly class TaskGraphGuard
 
         $canonicalFirst = $locked[$firstId];
         $canonicalSecond = $locked[$secondId];
-        $this->legacy->assertPair($canonicalFirst, $canonicalSecond);
 
         $this->authorization->authorize(TaskAbility::Update, $actor, $canonicalFirst);
         $this->authorization->authorize(TaskAbility::Update, $actor, $canonicalSecond);
@@ -84,7 +93,7 @@ final readonly class TaskGraphGuard
             }
 
             $seen[$ancestorId] = true;
-            $relationship = $this->legacy->restrict(TaskRelationship::query(), $child)
+            $relationship = TaskRelationship::query()
                 ->where('child_task_id', $ancestorId)
                 ->first();
 
@@ -118,7 +127,7 @@ final readonly class TaskGraphGuard
             }
 
             $seen[$candidate] = true;
-            $dependencies = $this->legacy->restrict(TaskDependency::query(), $task)
+            $dependencies = TaskDependency::query()
                 ->where('task_id', $candidate)
                 ->pluck('blocker_task_id');
 

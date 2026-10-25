@@ -134,7 +134,7 @@ final readonly class TaskReader
         $this->applyDateWindow($query, 'due_at', $dueFrom, $dueTo);
 
         if ($overdue !== null) {
-            $now = CarbonImmutable::now();
+            $now = CarbonImmutable::now('UTC');
             $completedStatus = $this->status('nvl-tasks.dashboard.statuses.completed', TaskEnumConfiguration::completedStatus());
             $cancelledStatus = $this->status('nvl-tasks.dashboard.statuses.cancelled', TaskStatus::Cancelled->value);
 
@@ -184,7 +184,7 @@ final readonly class TaskReader
         $query->where($field, $candidate);
     }
 
-    /** Apply an inclusive calendar-date window to a timestamp column.
+    /** Apply inclusive host-calendar dates as UTC instants, preserving DST edges.
      *
      * @param  Builder<Task>  $query
      */
@@ -198,11 +198,11 @@ final readonly class TaskReader
         }
 
         if ($first !== null) {
-            $query->where($column, '>=', $first->startOfDay());
+            $query->where($column, '>=', $first->startOfDay()->utc());
         }
 
         if ($last !== null) {
-            $query->where($column, '<', $last->addDay()->startOfDay());
+            $query->where($column, '<', $last->addDay()->startOfDay()->utc());
         }
     }
 
@@ -278,7 +278,8 @@ final readonly class TaskReader
         $completed = $this->status('nvl-tasks.dashboard.statuses.completed', $this->status('nvl-tasks.lifecycle.completed_status', TaskStatus::Completed->value));
         $cancelled = $this->status('nvl-tasks.dashboard.statuses.cancelled', TaskStatus::Cancelled->value);
         $now = CarbonImmutable::now();
-        $soonEnd = $now->addDays($days);
+        $soonEnd = $now->addDays($days)->utc();
+        $now = $now->utc();
 
         $query = $this->reads->query($actor);
 

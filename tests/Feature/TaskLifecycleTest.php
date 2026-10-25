@@ -6,7 +6,6 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -23,9 +22,17 @@ use Nvl\Tasks\Enums\TaskStatus;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Integrations\MediaTaskAttachments;
 use Nvl\Tasks\Models\Task;
+use Nvl\Tasks\Models\TaskActivityOutbox;
+use Nvl\Tasks\Models\TaskAssignment;
+use Nvl\Tasks\Models\TaskChecklistItem;
+use Nvl\Tasks\Models\TaskDependency;
+use Nvl\Tasks\Models\TaskRelationship;
+use Nvl\Tasks\Models\TaskTag;
+use Nvl\Tasks\Models\TaskTimeEntry;
 use Nvl\Tasks\Services\ConfiguredTaskAuthorization;
 use Nvl\Tasks\Services\TaskAssignments;
 use Nvl\Tasks\Services\TaskLifecycle;
+use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Services\TaskPrincipalGuard;
 use Nvl\Tasks\Services\TaskReader;
 
@@ -149,9 +156,17 @@ it('lets a host authorization adapter scope task table rows to its actor', funct
 it('keeps authorized task list queries constant and pages bounded as rows grow', function (): void {
     $actor = SystemActor::Background;
     $list = app(TaskReader::class);
-    $connection = DB::connection();
+    $taskModel = TaskModelRegistry::newInstance();
+    $connection = $taskModel->getConnection();
+    $assignee = taskTestUser('Budget assignee');
+    $models = [$taskModel, $assignee, new TaskAssignment, new TaskChecklistItem,
+        new TaskTimeEntry, new TaskTag, new TaskRelationship,
+        new TaskDependency, new TaskActivityOutbox];
+    $tables = array_map(static fn (Model $model): string => preg_quote($connection->getQueryGrammar()->wrapTable($model->getTable()), '/'), $models);
+    $protectedRead = static fn (array $query): bool => preg_match('/\\b(?:from|join)\\s+(?:'.implode('|', $tables).')(?=\\s|\\)|$)/i', $query['query']) === 1;
 
-    app(TaskLifecycle::class)->create(['title' => 'Task 1'], $actor);
+    $task = app(TaskLifecycle::class)->create(['title' => 'Task 1'], $actor);
+    app(TaskAssignments::class)->assign($task, $assignee, $actor);
     $list->paginate([], $actor, perPage: 4);
 
     $connection->enableQueryLog();
@@ -159,15 +174,20 @@ it('keeps authorized task list queries constant and pages bounded as rows grow',
     try {
         $connection->flushQueryLog();
         $one = $list->paginate([], $actor, perPage: 4);
-        $oneQueries = count(array_filter($connection->getQueryLog(), static fn (array $query): bool => str_contains($query['query'], 'from "nvl_tasks"')));
+        $oneQueries = count(array_filter($connection->getQueryLog(), $protectedRead));
 
         foreach (range(2, 5) as $number) {
-            app(TaskLifecycle::class)->create(['title' => "Task {$number}"], $actor);
+            $task = app(TaskLifecycle::class)->create(['title' => "Task {$number}"], $actor);
+            app(TaskAssignments::class)->assign($task, $assignee, $actor);
         }
 
         $connection->flushQueryLog();
         $many = $list->paginate([], $actor, perPage: 4);
-        $manyQueries = count(array_filter($connection->getQueryLog(), static fn (array $query): bool => str_contains($query['query'], 'from "nvl_tasks"')));
+        $manyQueries = count(array_filter($connection->getQueryLog(), $protectedRead));
+        $connection->flushQueryLog();
+        $task->assignments()->get();
+        $assignee->fresh();
+        expect(count(array_filter($connection->getQueryLog(), $protectedRead)))->toBe(2);
     } finally {
         $connection->disableQueryLog();
         $connection->flushQueryLog();
@@ -176,6 +196,7 @@ it('keeps authorized task list queries constant and pages bounded as rows grow',
     expect($one->total())->toBe(1)
         ->and($many->total())->toBe(5)
         ->and($many->count())->toBe(4)
+        ->and($oneQueries)->toBe(2)
         ->and($manyQueries)->toBe($oneQueries)
         ->toBeLessThanOrEqual(4);
 

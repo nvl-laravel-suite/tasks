@@ -66,7 +66,7 @@ it('isolates task creation and reads after tenant adoption', function (): void {
     });
 });
 
-it('adopts every task child and keeps inherited reads inside the active tenant', function (): void {
+it('attributes new task children and keeps inherited reads inside the active owner', function (): void {
     tasksOwner(7, function (): void {
         $actor = Actor::query()->findOrFail(1);
         $task = app(TaskLifecycle::class)->create(['title' => 'Owner'], $actor);
@@ -91,7 +91,7 @@ it('adopts every task child and keeps inherited reads inside the active tenant',
     }
 });
 
-it('adopts outbox rows from their tasks and detects conflicting ownership', function (): void {
+it('captures ownership for new outbox rows and rejects immutable fact changes', function (): void {
     tasksOwner(7, function (): void {
         $task = app(TaskLifecycle::class)->create(['title' => 'Captured audit'], Actor::query()->findOrFail(1));
         $event = TaskActivityOutbox::query()->where('task_id', $task->id)->firstOrFail();

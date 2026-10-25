@@ -95,9 +95,9 @@ final readonly class TasksActivityDelivery
 
         $ids = $this->boundary->query(TaskActivityOutbox::query(), TaskActivityOutbox::TENANT_RESOURCE)
             ->whereNull('delivered_at')
-            ->where('available_at', '<=', CarbonImmutable::now())
+            ->where('available_at', '<=', CarbonImmutable::now('UTC'))
             ->where(static function ($query): void {
-                $query->whereNull('leased_until')->orWhere('leased_until', '<=', CarbonImmutable::now());
+                $query->whereNull('leased_until')->orWhere('leased_until', '<=', CarbonImmutable::now('UTC'));
             })
             ->orderBy('available_at')
             ->limit(max(1, min($limit, 1000)))

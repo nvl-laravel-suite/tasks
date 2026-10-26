@@ -31,13 +31,15 @@ abstract class TestCase extends Orchestra
     {
         parent::setUp();
         nativeTaskPolicy();
-        $this->app->bind(MediaAuthorization::class, static fn () => new class implements MediaAuthorization
-        {
-            public function allows(Authenticatable|SystemActor $actor, MediaAbility $ability, ?Media $media = null, ?Model $owner = null): bool
+        if (interface_exists(MediaAuthorization::class)) {
+            $this->app->bind(MediaAuthorization::class, static fn () => new class implements MediaAuthorization
             {
-                return $actor instanceof SystemActor;
-            }
-        });
+                public function allows(Authenticatable|SystemActor $actor, MediaAbility $ability, ?Media $media = null, ?Model $owner = null): bool
+                {
+                    return $actor instanceof SystemActor;
+                }
+            });
+        }
         $this->app->forgetScopedInstances();
     }
 

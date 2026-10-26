@@ -9,7 +9,7 @@ Tasks owns task lifecycle, assignments, checklists, tags, timers, time entries, 
 PHP 8.4+, Laravel 13 and `nvl/core` are required. Internal family versions remain 6 during the coordinated Light conversion; the breaking release is coordinated separately.
 
 ```sh
-composer require nvl/tasks:^6.0
+composer require nvl/tasks:^7.0
 php artisan vendor:publish --tag=nvl-tasks-config
 php artisan migrate
 php artisan nvl:tasks:doctor --strict

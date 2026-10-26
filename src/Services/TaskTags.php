@@ -18,7 +18,8 @@ use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskTag;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Native TaskTags operations with explicit actors and canonical persistence.
+/**
+ * Native TaskTags operations with explicit actors and canonical persistence.
  *
  * @api
  */

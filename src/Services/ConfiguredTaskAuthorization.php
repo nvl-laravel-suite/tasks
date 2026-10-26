@@ -13,7 +13,11 @@ use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
 
-/** Fails closed until a consuming app binds its own task policy. */
+/**
+ * Fails closed until a consuming app binds its own task policy.
+ *
+ * @internal
+ */
 final class ConfiguredTaskAuthorization implements TaskAuthorization
 {
     /** Reject every actor until a host policy is explicitly bound. */

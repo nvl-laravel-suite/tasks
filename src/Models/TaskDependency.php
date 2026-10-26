@@ -17,7 +17,8 @@ use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** One blocker edge from a task to the task it waits for.
+/**
+ * One blocker edge from a task to the task it waits for.
  *
  * @property string $id
  * @property string|null $tenant_id

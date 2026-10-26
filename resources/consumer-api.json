@@ -360,7 +360,6 @@
                 "assignments",
                 "blockedTaskLinks",
                 "blockerLinks",
-                "bootHasOwnership",
                 "checklistItems",
                 "childLinks",
                 "creator",
@@ -415,7 +414,6 @@
             "methods": [
                 "assignedBy",
                 "assignee",
-                "bootHasOwnership",
                 "delete",
                 "fresh",
                 "getConnectionName",
@@ -447,7 +445,6 @@
             "kind": "class",
             "file": "src/Models/TaskChecklistItem.php",
             "methods": [
-                "bootHasOwnership",
                 "completedBy",
                 "delete",
                 "fresh",
@@ -481,7 +478,6 @@
             "file": "src/Models/TaskDependency.php",
             "methods": [
                 "blocker",
-                "bootHasOwnership",
                 "delete",
                 "fresh",
                 "getConnectionName",
@@ -509,7 +505,6 @@
             "kind": "class",
             "file": "src/Models/TaskRelationship.php",
             "methods": [
-                "bootHasOwnership",
                 "child",
                 "delete",
                 "fresh",
@@ -538,7 +533,6 @@
             "kind": "class",
             "file": "src/Models/TaskTag.php",
             "methods": [
-                "bootHasOwnership",
                 "delete",
                 "fresh",
                 "getConnectionName",
@@ -565,7 +559,6 @@
             "kind": "class",
             "file": "src/Models/TaskTimeEntry.php",
             "methods": [
-                "bootHasOwnership",
                 "delete",
                 "fresh",
                 "getConnectionName",

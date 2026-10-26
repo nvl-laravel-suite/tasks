@@ -20,7 +20,8 @@ use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TaskInstantCast;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** One ordered, independently completable item in a task checklist.
+/**
+ * One ordered, independently completable item in a task checklist.
  *
  * @property string $id
  * @property string $task_id

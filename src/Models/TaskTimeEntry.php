@@ -20,7 +20,8 @@ use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TaskInstantCast;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** A manual interval or running timer belonging to a canonical task and performer.
+/**
+ * A manual interval or running timer belonging to a canonical task and performer.
  *
  * @property string $id
  * @property string $task_id

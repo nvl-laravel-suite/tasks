@@ -6,7 +6,8 @@ namespace Nvl\Tasks\Exceptions;
 
 /**
  * @api
- Signals that a task changed after a consumer read its revision. */
+ * Signals that a task changed after a consumer read its revision.
+ */
 final class TaskRevisionConflict extends TasksException
 {
     /** Describe the rejected stale task update. */

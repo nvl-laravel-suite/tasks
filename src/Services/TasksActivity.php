@@ -10,7 +10,11 @@ use Nvl\Tasks\Contracts\TaskActivityPublisher;
 use Nvl\Tasks\Enums\TaskChangeOperation;
 use Nvl\Tasks\Models\Task;
 
-/** Composes semantic task mutation events through the selected package-owned publisher. */
+/**
+ * Composes semantic task mutation events through the selected package-owned publisher.
+ *
+ * @internal
+ */
 final readonly class TasksActivity
 {
     /** Create the task event composition boundary. */

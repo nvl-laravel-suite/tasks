@@ -19,7 +19,8 @@ use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskTimeEntry;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Native TaskTimeTracking operations with explicit actors and canonical persistence.
+/**
+ * Native TaskTimeTracking operations with explicit actors and canonical persistence.
  *
  * @api
  */

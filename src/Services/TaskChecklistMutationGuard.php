@@ -13,7 +13,11 @@ use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskChecklistItem;
 
-/** Resolves canonical task ownership and revision for checklist writes. */
+/**
+ * Resolves canonical task ownership and revision for checklist writes.
+ *
+ * @internal
+ */
 final readonly class TaskChecklistMutationGuard
 {
     /** Construct the checklist write boundary. */

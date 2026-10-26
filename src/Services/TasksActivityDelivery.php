@@ -18,7 +18,11 @@ use Nvl\Tasks\Support\TaskIntegrations;
 use Nvl\Tasks\Support\TasksConfiguration;
 use Throwable;
 
-/** Delivers committed task events with a short lease and idempotent Activity IDs. */
+/**
+ * Delivers committed task events with a short lease and idempotent Activity IDs.
+ *
+ * @internal
+ */
 final readonly class TasksActivityDelivery
 {
     private const int LEASE_SECONDS = 120;

@@ -14,7 +14,8 @@ use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Native TaskLifecycle operations with explicit actors and canonical persistence.
+/**
+ * Native TaskLifecycle operations with explicit actors and canonical persistence.
  *
  * @api
  */

@@ -14,7 +14,8 @@ use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskChecklistItem;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Native TaskChecklist operations with explicit actors and canonical persistence.
+/**
+ * Native TaskChecklist operations with explicit actors and canonical persistence.
  *
  * @api
  */
@@ -29,8 +30,8 @@ final readonly class TaskChecklist
         $actor = $this->principals->actor($actor);
         $title = trim($title);
         Validator::make(
-            ['title' => $title, 'expectedRevision' => $expectedRevision],
-            ['title' => ['required', 'string', 'max:255'], 'expectedRevision' => ['required', 'integer', 'min:1']],
+            ['title' => $title, 'expected_revision' => $expectedRevision],
+            ['title' => ['required', 'string', 'max:255'], 'expected_revision' => ['required', 'integer', 'min:1']],
         )->validate();
 
         $item = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $expectedRevision, $task, $title): TaskChecklistItem {
@@ -65,8 +66,8 @@ final readonly class TaskChecklist
         $actor = $this->principals->actor($actor);
         $title = trim($title);
         Validator::make(
-            ['title' => $title, 'expectedRevision' => $expectedRevision],
-            ['title' => ['required', 'string', 'max:255'], 'expectedRevision' => ['required', 'integer', 'min:1']],
+            ['title' => $title, 'expected_revision' => $expectedRevision],
+            ['title' => ['required', 'string', 'max:255'], 'expected_revision' => ['required', 'integer', 'min:1']],
         )->validate();
 
         $updated = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $expectedRevision, $item, $task, $title): TaskChecklistItem {
@@ -94,8 +95,8 @@ final readonly class TaskChecklist
     ): TaskChecklistItem {
         $actor = $this->principals->actor($actor);
         Validator::make(
-            ['completed' => $completed, 'expectedRevision' => $expectedRevision],
-            ['expectedRevision' => ['required', 'integer', 'min:1']],
+            ['completed' => $completed, 'expected_revision' => $expectedRevision],
+            ['expected_revision' => ['required', 'integer', 'min:1']],
         )->validate();
 
         $updated = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $expectedRevision, $completed, $item, $task): TaskChecklistItem {
@@ -126,8 +127,8 @@ final readonly class TaskChecklist
     {
         $actor = $this->principals->actor($actor);
         Validator::make(
-            ['itemIds' => $itemIds, 'expectedRevision' => $expectedRevision],
-            ['itemIds' => ['required', 'array', 'list', 'min:1'], 'itemIds.*' => ['required', 'uuid', 'distinct:strict'], 'expectedRevision' => ['required', 'integer', 'min:1']],
+            ['itemIds' => $itemIds, 'expected_revision' => $expectedRevision],
+            ['itemIds' => ['required', 'array', 'list', 'min:1'], 'itemIds.*' => ['required', 'uuid', 'distinct:strict'], 'expected_revision' => ['required', 'integer', 'min:1']],
         )->validate();
 
         $reorderedTask = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $expectedRevision, $itemIds, $task): Task {
@@ -179,8 +180,8 @@ final readonly class TaskChecklist
     ): Task {
         $actor = $this->principals->actor($actor);
         Validator::make(
-            ['expectedRevision' => $expectedRevision],
-            ['expectedRevision' => ['required', 'integer', 'min:1']],
+            ['expected_revision' => $expectedRevision],
+            ['expected_revision' => ['required', 'integer', 'min:1']],
         )->validate();
 
         $itemId = $item instanceof TaskChecklistItem ? $item->id : $item;

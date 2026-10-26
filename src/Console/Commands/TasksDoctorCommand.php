@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Nvl\Tasks\Console;
+namespace Nvl\Tasks\Console\Commands;
 
 use Illuminate\Console\Command;
 use InvalidArgumentException;

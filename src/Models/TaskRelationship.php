@@ -17,7 +17,8 @@ use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** One child-to-parent edge in the task hierarchy.
+/**
+ * One child-to-parent edge in the task hierarchy.
  *
  * @property string $id
  * @property string|null $tenant_id

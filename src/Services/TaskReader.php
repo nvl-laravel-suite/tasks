@@ -28,7 +28,8 @@ use Nvl\Tasks\Support\TasksConfiguration;
 use stdClass;
 use UnexpectedValueException;
 
-/** Native TaskReader operations with explicit actors and canonical persistence.
+/**
+ * Native TaskReader operations with explicit actors and canonical persistence.
  *
  * @api
  */

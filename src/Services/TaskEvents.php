@@ -15,7 +15,11 @@ use Nvl\Tasks\Enums\TaskChangeOperation;
 use Nvl\Tasks\Events\TaskChanged;
 use Nvl\Tasks\Models\Task;
 
-/** Snapshots semantic task changes on their actual writer connection. */
+/**
+ * Snapshots semantic task changes on their actual writer connection.
+ *
+ * @internal
+ */
 final readonly class TaskEvents
 {
     /** Retain the source-aware dispatcher and current ownership boundary. */

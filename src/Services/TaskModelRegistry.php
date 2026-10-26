@@ -42,7 +42,9 @@ final class TaskModelRegistry
         );
     }
 
-    /** Resolve and freeze the concrete Task class before resource compilation.
+    /**
+     * Resolve and freeze the concrete Task class before resource compilation.
+     *
      * @internal
      *
      * @return class-string<Task>
@@ -60,7 +62,9 @@ final class TaskModelRegistry
         return $this->registration->modelClass();
     }
 
-    /** Resolve the immutable model from native framework entry points.
+    /**
+     * Resolve the immutable model from native framework entry points.
+     *
      * @internal
      *
      * @return class-string<Task>
@@ -82,7 +86,9 @@ final class TaskModelRegistry
         return new $class;
     }
 
-    /** Persist a package-authored attribute map under the exact source assignment.
+    /**
+     * Persist a package-authored attribute map under the exact source assignment.
+     *
      * @internal
      *
      * @param  array<string, mixed>  $attributes

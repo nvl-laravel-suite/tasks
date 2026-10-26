@@ -14,7 +14,11 @@ use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Support\TaskEnumConfiguration;
 use Throwable;
 
-/** Validates native task edits and preserves omitted fields. @internal */
+/**
+ * Validates native task edits and preserves omitted fields.
+ *
+ * @internal
+ */
 final class TaskMutationValues
 {
     /** @param array<string, mixed> $attributes

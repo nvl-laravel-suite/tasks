@@ -16,7 +16,11 @@ use Nvl\Tasks\Support\TaskEnumConfiguration;
 use Nvl\Tasks\Support\TaskIntegrations;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Inspects task schema and consumer bindings without mutating application data. */
+/**
+ * Inspects task schema and consumer bindings without mutating application data.
+ *
+ * @internal
+ */
 final class TasksDoctor
 {
     /** Initialize the package-owned inspection dependencies. */

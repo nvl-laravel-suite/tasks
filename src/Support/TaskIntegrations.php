@@ -8,7 +8,11 @@ use Illuminate\Contracts\Config\Repository;
 use InvalidArgumentException;
 use Nvl\Support\Integrations\OptionalIntegration;
 
-/** Explicitly selects checked optional Tasks adapters. @internal */
+/**
+ * Explicitly selects checked optional Tasks adapters.
+ *
+ * @internal
+ */
 final readonly class TaskIntegrations
 {
     public function __construct(private Repository $config, private OptionalIntegration $integrations) {}

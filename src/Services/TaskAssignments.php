@@ -15,7 +15,8 @@ use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskAssignment;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Native TaskAssignments operations with explicit actors and canonical persistence.
+/**
+ * Native TaskAssignments operations with explicit actors and canonical persistence.
  *
  * @api
  */

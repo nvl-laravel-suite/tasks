@@ -26,8 +26,8 @@ final readonly class TasksManagementController
     public function index(Request $request): JsonResponse
     {
         $actor = $this->actor($request);
-        $request->validate(['perPage' => 'sometimes|integer|min:1|max:100', 'page' => 'sometimes|integer|min:1', 'overdue' => 'sometimes|boolean']);
-        $criteria = $this->attributes($request->except(['perPage', 'page']));
+        $request->validate(['per_page' => 'sometimes|integer|min:1|max:100', 'page' => 'sometimes|integer|min:1', 'overdue' => 'sometimes|boolean']);
+        $criteria = $this->attributes($request->except(['per_page', 'page']));
         if (array_key_exists('overdue', $criteria)) {
             $criteria['overdue'] = $request->boolean('overdue');
         }
@@ -36,7 +36,7 @@ final readonly class TasksManagementController
             unset($criteria['assignee_id']);
         }
 
-        return $this->page($this->reader->paginate($criteria, $actor, (int) $request->input('perPage', 25), (int) $request->input('page', 1)));
+        return $this->page($this->reader->paginate($criteria, $actor, (int) $request->input('per_page', 25), (int) $request->input('page', 1)));
     }
 
     public function store(Request $request): JsonResponse
@@ -51,7 +51,7 @@ final readonly class TasksManagementController
 
     public function update(Request $request, string $task): JsonResponse
     {
-        return $this->model($this->tasks->update($task, $this->attributes($request->except('expectedRevision')), $this->revision($request), $this->actor($request)));
+        return $this->model($this->tasks->update($task, $this->attributes($request->except('expected_revision')), $this->revision($request), $this->actor($request)));
     }
 
     public function destroy(Request $request, string $task): JsonResponse
@@ -101,12 +101,12 @@ final readonly class TasksManagementController
 
     public function checklistItems(Request $request, string $task): JsonResponse
     {
-        return $this->page($this->reader->checklist($task, $this->actor($request), (int) $request->input('perPage', 25), (int) $request->input('page', 1)));
+        return $this->page($this->reader->checklist($task, $this->actor($request), (int) $request->input('per_page', 25), (int) $request->input('page', 1)));
     }
 
     public function timeEntries(Request $request, string $task): JsonResponse
     {
-        return $this->page($this->reader->timeEntries($task, $this->actor($request), (int) $request->input('perPage', 25), (int) $request->input('page', 1)));
+        return $this->page($this->reader->timeEntries($task, $this->actor($request), (int) $request->input('per_page', 25), (int) $request->input('page', 1)));
     }
 
     public function addChecklistItem(Request $request, string $task): JsonResponse
@@ -150,12 +150,12 @@ final readonly class TasksManagementController
 
     public function addTimeEntry(Request $request, string $task): JsonResponse
     {
-        return $this->model($this->time->add($task, $this->attributes($request->except('expectedRevision')), $this->revision($request), $this->actor($request)), 201);
+        return $this->model($this->time->add($task, $this->attributes($request->except('expected_revision')), $this->revision($request), $this->actor($request)), 201);
     }
 
     public function updateTimeEntry(Request $request, string $task, string $entry): JsonResponse
     {
-        return $this->model($this->time->update($task, $entry, $this->attributes($request->except('expectedRevision')), $this->revision($request), $this->actor($request)), 200);
+        return $this->model($this->time->update($task, $entry, $this->attributes($request->except('expected_revision')), $this->revision($request), $this->actor($request)), 200);
     }
 
     public function deleteTimeEntry(Request $request, string $task, string $entry): JsonResponse
@@ -204,7 +204,7 @@ final readonly class TasksManagementController
         return $request->user() ?? abort(401);
     }
 
-    private function revision(Request $request, string $field = 'expectedRevision'): int
+    private function revision(Request $request, string $field = 'expected_revision'): int
     {
         $request->validate([$field => 'required|integer|min:1']);
 

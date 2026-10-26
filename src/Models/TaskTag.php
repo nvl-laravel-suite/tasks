@@ -17,7 +17,8 @@ use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** One normalized label attached to a canonical task.
+/**
+ * One normalized label attached to a canonical task.
  *
  * @property string $id
  * @property string $task_id

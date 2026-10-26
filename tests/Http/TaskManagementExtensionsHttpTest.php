@@ -82,62 +82,62 @@ it('manages checklist, tags, manual time and timers through revision-checked rou
         ->assertCreated()->json('data.id');
 
     $item = $this->postJson("/nvl/api/v1/tasks/{$task}/checklist-items", [
-        'title' => '  Check links  ', 'expectedRevision' => 1,
+        'title' => '  Check links  ', 'expected_revision' => 1,
     ])->assertCreated()->assertJsonPath('data.title', 'Check links')->json('data.id');
     $this->putJson("/nvl/api/v1/tasks/{$task}/checklist-items/{$item}", [
-        'title' => 'Check all links', 'expectedRevision' => 2,
+        'title' => 'Check all links', 'expected_revision' => 2,
     ])->assertOk()->assertJsonPath('data.title', 'Check all links');
     $this->postJson("/nvl/api/v1/tasks/{$task}/checklist-items/{$item}/completion", [
-        'completed' => true, 'expectedRevision' => 3,
+        'completed' => true, 'expected_revision' => 3,
     ])->assertOk()->assertJsonPath('data.completedById', (string) $owner->getKey());
     $this->putJson("/nvl/api/v1/tasks/{$task}/checklist-items/order", [
-        'itemIds' => [$item], 'expectedRevision' => 4,
+        'itemIds' => [$item], 'expected_revision' => 4,
     ])->assertOk()->assertJsonPath('data.revision', 5);
     $this->getJson("/nvl/api/v1/tasks/{$task}/detail")->assertOk()
         ->assertJsonPath('data.checklist.0.title', 'Check all links');
     $this->deleteJson("/nvl/api/v1/tasks/{$task}/checklist-items/{$item}", [
-        'expectedRevision' => 5,
+        'expected_revision' => 5,
     ])->assertNoContent();
 
     $this->postJson("/nvl/api/v1/tasks/{$task}/tags", [
-        'tag' => ' Release ', 'expectedRevision' => 6,
+        'tag' => ' Release ', 'expected_revision' => 6,
     ])->assertCreated()->assertJsonPath('data.tag', 'release');
     $this->getJson("/nvl/api/v1/tasks/{$task}/detail")->assertOk()
         ->assertJsonPath('data.tags.0', 'release');
     $this->deleteJson("/nvl/api/v1/tasks/{$task}/tags/release", [
-        'expectedRevision' => 7,
+        'expected_revision' => 7,
     ])->assertNoContent();
 
     $entry = $this->postJson("/nvl/api/v1/tasks/{$task}/time-entries", [
         'startedAt' => '2026-09-28T10:00:00+00:00',
         'endedAt' => '2026-09-28T10:30:00+00:00',
-        'expectedRevision' => 8,
+        'expected_revision' => 8,
     ])->assertCreated()->assertJsonPath('data.durationSeconds', 1800)->json('data.id');
     $this->putJson("/nvl/api/v1/tasks/{$task}/time-entries/{$entry}", [
         'startedAt' => '2026-09-28T10:00:00+00:00',
         'endedAt' => '2026-09-28T11:00:00+00:00',
-        'expectedRevision' => 9,
+        'expected_revision' => 9,
     ])->assertOk()->assertJsonPath('data.durationSeconds', 3600);
     $this->deleteJson("/nvl/api/v1/tasks/{$task}/time-entries/{$entry}", [
-        'expectedRevision' => 10,
+        'expected_revision' => 10,
     ])->assertNoContent();
 
     $start = CarbonImmutable::now();
     CarbonImmutable::setTestNow($start);
 
     try {
-        $timer = $this->postJson("/nvl/api/v1/tasks/{$task}/timer", ['expectedRevision' => 11])
+        $timer = $this->postJson("/nvl/api/v1/tasks/{$task}/timer", ['expected_revision' => 11])
             ->assertCreated()->json('data.id');
         CarbonImmutable::setTestNow($start->addSeconds(2));
         $this->postJson("/nvl/api/v1/tasks/{$task}/timer/{$timer}/stop", [
-            'expectedRevision' => 12,
+            'expected_revision' => 12,
         ])->assertOk()->assertJsonPath('data.durationSeconds', 2);
     } finally {
         CarbonImmutable::setTestNow();
     }
 
     $this->postJson("/nvl/api/v1/tasks/{$task}/tags", [
-        'tag' => 'Stale', 'expectedRevision' => 11,
+        'tag' => 'Stale', 'expected_revision' => 11,
     ])->assertStatus(409);
 });
 
@@ -179,7 +179,7 @@ it('pages checklist and time history beyond bounded task detail', function (): v
     foreach (range(1, 3) as $number) {
         $this->postJson("/nvl/api/v1/tasks/{$task}/checklist-items", [
             'title' => "Item {$number}",
-            'expectedRevision' => $number,
+            'expected_revision' => $number,
         ])->assertCreated();
     }
 
@@ -187,17 +187,17 @@ it('pages checklist and time history beyond bounded task detail', function (): v
         $this->postJson("/nvl/api/v1/tasks/{$task}/time-entries", [
             'startedAt' => "2026-09-2{$number}T10:00:00+00:00",
             'endedAt' => "2026-09-2{$number}T10:30:00+00:00",
-            'expectedRevision' => $number + 3,
+            'expected_revision' => $number + 3,
         ])->assertCreated();
     }
 
     $this->getJson("/nvl/api/v1/tasks/{$task}/detail")->assertOk()
         ->assertJsonCount(1, 'data.checklist')
         ->assertJsonCount(1, 'data.timeEntries');
-    $this->getJson("/nvl/api/v1/tasks/{$task}/checklist-items?perPage=2&page=2")->assertOk()
+    $this->getJson("/nvl/api/v1/tasks/{$task}/checklist-items?per_page=2&page=2")->assertOk()
         ->assertJsonPath('meta.total', 3)
         ->assertJsonPath('data.0.title', 'Item 3');
-    $this->getJson("/nvl/api/v1/tasks/{$task}/time-entries?perPage=2&page=2")->assertOk()
+    $this->getJson("/nvl/api/v1/tasks/{$task}/time-entries?per_page=2&page=2")->assertOk()
         ->assertJsonPath('meta.total', 3)
         ->assertJsonPath('data.0.durationSeconds', 1800);
 });

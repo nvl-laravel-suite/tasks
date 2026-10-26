@@ -23,7 +23,8 @@ use Nvl\Tasks\Support\TaskEnumConfiguration;
 use Nvl\Tasks\Support\TaskInstantCast;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** An ownership-aware task with app-agnostic actors and optional package-owned extensions.
+/**
+ * An ownership-aware task with app-agnostic actors and optional package-owned extensions.
  *
  * @property string $id
  * @property string|null $tenant_id

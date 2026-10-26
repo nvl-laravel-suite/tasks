@@ -10,7 +10,11 @@ use Nvl\Support\Ownership\Services\OwnershipContextResolver;
 use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
 use Nvl\Tasks\Ownership\TaskOutboxOwnerWorklist;
 
-/** Recovers task audit facts inside separately authorized canonical owner scopes. */
+/**
+ * Recovers task audit facts inside separately authorized canonical owner scopes.
+ *
+ * @internal
+ */
 final readonly class TasksActivityDrainDispatcher
 {
     /** Retain only neutral admission contracts and the bounded task recovery capability. */

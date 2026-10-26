@@ -10,7 +10,11 @@ use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
 use Nvl\Support\Ownership\ValueObjects\OwnerReference;
 use Nvl\Tasks\Models\TaskActivityOutbox;
 
-/** Projects only due outbox owner identities; each identity still requires fresh system admission. @internal */
+/**
+ * Projects only due outbox owner identities; each identity still requires fresh system admission.
+ *
+ * @internal
+ */
 final readonly class TaskOutboxOwnerWorklist
 {
     /** Validate live source markers before this fixed cross-owner maintenance projection. */

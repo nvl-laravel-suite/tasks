@@ -12,7 +12,11 @@ use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
 
-/** Applies ownership and actor visibility before protected reads and aggregates. @internal */
+/**
+ * Applies ownership and actor visibility before protected reads and aggregates.
+ *
+ * @internal
+ */
 final readonly class TaskReadGuard
 {
     /** Retain the policy and fresh ownership boundary. */

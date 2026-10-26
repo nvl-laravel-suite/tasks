@@ -7,7 +7,11 @@ namespace Nvl\Tasks\Services;
 use Illuminate\Contracts\Cache\Factory;
 use Nvl\Tasks\Contracts\TaskSchedulerReadiness;
 
-/** Observes actual schedule execution through a short-lived cache heartbeat. */
+/**
+ * Observes actual schedule execution through a short-lived cache heartbeat.
+ *
+ * @internal
+ */
 final readonly class CachedTaskSchedulerReadiness implements TaskSchedulerReadiness
 {
     public const string CACHE_KEY = 'nvl:tasks:scheduler-heartbeat';

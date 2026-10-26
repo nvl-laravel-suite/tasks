@@ -10,7 +10,9 @@ use Nvl\Support\Traits\InteractsWithPackageFailure;
 use Nvl\Tasks\Enums\TasksResponseCode;
 use RuntimeException;
 
-/** Base public Tasks runtime failure.
+/**
+ * Base public Tasks runtime failure.
+ *
  * @api
  */
 class TasksException extends RuntimeException implements RespondableException

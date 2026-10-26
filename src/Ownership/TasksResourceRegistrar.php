@@ -16,7 +16,11 @@ use Nvl\Tasks\Models\TaskTag;
 use Nvl\Tasks\Models\TaskTimeEntry;
 use Nvl\Tasks\Services\TaskModelRegistry;
 
-/** Declares the canonical Task root, inherited children and independently retained outbox. @internal */
+/**
+ * Declares the canonical Task root, inherited children and independently retained outbox.
+ *
+ * @internal
+ */
 final readonly class TasksResourceRegistrar
 {
     /** Retain the configured model extension boundary. */

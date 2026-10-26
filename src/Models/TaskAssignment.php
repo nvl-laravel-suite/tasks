@@ -18,7 +18,8 @@ use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Services\TaskModelRegistry;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** One durable assignment of a task to a host application's principal.
+/**
+ * One durable assignment of a task to a host application's principal.
  *
  * @property string $id
  * @property string $task_id

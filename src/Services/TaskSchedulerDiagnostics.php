@@ -11,7 +11,11 @@ use Nvl\Tasks\Contracts\TaskSchedulerReadiness;
 use Nvl\Tasks\Support\TaskIntegrations;
 use Throwable;
 
-/** Checks observable schedule execution and the native scheduler's lock backend. */
+/**
+ * Checks observable schedule execution and the native scheduler's lock backend.
+ *
+ * @internal
+ */
 final readonly class TaskSchedulerDiagnostics
 {
     /** Resolve integrations lazily while retaining host-replaceable health evidence. */

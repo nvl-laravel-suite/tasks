@@ -13,7 +13,11 @@ use Nvl\Tasks\Models\TaskRelationship;
 use Nvl\Tasks\Models\TaskTag;
 use Nvl\Tasks\Models\TaskTimeEntry;
 
-/** Persists only package-owned Task children through their canonical parent assignment. @internal */
+/**
+ * Persists only package-owned Task children through their canonical parent assignment.
+ *
+ * @internal
+ */
 final readonly class TaskRecordWriter
 {
     /** Retain the neutral writer without retaining a model or execution scope. */

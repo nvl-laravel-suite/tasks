@@ -94,14 +94,14 @@ it('exposes bounded task rows, exact-revision writes, and host-resolved assignme
         'metadata' => ['source' => 'editorial'],
     ])->assertCreated()->json('data.id');
 
-    $this->getJson('/nvl/api/v1/tasks?status=open&perPage=10')
+    $this->getJson('/nvl/api/v1/tasks?status=open&per_page=10')
         ->assertOk()->assertJsonPath('meta.total', 1)
         ->assertJsonPath('data.0.id', $taskId)
         ->assertJsonPath('data.0.assigneesCount', 0)
         ->assertJsonMissingPath('data.0.tenantId');
 
     $this->getJson('/nvl/api/v1/tasks?status=invalid')->assertUnprocessable();
-    $this->getJson('/nvl/api/v1/tasks?perPage=0')->assertUnprocessable();
+    $this->getJson('/nvl/api/v1/tasks?per_page=0')->assertUnprocessable();
     $this->postJson('/nvl/api/v1/tasks', ['title' => 'Invalid metadata', 'metadata' => ['not-an-object']])
         ->assertUnprocessable();
     $this->postJson("/nvl/api/v1/tasks/{$taskId}/assignees", [])->assertUnprocessable();
@@ -118,7 +118,7 @@ it('exposes bounded task rows, exact-revision writes, and host-resolved assignme
         'title' => 'Approved draft',
         'status' => 'completed',
         'priority' => 'high',
-        'expectedRevision' => 2,
+        'expected_revision' => 2,
     ])->assertOk()->assertJsonPath('data.status', 'completed')
         ->assertJsonPath('data.description', 'Check the copy.');
 
@@ -129,15 +129,15 @@ it('exposes bounded task rows, exact-revision writes, and host-resolved assignme
         'title' => 'Stale draft',
         'status' => 'open',
         'priority' => 'low',
-        'expectedRevision' => 2,
+        'expected_revision' => 2,
     ])->assertStatus(409);
 
     $this->deleteJson("/nvl/api/v1/tasks/{$taskId}/assignees/{$assignee->getKey()}")->assertNoContent();
     $this->deleteJson("/nvl/api/v1/tasks/{$taskId}")->assertNoContent();
     $this->getJson("/nvl/api/v1/tasks/{$taskId}")->assertNotFound();
     $this->postJson("/nvl/api/v1/tasks/{$taskId}/restore", [])->assertUnprocessable();
-    $this->postJson("/nvl/api/v1/tasks/{$taskId}/restore", ['expectedRevision' => 3])->assertStatus(409);
-    $this->postJson("/nvl/api/v1/tasks/{$taskId}/restore", ['expectedRevision' => 4])
+    $this->postJson("/nvl/api/v1/tasks/{$taskId}/restore", ['expected_revision' => 3])->assertStatus(409);
+    $this->postJson("/nvl/api/v1/tasks/{$taskId}/restore", ['expected_revision' => 4])
         ->assertOk()->assertJsonPath('data.revision', 5);
     $this->getJson("/nvl/api/v1/tasks/{$taskId}")->assertOk();
     $this->putJson("/nvl/api/v1/tasks/{$taskId}", [
@@ -145,6 +145,6 @@ it('exposes bounded task rows, exact-revision writes, and host-resolved assignme
         'status' => 'completed',
         'priority' => 'high',
         'description' => null,
-        'expectedRevision' => 5,
+        'expected_revision' => 5,
     ])->assertOk()->assertJsonPath('data.description', null);
 });

@@ -11,7 +11,11 @@ use Nvl\Support\Enums\SystemActor;
 use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
 
-/** Reloads an assignee from its canonical class, actual source and persisted identity. @internal */
+/**
+ * Reloads an assignee from its canonical class, actual source and persisted identity.
+ *
+ * @internal
+ */
 final readonly class TaskPrincipalGuard
 {
     /** Retain declared resource policies without retaining principals. */

@@ -18,7 +18,11 @@ use Nvl\Tasks\Models\TaskDependency;
 use Nvl\Tasks\Models\TaskRelationship;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Protects task graph mutations with canonical endpoint, ownership, revision and cycle checks. */
+/**
+ * Protects task graph mutations with canonical endpoint, ownership, revision and cycle checks.
+ *
+ * @internal
+ */
 final readonly class TaskGraphGuard
 {
     /** Construct the task graph boundary. */

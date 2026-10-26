@@ -13,7 +13,8 @@ use Nvl\Tasks\Models\TaskDependency;
 use Nvl\Tasks\Models\TaskRelationship;
 use Nvl\Tasks\Support\TasksConfiguration;
 
-/** Native TaskRelationships operations with explicit actors and canonical persistence.
+/**
+ * Native TaskRelationships operations with explicit actors and canonical persistence.
  *
  * @api
  */

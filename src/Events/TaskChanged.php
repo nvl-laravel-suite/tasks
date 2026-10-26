@@ -10,7 +10,8 @@ use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
 use Nvl\Support\Ownership\ValueObjects\OwnershipJobEnvelope;
 use Nvl\Tasks\Enums\TaskChangeOperation;
 
-/** A committed task operation independent of optional Activity delivery.
+/**
+ * A committed task operation independent of optional Activity delivery.
  *
  * @api
  */

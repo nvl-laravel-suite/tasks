@@ -59,7 +59,7 @@ it('denies user mutations until the consuming app binds task authorization', fun
 });
 
 it('registers bounded private task attachments', function (): void {
-    $this->markTestSkipped('Native Media-enabled integration is certified with Task 12.');
+    config(['nvl-tasks.media.enabled' => true]);
     $slot = app(MediaTaskAttachments::class)->slot();
 
     expect($slot)->not->toBeNull()
@@ -70,7 +70,7 @@ it('registers bounded private task attachments', function (): void {
 });
 
 it('uses Media for a private task attachment', function (): void {
-    $this->markTestSkipped('Native Media-enabled integration is certified with Task 12.');
+    config(['nvl-tasks.media.enabled' => true]);
     Storage::fake('local');
     $task = app(TaskLifecycle::class)->create(['title' => 'Review assets'], SystemActor::Background);
     $media = Media::factory()->create(['mime_type' => 'text/plain', 'is_public' => false]);

@@ -4,11 +4,18 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Tests;
 
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Nvl\Activity\Providers\ActivityServiceProvider;
 use Nvl\Filterable\Providers\FilterableServiceProvider;
+use Nvl\Media\Contracts\MediaAuthorization;
+use Nvl\Media\Enums\MediaAbility;
+use Nvl\Media\Models\Media;
+use Nvl\Media\Providers\MediaServiceProvider;
+use Nvl\Support\Enums\SystemActor;
 use Nvl\Support\Providers\LocaleServiceProvider;
 use Nvl\Support\Providers\SupportServiceProvider;
 use Nvl\Tasks\Providers\TasksServiceProvider;
@@ -24,6 +31,14 @@ abstract class TestCase extends Orchestra
     {
         parent::setUp();
         nativeTaskPolicy();
+        $this->app->bind(MediaAuthorization::class, static fn () => new class implements MediaAuthorization
+        {
+            public function allows(Authenticatable|SystemActor $actor, MediaAbility $ability, ?Media $media = null, ?Model $owner = null): bool
+            {
+                return $actor instanceof SystemActor;
+            }
+        });
+        $this->app->forgetScopedInstances();
     }
 
     /** @return list<class-string> */
@@ -36,6 +51,7 @@ abstract class TestCase extends Orchestra
             ...(class_exists(TranslatableServiceProvider::class) ? [TranslatableServiceProvider::class] : []),
             ...(class_exists(FilterableServiceProvider::class) ? [FilterableServiceProvider::class] : []),
             ...(class_exists(ActivityServiceProvider::class) ? [ActivityServiceProvider::class] : []),
+            MediaServiceProvider::class,
             TasksServiceProvider::class,
         ];
     }

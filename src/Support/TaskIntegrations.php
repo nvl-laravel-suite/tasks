@@ -31,9 +31,6 @@ final readonly class TaskIntegrations
     {
         try {
             $active = $this->enabled($key, $provider);
-            if ($active && $key === 'tasks.media.enabled') {
-                throw new InvalidArgumentException('The native Tasks MediaAttachments adapter is staged for Task12; disable nvl-tasks.media.enabled until that adapter is available.');
-            }
 
             return ['key' => 'nvl-'.$key, 'severity' => 'info', 'passed' => true, 'message' => $active ? 'The optional adapter is explicitly active.' : 'The optional adapter is inactive.'];
         } catch (InvalidArgumentException $exception) {

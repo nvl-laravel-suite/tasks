@@ -27,6 +27,7 @@ use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Contracts\TaskSchedulerReadiness;
 use Nvl\Tasks\Integrations\ActivityTaskPublisher;
 use Nvl\Tasks\Integrations\InactiveTaskActivityPublisher;
+use Nvl\Tasks\Integrations\MediaTaskAttachments;
 use Nvl\Tasks\Integrations\UnavailableTaskAttachments;
 use Nvl\Tasks\Ownership\TasksAdoptionAdapter as NativeTasksAdoptionAdapter;
 use Nvl\Tasks\Ownership\TasksResourceRegistrar as NativeTasksResourceRegistrar;
@@ -66,7 +67,7 @@ final class TasksServiceProvider extends ServiceProvider implements OwnershipInt
             $active = $app->make(TaskIntegrations::class)->enabled('tasks.media.enabled', MediaServiceProvider::class);
 
             if ($active) {
-                throw new \LogicException('Tasks requires the native MediaAttachments adapter; complete the native Media integration before enabling nvl-tasks.media.enabled.');
+                return $app->make(MediaTaskAttachments::class);
             }
 
             return $app->make(UnavailableTaskAttachments::class);

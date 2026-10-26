@@ -357,112 +357,242 @@
             "kind": "class",
             "file": "src/Models/Task.php",
             "methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
+                "assignments",
+                "blockedTaskLinks",
+                "blockerLinks",
+                "bootHasOwnership",
+                "checklistItems",
+                "childLinks",
+                "creator",
+                "delete",
+                "fresh",
+                "getConnectionName",
+                "getTable",
+                "newQueryForRestoration",
+                "ownershipDefinition",
+                "parentLink",
+                "refresh",
+                "refreshForUpdate",
+                "save",
+                "tags",
+                "timeEntries"
             ],
-            "properties": [],
-            "constants": []
+            "properties": [
+                "assignments",
+                "assignments_count",
+                "category",
+                "checklistItems",
+                "completed_at",
+                "created_at",
+                "creator",
+                "creator_id",
+                "creator_type",
+                "deleted_at",
+                "description",
+                "due_at",
+                "estimated_seconds",
+                "id",
+                "importance",
+                "metadata",
+                "priority",
+                "revision",
+                "status",
+                "tags",
+                "target_at",
+                "tenant_id",
+                "timeEntries",
+                "title",
+                "type",
+                "updated_at"
+            ],
+            "constants": [
+                "TENANT_RESOURCE"
+            ]
         },
         "Nvl\\Tasks\\Models\\TaskAssignment": {
             "kind": "class",
             "file": "src/Models/TaskAssignment.php",
             "methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
+                "assignedBy",
+                "assignee",
+                "bootHasOwnership",
+                "delete",
+                "fresh",
+                "getConnectionName",
+                "getTable",
+                "newQueryForRestoration",
+                "ownershipDefinition",
+                "refresh",
+                "refreshForUpdate",
+                "save",
+                "task"
             ],
-            "properties": [],
+            "properties": [
+                "assignedBy",
+                "assigned_by_id",
+                "assigned_by_type",
+                "assignee",
+                "assignee_id",
+                "assignee_type",
+                "created_at",
+                "id",
+                "task",
+                "task_id",
+                "tenant_id",
+                "updated_at"
+            ],
             "constants": []
         },
         "Nvl\\Tasks\\Models\\TaskChecklistItem": {
             "kind": "class",
             "file": "src/Models/TaskChecklistItem.php",
             "methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
+                "bootHasOwnership",
+                "completedBy",
+                "delete",
+                "fresh",
+                "getConnectionName",
+                "getTable",
+                "newQueryForRestoration",
+                "ownershipDefinition",
+                "refresh",
+                "refreshForUpdate",
+                "save",
+                "task"
             ],
-            "properties": [],
+            "properties": [
+                "completedBy",
+                "completed_at",
+                "completed_by_id",
+                "completed_by_type",
+                "created_at",
+                "id",
+                "position",
+                "task",
+                "task_id",
+                "tenant_id",
+                "title",
+                "updated_at"
+            ],
             "constants": []
         },
         "Nvl\\Tasks\\Models\\TaskDependency": {
             "kind": "class",
             "file": "src/Models/TaskDependency.php",
             "methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
+                "blocker",
+                "bootHasOwnership",
+                "delete",
+                "fresh",
+                "getConnectionName",
+                "getTable",
+                "newQueryForRestoration",
+                "ownershipDefinition",
+                "refresh",
+                "refreshForUpdate",
+                "save",
+                "task"
             ],
-            "properties": [],
+            "properties": [
+                "blocker",
+                "blocker_task_id",
+                "created_at",
+                "id",
+                "task",
+                "task_id",
+                "tenant_id",
+                "updated_at"
+            ],
             "constants": []
         },
         "Nvl\\Tasks\\Models\\TaskRelationship": {
             "kind": "class",
             "file": "src/Models/TaskRelationship.php",
             "methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
+                "bootHasOwnership",
+                "child",
+                "delete",
+                "fresh",
+                "getConnectionName",
+                "getTable",
+                "newQueryForRestoration",
+                "ownershipDefinition",
+                "parent",
+                "refresh",
+                "refreshForUpdate",
+                "save"
             ],
-            "properties": [],
+            "properties": [
+                "child",
+                "child_task_id",
+                "created_at",
+                "id",
+                "parent",
+                "parent_task_id",
+                "tenant_id",
+                "updated_at"
+            ],
             "constants": []
         },
         "Nvl\\Tasks\\Models\\TaskTag": {
             "kind": "class",
             "file": "src/Models/TaskTag.php",
             "methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
+                "bootHasOwnership",
+                "delete",
+                "fresh",
+                "getConnectionName",
+                "getTable",
+                "newQueryForRestoration",
+                "ownershipDefinition",
+                "refresh",
+                "refreshForUpdate",
+                "save",
+                "task"
             ],
-            "properties": [],
+            "properties": [
+                "created_at",
+                "id",
+                "tag",
+                "task",
+                "task_id",
+                "tenant_id",
+                "updated_at"
+            ],
             "constants": []
         },
         "Nvl\\Tasks\\Models\\TaskTimeEntry": {
             "kind": "class",
             "file": "src/Models/TaskTimeEntry.php",
             "methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
+                "bootHasOwnership",
+                "delete",
+                "fresh",
+                "getConnectionName",
+                "getTable",
+                "newQueryForRestoration",
+                "ownershipDefinition",
+                "performer",
+                "refresh",
+                "refreshForUpdate",
+                "save",
+                "task"
             ],
-            "properties": [],
+            "properties": [
+                "created_at",
+                "description",
+                "duration_seconds",
+                "id",
+                "performer",
+                "performer_id",
+                "performer_type",
+                "started_at",
+                "stopped_at",
+                "task",
+                "task_id",
+                "tenant_id",
+                "updated_at"
+            ],
             "constants": []
         },
         "Nvl\\Tasks\\Services\\TaskAssignments": {
@@ -565,117 +695,5 @@
             "properties": [],
             "constants": []
         }
-    },
-    "models": {
-        "Nvl\\Tasks\\Models\\Task": {
-            "read": [],
-            "identity_methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
-            ],
-            "capability_relations": []
-        },
-        "Nvl\\Tasks\\Models\\TaskAssignment": {
-            "read": [],
-            "identity_methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
-            ],
-            "capability_relations": []
-        },
-        "Nvl\\Tasks\\Models\\TaskChecklistItem": {
-            "read": [],
-            "identity_methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
-            ],
-            "capability_relations": []
-        },
-        "Nvl\\Tasks\\Models\\TaskDependency": {
-            "read": [],
-            "identity_methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
-            ],
-            "capability_relations": []
-        },
-        "Nvl\\Tasks\\Models\\TaskRelationship": {
-            "read": [],
-            "identity_methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
-            ],
-            "capability_relations": []
-        },
-        "Nvl\\Tasks\\Models\\TaskTag": {
-            "read": [],
-            "identity_methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
-            ],
-            "capability_relations": []
-        },
-        "Nvl\\Tasks\\Models\\TaskTimeEntry": {
-            "read": [],
-            "identity_methods": [
-                "getKey",
-                "getKeyName",
-                "getMorphClass",
-                "getRouteKey",
-                "getRouteKeyName",
-                "is",
-                "isNot",
-                "relationLoaded"
-            ],
-            "capability_relations": []
-        }
-    },
-    "capability_relations": {},
-    "tables": {
-        "activity_outbox": "nvl_tasks_activity_outbox",
-        "assignments": "nvl_tasks_assignments",
-        "checklist_items": "nvl_tasks_checklist_items",
-        "dependencies": "nvl_tasks_dependencies",
-        "graph_lock": "nvl_tasks_graph_lock",
-        "relationships": "nvl_tasks_relationships",
-        "tags": "nvl_tasks_tags",
-        "tasks": "nvl_tasks_tasks",
-        "time_entries": "nvl_tasks_time_entries"
     }
 }

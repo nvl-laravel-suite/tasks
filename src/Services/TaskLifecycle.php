@@ -64,10 +64,11 @@ final readonly class TaskLifecycle
                 throw new TaskRevisionConflict;
             }
 
-            $current->forceFill([
-                ...$this->values->replace($changes, $current),
-                'revision' => $current->revision + 1,
-            ]);
+            $current->forceFill($this->values->replace($changes, $current));
+            if ($current->isClean()) {
+                return $current;
+            }
+            $current->revision++;
             $current->save();
             $this->activity->updated($current, $actor);
 

@@ -10,6 +10,7 @@
     ],
     "require": {
         "ext-json": "*",
+        "ext-mbstring": "*",
         "laravel/framework": "^13.0",
         "nesbot/carbon": "^2.72 || ^3.0",
         "nvl/core": "^7.0",

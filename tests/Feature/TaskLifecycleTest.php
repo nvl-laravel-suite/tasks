@@ -2,13 +2,16 @@
 
 declare(strict_types=1);
 
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Nvl\Activity\Models\ActivityLog;
 use Nvl\Media\Models\Media;
 use Nvl\Media\Slots\MediaSlot;
 use Nvl\Support\Enums\SystemActor;
@@ -19,6 +22,7 @@ use Nvl\Tasks\Contracts\TaskQueryScope;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Enums\TaskPriority;
 use Nvl\Tasks\Enums\TaskStatus;
+use Nvl\Tasks\Events\TaskChanged;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Integrations\MediaTaskAttachments;
 use Nvl\Tasks\Models\Task;
@@ -241,3 +245,30 @@ it('creates, updates, assigns and lists tasks without assuming the host user mod
     expect(app(TaskAssignments::class)->unassign($task, $assignee, $actor))->toBeTrue()
         ->and(app(TaskAssignments::class)->unassign($task, $assignee, $actor))->toBeFalse();
 });
+
+it('preserves task revisions timestamps and events for normalized no-op patches', function (array $changes, TaskStatus $status): void {
+    CarbonImmutable::setTestNow('2026-10-27 12:00:00 UTC');
+    try {
+        $actor = nativeTaskUser();
+        $service = app(TaskLifecycle::class);
+        $task = $service->create(['title' => 'Audit task', 'status' => $status, 'metadata' => ['source' => 'editorial']], $actor);
+        $activityCount = ActivityLog::query()->count();
+        Event::fake([TaskChanged::class]);
+        CarbonImmutable::setTestNow('2026-10-27 12:00:02 UTC');
+
+        $updated = $service->update($task, $changes, $task->revision, $actor);
+
+        expect($updated->revision)->toBe($task->revision)
+            ->and($updated->updated_at->equalTo($task->updated_at))->toBeTrue()
+            ->and($updated->completed_at?->equalTo($task->completed_at))->toBe($task->completed_at === null ? null : true)
+            ->and(ActivityLog::query()->count())->toBe($activityCount);
+        Event::assertNotDispatched(TaskChanged::class);
+        expect(fn () => $service->update($updated, [], $updated->revision - 1, $actor))->toThrow(TaskRevisionConflict::class);
+    } finally {
+        CarbonImmutable::setTestNow();
+    }
+})->with([
+    'empty' => [[], TaskStatus::Open],
+    'normalized values' => [['title' => '  Audit task  ', 'status' => TaskStatus::Open, 'metadata' => ['source' => 'editorial']], TaskStatus::Open],
+    'completed task' => [[], TaskStatus::Completed],
+]);

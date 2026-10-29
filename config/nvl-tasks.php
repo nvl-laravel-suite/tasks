@@ -17,15 +17,15 @@ return [
     'connection' => null,
 
     'tables' => [
-        TasksTables::Tasks => TasksTables::Tasks,
-        TasksTables::Assignments => TasksTables::Assignments,
-        TasksTables::ChecklistItems => TasksTables::ChecklistItems,
-        TasksTables::TimeEntries => TasksTables::TimeEntries,
-        TasksTables::Relationships => TasksTables::Relationships,
-        TasksTables::Dependencies => TasksTables::Dependencies,
-        TasksTables::Tags => TasksTables::Tags,
-        TasksTables::GraphLock => TasksTables::GraphLock,
-        TasksTables::ActivityOutbox => TasksTables::ActivityOutbox,
+        'tasks' => TasksTables::Tasks,
+        'assignments' => TasksTables::Assignments,
+        'checklist_items' => TasksTables::ChecklistItems,
+        'time_entries' => TasksTables::TimeEntries,
+        'relationships' => TasksTables::Relationships,
+        'dependencies' => TasksTables::Dependencies,
+        'tags' => TasksTables::Tags,
+        'activity_outbox' => TasksTables::ActivityOutbox,
+        'graph_lock' => TasksTables::GraphLock,
     ],
 
     'enums' => [
@@ -54,7 +54,6 @@ return [
 
     'activity' => [
         'enabled' => false,
-        'queue' => null,
         'schedule' => [
             'enabled' => true,
         ],

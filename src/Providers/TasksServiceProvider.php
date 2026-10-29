@@ -108,13 +108,13 @@ final class TasksServiceProvider extends ServiceProvider implements OwnershipInt
 
         $this->publishes([
             __DIR__.'/../../config/nvl-tasks.php' => config_path('nvl-tasks.php'),
-        ], 'tasks-config');
+        ], 'nvl-tasks-config');
         $this->publishesMigrations([
             __DIR__.'/../../database/migrations' => database_path('migrations'),
-        ], 'tasks-migrations');
+        ], 'nvl-tasks-migrations');
         $this->publishes([
             __DIR__.'/../../resources/boost/skills' => base_path('.agents/skills'),
-        ], 'tasks-skills');
+        ], 'nvl-tasks-skills');
     }
 
     /** Schedule recovery of committed events missed by immediate queue dispatch. */

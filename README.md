@@ -76,3 +76,5 @@ php tools/run-package-quality.php tasks --format=json
 ```
 
 The package uses Testbench 11 and Pest. Native PostgreSQL/MySQL races use bounded forked workers and shared barriers through the existing database test runner. SQLite tests prove ordinary behavior, not process concurrency. Consumer API metadata is collected with the scoped developer collector while unconverted family leaves prevent whole-family regeneration. See `docs/events.md` for the scalar semantic event contract and `UPGRADING.md` for the breaking native migration.
+
+Shared [service contracts, model extensions and composition](https://github.com/nvl-laravel-suite/laravel-suite/blob/main/docs/consumer-api.md) apply alongside the package-specific rules above.

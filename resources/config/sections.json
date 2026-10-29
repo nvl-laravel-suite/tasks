@@ -10,17 +10,16 @@
                 "migrations.enabled",
                 "queue.connection",
                 "queue.name",
-                "tables.nvl_tasks_activity_outbox",
-                "tables.nvl_tasks_assignments",
-                "tables.nvl_tasks_dependencies",
-                "tables.nvl_tasks_relationships",
-                "tables.nvl_tasks_tags",
-                "tables.nvl_tasks_tasks",
-                "tables.nvl_tasks_time_entries"
+                "tables.activity_outbox",
+                "tables.assignments",
+                "tables.dependencies",
+                "tables.relationships",
+                "tables.tags",
+                "tables.tasks",
+                "tables.time_entries"
             ],
             "advanced": [
                 "activity.drain_limit",
-                "activity.queue",
                 "dashboard.due_soon_days",
                 "defaults.category",
                 "defaults.importance",
@@ -41,8 +40,8 @@
                 "media.maximum_attachments",
                 "media.maximum_file_bytes",
                 "models.task",
-                "tables.nvl_tasks_checklist_items",
-                "tables.nvl_tasks_graph_lock"
+                "tables.checklist_items",
+                "tables.graph_lock"
             ]
         }
     }

@@ -17,6 +17,6 @@ Run the additive graph mutex migration before serving graph changes. It serializ
 
 Activity is explicitly enabled, optional and uses native immutable envelope delivery through the durable Tasks source outbox. Preserve source outer commit, rollback, leases, idempotent replay, conflict rejection and recovery. Historical actor IDs survive deletion as facts. Native Ownership capture replaces legacy tenancy authority.
 
-Media's native adapter is staged for Task12; explicit enable fails closed until implemented. Preserve the four staged enabled-profile tests and their private slot, policy, lifecycle and foreign-association assertions. Do not restore old Media Action/DTO imports to simulate compatibility.
+Media is explicitly enabled and uses the native MediaTaskAttachments adapter through TaskAttachments. Preserve private/exclusive/keepLatest slot behavior, file and attachment limits, scan admission, actor and owner policies, foreign-association exclusion and Media-owned writes. The enabled-profile tests exercise the implemented adapter. Keep the base package usable with Media physically absent; do not restore old Media Action/DTO imports.
 
 Run the owning Pest suite and configured maximum package-quality gate; exercise the consumer-owned HTTP fixtures and real PostgreSQL/MySQL races for affected behavior. Installed optional dependencies do not enable integration profiles automatically.

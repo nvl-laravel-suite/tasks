@@ -14,4 +14,4 @@ Replace legacy Tenancy setup with native Ownership registration/adoption. Do not
 
 Set Activity integration explicitly when desired and register its native provider. Keep the Tasks source outbox, queue worker, scheduler and recovery configuration. Old Activity facades and actor DTOs are not supported. Scalar historical actor IDs are audit facts, not permission to perform later writes.
 
-Leave Media disabled until Task12's native adapter is implemented. Explicit enable currently fails closed; four retained Media tests are staged acceptance evidence for that task, not obsolete tests.
+Enable Media explicitly with `nvl-tasks.media.enabled=true` when native Media is installed. The implemented `MediaTaskAttachments` adapter uses Media-owned reads and writes through `TaskAttachments`; the enabled-profile tests cover private slots, lifecycle, limits, actor policy and foreign-association rejection. Base Tasks continues to boot with Media absent.

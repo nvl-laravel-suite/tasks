@@ -6,7 +6,7 @@ Tasks owns task lifecycle, assignments, checklists, tags, timers, time entries, 
 
 ## Requirements and installation
 
-PHP 8.4+, Laravel 13 and `nvl/core` are required. Internal family versions remain 6 during the coordinated Light conversion; the breaking release is coordinated separately.
+PHP 8.4+, Laravel 13 and `nvl/core:^7.0` are required. Upgrade the selected NVL dependency closure together to 7.x.
 
 ```sh
 composer require nvl/tasks:^7.0
@@ -66,7 +66,7 @@ Activity uses native `ActivityRecorder::recordEnvelope` with trusted immutable f
 
 With native Ownership enabled, adopt/register Tasks resources and required principals through Ownership's native ports. Every child derives owner attribution from the canonical task. Queued events and outbox delivery capture immutable ownership and reject foreign scope or changed facts. Pending orphan audit records require explicit verified ownership; do not guess authority from an old tenant column. The scheduled owned drain uses the native Ownership worklist/system runner.
 
-Media is staged for Task12. Explicit enable against the old Media implementation fails with an actionable configuration error. The four retained enabled-profile tests must be activated by Task12 when its native `MediaAttachments` adapter is implemented. It must preserve private/exclusive/keepLatest slot behavior, limits/MIME/scan rules, actor and owner admission, foreign association exclusion and Media-owned writes. Base Tasks remains fully usable with Media physically absent. `TaskAttachments` is the narrow optional port; this migration does not guess future Media service signatures.
+Media uses the implemented native `MediaTaskAttachments` adapter through the narrow `TaskAttachments` port. Explicit enable delegates attachment writes to `MediaAttachments` and reads to `MediaReader`, preserving private/exclusive/keepLatest slot behavior, attachment and file limits, scan rules, actor and owner admission and foreign association exclusion. The enabled-profile tests cover attachment lifecycle, policy and private-slot guarantees. Base Tasks remains fully usable with Media physically absent.
 
 ## Development and verification
 

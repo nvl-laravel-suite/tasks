@@ -9,7 +9,6 @@ use Nvl\Support\Providers\SupportServiceProvider;
 use Nvl\Tasks\Providers\TasksServiceProvider;
 use Nvl\Tasks\Tests\Fixtures\Ownership\WorkerProvider;
 use Orchestra\Testbench\Foundation\Application as TestbenchApplication;
-use Spatie\Activitylog\ActivitylogServiceProvider;
 
 require dirname(__DIR__, 6).'/vendor/autoload.php';
 $sources = json_decode($argv[1], true, flags: JSON_THROW_ON_ERROR);
@@ -21,7 +20,7 @@ foreach (['primary', 'remote'] as $key) {
     }
 }
 WorkerProvider::useSources($sources);
-$application = TestbenchApplication::create(options: ['load_environment_variables' => false, 'extra' => ['dont-discover' => ['*'], 'providers' => [SupportServiceProvider::class, OwnershipServiceProvider::class, ActivitylogServiceProvider::class, ActivityServiceProvider::class, TasksServiceProvider::class, WorkerProvider::class]]]);
+$application = TestbenchApplication::create(options: ['load_environment_variables' => false, 'extra' => ['dont-discover' => ['*'], 'providers' => [SupportServiceProvider::class, OwnershipServiceProvider::class, ActivityServiceProvider::class, TasksServiceProvider::class, WorkerProvider::class]]]);
 $kernel = $application->make(Kernel::class);
 $status = $kernel->call('queue:work', ['connection' => 'database', '--stop-when-empty' => true, '--sleep' => 0, '--tries' => 1, '--timeout' => 10, '--force' => true, '--no-interaction' => true]);
 if ($status !== 0) {

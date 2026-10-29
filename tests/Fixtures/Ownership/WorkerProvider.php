@@ -15,6 +15,7 @@ use Nvl\Ownership\Tests\Fixtures\Actor;
 use Nvl\Ownership\Tests\Fixtures\Company;
 use Nvl\Support\Ownership\Contracts\OwnershipContext;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
+use Nvl\Tasks\Enums\TaskChangeOperation;
 use Nvl\Tasks\Tests\Fixtures\OwnedTask;
 
 /** Boots the immutable Tasks and remote audit graph in a separate real worker. */
@@ -43,6 +44,7 @@ final class WorkerProvider extends ServiceProvider
             'nvl-tasks.models.task' => OwnedTask::class,
             'nvl-tasks.migrations.enabled' => false,
             'nvl-tasks.activity.enabled' => true,
+            'nvl-activity.events' => array_fill_keys(array_column(TaskChangeOperation::cases(), 'value'), ['change_fields' => null, 'metadata_fields' => null]),
             'nvl-tasks.media.enabled' => false,
             'nvl-activity.connection' => 'ownership_remote',
             'nvl-activity.migrations.enabled' => false,

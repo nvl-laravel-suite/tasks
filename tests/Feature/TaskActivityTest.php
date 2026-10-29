@@ -89,8 +89,8 @@ it('records one attributed activity for each task lifecycle mutation', function 
         ))->toBeTrue();
 
     $update = $activities->firstWhere('event', 'updated');
-    expect($update?->properties?->get('attributes')['title'] ?? null)->toBe('Reviewed')
-        ->and($update?->properties?->get('old')['title'] ?? null)->toBe('Draft');
+    expect($update?->attribute_changes?->get('attributes')['title'] ?? null)->toBe('Reviewed')
+        ->and($update?->attribute_changes?->get('old')['title'] ?? null)->toBe('Draft');
 });
 
 it('records assignment changes once and skips idempotent repeats', function (): void {

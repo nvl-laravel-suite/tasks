@@ -18,6 +18,7 @@ use Nvl\Media\Providers\MediaServiceProvider;
 use Nvl\Support\Enums\SystemActor;
 use Nvl\Support\Providers\LocaleServiceProvider;
 use Nvl\Support\Providers\SupportServiceProvider;
+use Nvl\Tasks\Enums\TaskChangeOperation;
 use Nvl\Tasks\Providers\TasksServiceProvider;
 use Nvl\Translatable\Providers\TranslatableServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -63,6 +64,7 @@ abstract class TestCase extends Orchestra
         $app['config']->set([
             'cache.default' => 'array',
             'nvl-tasks.activity.enabled' => true,
+            'nvl-activity.events' => array_fill_keys(array_column(TaskChangeOperation::cases(), 'value'), ['change_fields' => null, 'metadata_fields' => null]),
             'filesystems.default' => 'local',
             'nvl-media.disk' => 'local',
             'nvl-media.routes.assets_enabled' => false,

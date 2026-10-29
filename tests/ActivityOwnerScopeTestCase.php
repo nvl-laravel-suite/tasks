@@ -5,19 +5,20 @@ declare(strict_types=1);
 namespace Nvl\Tasks\Tests;
 
 use Nvl\Activity\Providers\ActivityServiceProvider;
-use Spatie\Activitylog\ActivitylogServiceProvider;
+use Nvl\Tasks\Enums\TaskChangeOperation;
 
 /** Activates the task and independent audit graph together without Tenancy. */
 abstract class ActivityOwnerScopeTestCase extends OwnerScopeTestCase
 {
     protected function getPackageProviders($app): array
     {
-        return [...parent::getPackageProviders($app), ActivitylogServiceProvider::class, ActivityServiceProvider::class];
+        return [...parent::getPackageProviders($app), ActivityServiceProvider::class];
     }
 
     protected function defineEnvironment($app): void
     {
         parent::defineEnvironment($app);
+        $app['config']->set('nvl-activity.events', array_fill_keys(array_column(TaskChangeOperation::cases(), 'value'), ['change_fields' => null, 'metadata_fields' => null]));
         $app['config']->set(['nvl-tasks.activity.enabled' => true, 'nvl-activity.migrations.enabled' => false]);
     }
 

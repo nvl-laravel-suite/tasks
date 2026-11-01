@@ -9,6 +9,7 @@ use Nvl\Activity\Models\ActivityLog;
 use Nvl\Ownership\Services\OwnershipRunner;
 use Nvl\Ownership\Tests\Fixtures\Actor;
 use Nvl\Ownership\Tests\Fixtures\Company;
+use Nvl\Ownership\Tests\Fixtures\NativeDatabaseSource;
 use Nvl\Ownership\Tests\Fixtures\Queue\QueueScenario;
 use Nvl\Support\Enums\SystemActor;
 use Nvl\Support\Ownership\Contracts\OwnershipContext;
@@ -46,8 +47,8 @@ it('captures and retries remote audit delivery without recapturing the serializa
 });
 
 it('delivers captured task outboxes through an independent worker and quarantines foreign scope metadata', function (): void {
-    if (getenv('NVL_OWNERSHIP_TEST_DRIVER') !== 'pgsql') {
-        $this->markTestSkipped('Requires explicitly dedicated PostgreSQL sources and a real worker.');
+    if (! in_array(getenv('NVL_OWNERSHIP_TEST_DRIVER'), ['pgsql', 'mysql', 'mariadb'], true)) {
+        $this->markTestSkipped('Requires explicitly dedicated native sources and a real worker.');
     }
     $actor = Actor::query()->findOrFail(1);
     foreach ([7, 8] as $key) {
@@ -61,7 +62,7 @@ it('delivers captured task outboxes through an independent worker and quarantine
     $payload['data']['nvl_ownership']['owner']['key'] = '8';
     Queue::connection('database')->pushRaw(json_encode($payload, JSON_THROW_ON_ERROR));
     $worker = new Process([PHP_BINARY, __DIR__.'/../Fixtures/Ownership/worker.php', json_encode([
-        'primary' => config('database.connections.sqlite'), 'remote' => config('database.connections.ownership_remote'),
+        'primary' => NativeDatabaseSource::capture(DB::connection('sqlite')), 'remote' => NativeDatabaseSource::capture(DB::connection('ownership_remote')),
     ], JSON_THROW_ON_ERROR)], timeout: 40);
     $worker->mustRun();
     expect($worker->getOutput())->toBe('tasks-worker-complete')

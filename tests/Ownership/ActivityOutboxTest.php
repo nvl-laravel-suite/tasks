@@ -22,9 +22,30 @@ use Nvl\Tasks\Models\TaskActivityOutbox;
 use Nvl\Tasks\Services\TaskLifecycle;
 use Nvl\Tasks\Services\TasksActivityDelivery;
 use Nvl\Tasks\Services\TasksActivityDrainDispatcher;
+use Nvl\Tasks\Services\TasksActivityRetention;
 use Nvl\Tasks\Tests\ActivityOwnerScopeTestCase;
 
 uses(ActivityOwnerScopeTestCase::class);
+
+it('prunes delivered facts only inside the explicitly admitted owner while retaining Activity evidence', function (): void {
+    config(['nvl-tasks.activity.retention.enabled' => true, 'nvl-tasks.activity.retention.days' => 30]);
+    $actor = Actor::query()->findOrFail(1);
+    $runner = app(OwnershipRunner::class);
+    foreach ([7, 8] as $owner) {
+        $runner->run(Company::query()->findOrFail($owner), $actor, function (): void {
+            app(TaskLifecycle::class)->create(['title' => 'Aged delivered fact'], SystemActor::Background);
+            TaskActivityOutbox::query()->sole()->forceFill(['delivered_at' => now('UTC')->subDays(60)])->save();
+        });
+    }
+    expect(fn () => app(TasksActivityRetention::class)->prune(SystemActor::Background))->toThrow(OwnershipViolation::class);
+    $runner->run(Company::query()->findOrFail(7), $actor, function (): void {
+        expect(app(TasksActivityRetention::class)->prune(SystemActor::Background))->toBe(['matched' => 1, 'deleted' => 1, 'has_more' => false])
+            ->and(TaskActivityOutbox::query()->count())->toBe(0)->and(ActivityLog::query()->count())->toBe(1);
+    });
+    $runner->run(Company::query()->findOrFail(8), $actor, function (): void {
+        expect(TaskActivityOutbox::query()->count())->toBe(1)->and(ActivityLog::query()->count())->toBe(1);
+    });
+});
 
 it('commits exactly one owned audit fact and preserves immutable outbox replay', function (): void {
     $actor = Actor::query()->findOrFail(1);

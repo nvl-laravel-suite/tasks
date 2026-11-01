@@ -20,5 +20,5 @@ it('inherits task delivery queue selection without discarding its captured envel
     'Core' => [['nvl-core.queue' => ['connection' => 'suite', 'name' => 'suite-work']], 'suite', 'suite-work'],
     'package' => [['nvl-tasks.queue' => ['connection' => 'tasks', 'name' => 'tasks-work']], 'tasks', 'tasks-work'],
     'explicit sync' => [['nvl-tasks.queue' => ['connection' => 'sync', 'name' => 'inline']], 'sync', 'inline'],
-    'legacy explicit override' => [['nvl-tasks.activity.queue' => 'old-work'], 'host', 'old-work'],
+    'retired override is ignored' => [['nvl-tasks.activity.queue' => 'old-work'], 'host', 'host-work'],
 ]);

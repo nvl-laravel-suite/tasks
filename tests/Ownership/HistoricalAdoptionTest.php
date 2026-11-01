@@ -14,6 +14,7 @@ use Nvl\Support\Ownership\Exceptions\OwnershipConfigurationInvalid;
 use Nvl\Support\Ownership\Exceptions\OwnershipSchemaNotReady;
 use Nvl\Support\Ownership\Exceptions\OwnershipViolation;
 use Nvl\Support\Ownership\Services\OwnershipResourceRegistry;
+use Nvl\Support\Ownership\ValueObjects\OwnerReference;
 use Nvl\Tasks\Services\TaskReader;
 use Nvl\Tasks\Tests\Fixtures\Ownership\HistoricalTasks;
 use Nvl\Tasks\Tests\OutboxAdoptionTestCase;
@@ -49,7 +50,7 @@ it('adopts populated native tasks and every child while conserving historical ou
             expect($row->{$field})->toBe($value);
         }
         if ($record['resource'] === 'tasks.activity_outbox') {
-            expect(json_decode($row->owner_reference, true, flags: JSON_THROW_ON_ERROR))->toBe($reference->toArray())
+            expect(OwnerReference::fromArray(json_decode($row->owner_reference, true, flags: JSON_THROW_ON_ERROR))->toArray())->toBe($reference->toArray())
                 ->and($row->payload)->toBe($history['payloads'][$record['id']]);
         }
     }

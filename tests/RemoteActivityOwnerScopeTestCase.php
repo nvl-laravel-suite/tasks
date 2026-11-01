@@ -10,7 +10,7 @@ abstract class RemoteActivityOwnerScopeTestCase extends ActivityOwnerScopeTestCa
     protected function defineEnvironment($app): void
     {
         parent::defineEnvironment($app);
-        if (getenv('NVL_OWNERSHIP_TEST_DRIVER') !== 'pgsql') {
+        if (! in_array(getenv('NVL_OWNERSHIP_TEST_DRIVER'), ['pgsql', 'mysql', 'mariadb'], true)) {
             $app['config']->set('database.connections.ownership_remote', ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => true]);
         }
         $app['config']->set(['nvl-activity.connection' => 'ownership_remote', 'nvl-tasks.queue.connection' => 'database', 'queue.default' => 'database']);

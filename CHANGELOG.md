@@ -5,6 +5,16 @@ All notable changes to `nvl/tasks` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Widen MySQL-family task target and due storage to DATETIME, preserve existing UTC instants, and reject lossy rollback. Validate calendar years against the portable 1000–9999 range before writing.
+
+### Changed
+
+- Add explicit disabled-by-default bounded delivered-outbox retention and an additive ready index, preserving pending and Activity evidence.
+- Bound graph traversal while retaining the database mutex, current edge reads and PostgreSQL outer-snapshot conflict fencing.
+- Align NVL peers and consumer contracts on the coordinated 7.x line. Review [UPGRADING.md](UPGRADING.md) for adoption and application-owned integration requirements.
+
 ## [6.0.1] - 2026-10-21
 
 ### Changed

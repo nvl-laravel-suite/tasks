@@ -17,6 +17,7 @@ it('blocks adoption when an orphan historical outbox lacks an explicit reviewed 
     $payload = json_encode(['historical' => 'retained'], JSON_THROW_ON_ERROR);
     $table = TasksTables::get(TasksTables::ActivityOutbox);
     DB::table($table)->insert(['id' => $id, 'task_id' => (string) Str::uuid(), 'payload' => $payload, 'available_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+    $payload = DB::table($table)->where('id', $id)->value('payload');
     $operation = new OwnershipOperation('orphan-proof', 'operator', '1');
     $coordinator = app(OwnershipAdoptionCoordinator::class);
     expect(function () use ($coordinator, $operation): void {

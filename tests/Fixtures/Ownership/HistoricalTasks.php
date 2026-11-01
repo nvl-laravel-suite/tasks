@@ -24,11 +24,18 @@ final class HistoricalTasks
         $records = $mappings = $roots = $payloads = [];
         $legacy = (string) Str::uuid();
         $resources = app(OwnershipResourceRegistry::class);
-        $insert = function (string $resource, array $attributes, int $owner) use (&$records, &$mappings, $legacy, $resources): string {
+        $insert = function (string $resource, array $attributes, int $owner) use (&$records, &$mappings, &$payloads, $legacy, $resources): string {
             $model = new ($resources->get($resource)->model);
             $id = $attributes['id'] ?? (string) Str::uuid();
             $facts = ['id' => $id, 'tenant_id' => $legacy, 'created_at' => '2026-01-02 10:00:00', 'updated_at' => '2026-01-02 10:00:00', ...$attributes];
             $model->getConnection()->table($model->getTable())->insert($facts);
+            if ($resource === 'tasks.activity_outbox') {
+                $payload = $model->getConnection()->table($model->getTable())->where('id', $id)->value('payload');
+                if (! is_string($payload)) {
+                    throw new \RuntimeException('Historical outbox fixtures require a persisted JSON payload.');
+                }
+                $facts['payload'] = $payloads[$id] = $payload;
+            }
             $records[] = compact('resource', 'id', 'owner', 'facts');
             $reference = app(OwnerIdentityResolver::class)->reference(Company::query()->findOrFail($owner));
             $mappings[] = new OwnershipMapping($resource, $id, $reference, legacyTenantId: $legacy);
@@ -51,8 +58,7 @@ final class HistoricalTasks
             foreach ([$root, $deleted, (string) Str::uuid()] as $source) {
                 $fact = new ActivityRecordEnvelope((string) Str::uuid(), new ActivitySubjectReference(Task::class, $source), null, 'historical', 'tasks', CarbonImmutable::parse('2026-01-02T10:00:00Z'), context: ['unchanged' => 'audit'], scalarActorId: 'deleted-actor');
                 $payload = json_encode($fact->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
-                $id = $insert('tasks.activity_outbox', ['id' => $fact->id, 'task_id' => $source, 'payload' => $payload, 'available_at' => '2026-01-02 10:00:00'], $owner);
-                $payloads[$id] = $payload;
+                $insert('tasks.activity_outbox', ['id' => $fact->id, 'task_id' => $source, 'payload' => $payload, 'available_at' => '2026-01-02 10:00:00'], $owner);
             }
             $taskModel->getConnection()->table($taskModel->getTable())->where('id', $deleted)->delete();
         }

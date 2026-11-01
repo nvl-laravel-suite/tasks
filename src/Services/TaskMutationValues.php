@@ -135,6 +135,10 @@ final class TaskMutationValues
         foreach (['target_at', 'due_at'] as $field) {
             if (array_key_exists($field, $values)) {
                 $values[$field] = self::date($values[$field], $field);
+                $year = $values[$field]?->year;
+                if ($year !== null && ($year < 1000 || $year > 9999)) {
+                    throw ValidationException::withMessages([$field => 'Calendar dates must fall between years 1000 and 9999 in UTC.']);
+                }
             }
         }
         $target = array_key_exists('target_at', $values) ? $values['target_at'] : $current?->target_at;

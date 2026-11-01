@@ -1,22 +1,79 @@
 ---
 name: nvl-tasks
-description: Use when implementing or reviewing native Tasks services, actor authorization, model reads, graph/timer operations, ownership or optional Activity integration.
+description: Use when integrating task lifecycle, assignments, checklist, tags, time tracking, task graphs, authorized task queries or optional Activity and Media adapters with nvl/tasks.
 ---
 
-# Native NVL Tasks
+# NVL Tasks
 
-Inject the seven services directly: TaskLifecycle, TaskAssignments, TaskChecklist, TaskTags, TaskTimeTracking, TaskRelationships and TaskReader. See README for exact native array/scalar signatures. Applications own DTOs, HTTP routes, request parsing, response projections and frontend types; the package supplies none of these transport layers.
+Tasks targets PHP 8.4 and Laravel 13 and requires Core.
+The base package boots without Activity, Media, Ownership, Tenancy or DTO libraries.
+Consumers own Actions, HTTP routes, request parsing, response projections and frontend types.
 
-Pass an explicit persisted Eloquent Authenticatable or deliberately authorized SystemActor. Bind TaskAuthorization::authorize and scopeTasks. Both users and system actors are denied by default. Never infer actors from current Auth/Request or turn scalar audit attribution into current authority. Canonical ownership and principal admission must remain fresh.
+## Portable references
 
-Use snake_case native fields, separate expected revisions, exact integer/boolean types and explicit omission/null semantics. Protect primary keys, revisions, owner and actor fields. Dates preserve instants in UTC at second precision. Services own validation, transactions, locking, CAS, graph cycles, timer overlap, child attribution, events and refreshed returns.
+- [Installation](references/installation.md): provider, publish tags, migration ownership and schema prerequisites.
+- [Native API](references/api.md): service signatures, contracts, model capabilities and typed arrays.
+- [Usage](references/usage.md): full capability map, field/null rules, policy binding and verified examples.
 
-Use TaskReader for user-facing pages/aggregates: actor SQL visibility is grouped inside ownership before pagination/counts. Models expose useful casts, relations and scoped reads; raw model queries do not add host actor policy. Mutation writes belong to services.
+Read usage when choosing services or building a consumer workflow.
+Read installation before schema/adoption changes and API before supplying arguments.
+Local references work in the published Laravel Boost skill tree.
 
-Run the additive graph mutex migration before serving graph changes. It serializes all graph edits on the configured source connection before endpoint locks. Do not replace native race tests with sequential loops.
+## Choose the native capability
 
-Activity is explicitly enabled, optional and uses native immutable envelope delivery through the durable Tasks source outbox. Preserve source outer commit, rollback, leases, idempotent replay, conflict rejection and recovery. Historical actor IDs survive deletion as facts. Native Ownership capture replaces legacy tenancy authority.
+- `TaskLifecycle`: create, patch, soft-delete and restore tasks.
+- `TaskAssignments`: add/remove canonical persisted assignees.
+- `TaskChecklist`: add/edit/toggle/reorder/remove checklist entries.
+- `TaskTags`: add/remove task tags.
+- `TaskTimeTracking`: log/edit/delete intervals and start/stop timers.
+- `TaskRelationships`: parent links and dependencies with cycle protection.
+- `TaskReader`: authorized detail, pages, child pages and dashboard counts.
+- `TaskAttachments`: narrow port for explicitly enabled native Media attachments.
+- `TasksActivityRetention`: explicitly authorized, bounded delivered-outbox pruning.
 
-Media is explicitly enabled and uses the native MediaTaskAttachments adapter through TaskAttachments. Preserve private/exclusive/keepLatest slot behavior, file and attachment limits, scan admission, actor and owner policies, foreign-association exclusion and Media-owned writes. The enabled-profile tests exercise the implemented adapter. Keep the base package usable with Media physically absent; do not restore old Media Action/DTO imports.
+## Supply actor visibility explicitly
 
-Run the owning Pest suite and configured maximum package-quality gate; exercise the consumer-owned HTTP fixtures and real PostgreSQL/MySQL races for affected behavior. Installed optional dependencies do not enable integration profiles automatically.
+Bind both `TaskAuthorization::authorize` and `scopeTasks`; defaults deny users and system actors.
+Pass an explicit persisted Eloquent Authenticatable or deliberately authorized SystemActor.
+Actors and assignees are reloaded from canonical storage.
+`scopeTasks` must express complete row visibility as SQL.
+Ownership predicates group the actor scope before filters, counts and pagination.
+`TaskAbility::View` is still checked on individual task reads.
+Raw Eloquent queries do not add the host's actor policy.
+
+## Preserve native mutations
+
+Use documented snake_case fields and separate integer revision arguments.
+Omitted patch fields retain their values; explicit null clears only supported fields.
+Unknown/protected IDs, ownership, actor, revision and computed completion fields reject.
+Normalized no-op patches still authorize and check revisions while preserving timestamps/events.
+Services own source transactions, locks, CAS, child attribution and refreshed returns.
+Graph operations check both endpoints and the connection-wide graph mutex.
+Keep the vertex/edge budgets (defaults 1000/5000, counting the proposed edge and
+both endpoints), current locking edge reads and
+mutex version write; overflow denies atomically. Retry the entire host transaction
+after a PostgreSQL serialization failure or MariaDB enforced-snapshot conflict.
+Install its additive migration before serving graph changes.
+Timers enforce a human performer, interval validity and overlap exclusion.
+
+## Enable integrations deliberately
+
+Activity requires `activity.enabled=true` and registered emitted event policies.
+Its native immutable envelopes use the Tasks source outbox for separate Activity storage.
+Preserve outer commit, rollback, leases, replay conflict checks and scheduler recovery.
+Delivered-outbox retention defaults off with no age. Grant `TaskAbility::PruneActivity` with a
+null task for the entire admitted owner scope, configure a positive age, and call
+`TasksActivityRetention::prune` outside host transactions (including previews).
+It retains pending delivery and Activity evidence; no cleanup actor/schedule is inferred.
+Media requires `media.enabled=true` and delegates to native Media services.
+Preserve private slots, attachment/file limits, scan rules and foreign association exclusion.
+Installing optional packages alone does not enable these profiles.
+
+## Configure models and results
+
+Select `models.task` before boot and retain native identity, casts, ownership and storage capabilities.
+The host may configure classification enums/defaults and the completed status.
+Reads return native task models/paginators or a bounded dashboard array.
+Map `TaskRevisionConflict` and validation/authorization failures in the host.
+Use `nvl:tasks:doctor --strict`; enabled Activity recovery uses `nvl:tasks:activity:drain`.
+The usage reference includes a create/patch/checklist/page composition with exact revisions.

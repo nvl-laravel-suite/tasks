@@ -39,7 +39,7 @@ abstract class ConfiguredStorageTestCase extends OwnershipTestCase
     protected function defineEnvironment($app): void
     {
         parent::defineEnvironment($app);
-        if (getenv('NVL_OWNERSHIP_TEST_DRIVER') !== 'pgsql') {
+        if (! in_array(getenv('NVL_OWNERSHIP_TEST_DRIVER'), ['pgsql', 'mysql', 'mariadb'], true)) {
             $app['config']->set('database.connections.ownership_remote', ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => true]);
         }
         $app['config']->set(['nvl-tasks.models.task' => RemoteTask::class, 'nvl-tasks.migrations.enabled' => false, 'nvl-tasks.activity.enabled' => false, 'nvl-tasks.media.enabled' => false]);
@@ -49,13 +49,13 @@ abstract class ConfiguredStorageTestCase extends OwnershipTestCase
     {
         $this->originalMorphMap = Relation::morphMap();
         parent::setUp();
-        config(['nvl-tasks.connection' => 'ownership_remote', 'nvl-tasks.tables.nvl_tasks_tasks' => 'consumer_tasks']);
+        config(['nvl-tasks.connection' => 'ownership_remote', 'nvl-tasks.tables.tasks' => 'consumer_tasks']);
         try {
             foreach (glob(__DIR__.'/../database/migrations/*.php') ?: [] as $path) {
                 (require $path)->up();
             }
         } finally {
-            config(['nvl-tasks.connection' => null, 'nvl-tasks.tables.nvl_tasks_tasks' => 'nvl_tasks_tasks']);
+            config(['nvl-tasks.connection' => null, 'nvl-tasks.tables.tasks' => 'nvl_tasks_tasks']);
         }
         $this->app->bind(TaskAuthorization::class, static fn () => new class implements TaskAuthorization
         {

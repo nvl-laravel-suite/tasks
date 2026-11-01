@@ -111,6 +111,11 @@ final class TasksDoctor
             }
         }
 
+        if ($checks['activity_outbox.table']) {
+            $checks['activity_outbox.ready_index'] = collect($schema->getIndexes(TasksConfiguration::table(TasksTables::ActivityOutbox)))
+                ->contains(static fn (array $index): bool => array_slice($index['columns'], 0, 2) === ['delivered_at', 'available_at']);
+        }
+
         $integrations = [
             ...$this->scheduler->inspect(),
             $this->integrations->check('tasks.activity.enabled', ActivityServiceProvider::class),

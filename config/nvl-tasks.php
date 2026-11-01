@@ -58,6 +58,7 @@ return [
             'enabled' => true,
         ],
         'drain_limit' => 100,
+        'retention' => ['enabled' => false, 'days' => null, 'maximum_records' => 1000, 'batch_size' => 200],
     ],
 
     'media' => [
@@ -79,5 +80,7 @@ return [
     'limits' => [
         'default_page_size' => 25,
         'maximum_page_size' => 100,
+        'maximum_graph_vertices' => 1000,
+        'maximum_graph_edges' => 5000,
     ],
 ];

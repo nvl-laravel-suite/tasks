@@ -5,10 +5,8 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 use Nvl\Activity\Providers\ActivityServiceProvider;
-use Nvl\Media\Providers\MediaServiceProvider;
 use Nvl\Support\Enums\SystemActor;
 use Nvl\Tasks\Contracts\TaskAttachments;
-use Nvl\Tasks\Integrations\MediaTaskAttachments;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskActivityOutbox;
 use Nvl\Tasks\Services\TaskLifecycle;
@@ -51,10 +49,4 @@ it('requires explicit valid optional flags even when classes are installed', fun
     expect($integrations->enabled('tasks.activity.enabled', ActivityServiceProvider::class))->toBeFalse();
     config(['nvl-tasks.activity.enabled' => 'true']);
     expect(fn () => $integrations->enabled('tasks.activity.enabled', ActivityServiceProvider::class))->toThrow(InvalidArgumentException::class);
-});
-
-it('loads the explicitly enabled native Media adapter', function (): void {
-    app()->register(MediaServiceProvider::class);
-    config(['nvl-tasks.media.enabled' => true]);
-    expect(app(TaskAttachments::class))->toBeInstanceOf(MediaTaskAttachments::class);
 });

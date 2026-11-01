@@ -1,4 +1,4 @@
 interface:
   display_name: "NVL Tasks"
-  short_description: "Build complete tenant-safe task workflows"
-  default_prompt: "Use $nvl-tasks to implement or review task lifecycle, classifications, checklists, tags, time tracking, relationships, Activity audit, Media attachments, and tenant-safe API consumption."
+  short_description: "Integrate complete owner-scoped task workflows"
+  default_prompt: "Use $nvl-tasks to integrate native task lifecycle, checklists, classifications, time tracking and optional Activity or Media with explicit authorization and ownership."

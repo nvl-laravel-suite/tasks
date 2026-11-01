@@ -19,4 +19,5 @@ enum TaskAbility: string
     case Delete = 'delete';
 
     case Restore = 'restore';
+    case PruneActivity = 'prune_activity';
 }

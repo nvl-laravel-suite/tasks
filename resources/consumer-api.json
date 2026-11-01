@@ -146,6 +146,7 @@
                 "Create",
                 "Delete",
                 "List",
+                "PruneActivity",
                 "Restore",
                 "Update",
                 "View"
@@ -684,6 +685,16 @@
                 "startTimer",
                 "stopTimer",
                 "update"
+            ],
+            "properties": [],
+            "constants": []
+        },
+        "Nvl\\Tasks\\Services\\TasksActivityRetention": {
+            "kind": "class",
+            "file": "src/Services/TasksActivityRetention.php",
+            "methods": [
+                "__construct",
+                "prune"
             ],
             "properties": [],
             "constants": []

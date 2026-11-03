@@ -5,6 +5,10 @@ All notable changes to `nvl/tasks` are documented here.
 
 ## [Unreleased]
 
+## [7.0.0] - 2026-11-03
+
+- Adopt the reviewed NVL 7 family for PHP 8.4+ and Laravel 13, with compatible required and optional NVL peers. Review the package upgrade guide before deployment.
+
 ### Fixed
 
 - Widen MySQL-family task target and due storage to DATETIME, preserve existing UTC instants, and reject lossy rollback. Validate calendar years against the portable 1000–9999 range before writing.

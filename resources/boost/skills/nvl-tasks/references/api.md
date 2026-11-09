@@ -400,7 +400,9 @@ resolved @return Illuminate\Database\Eloquent\Relations\HasMany<Nvl\Tasks\Models
 public function creator(): Illuminate\Database\Eloquent\Relations\MorphTo
 @return MorphTo<Model, $this>
 resolved @return Illuminate\Database\Eloquent\Relations\MorphTo<Illuminate\Database\Eloquent\Model, $this>
-public function delete(): ?bool
+public function delete(): mixed
+@return ($this is Pivot ? (bool | int | null) : (bool | null))
+resolved @return ($this is Illuminate\Database\Eloquent\Relations\Pivot ? (bool | int | null) : (bool | null))
 public function fresh(mixed $with=[]): ?static
 @param (array<array-key, mixed> | string) $with
 public function getConnectionName(): ?string
@@ -472,7 +474,9 @@ resolved @return Illuminate\Database\Eloquent\Relations\MorphTo<Illuminate\Datab
 public function assignee(): Illuminate\Database\Eloquent\Relations\MorphTo
 @return MorphTo<Model, $this>
 resolved @return Illuminate\Database\Eloquent\Relations\MorphTo<Illuminate\Database\Eloquent\Model, $this>
-public function delete(): ?bool
+public function delete(): mixed
+@return ($this is Pivot ? (bool | int | null) : (bool | null))
+resolved @return ($this is Illuminate\Database\Eloquent\Relations\Pivot ? (bool | int | null) : (bool | null))
 public function fresh(mixed $with=[]): ?static
 @param (array<array-key, mixed> | string) $with
 public function getConnectionName(): ?string
@@ -515,7 +519,9 @@ final class Nvl\Tasks\Models\TaskChecklistItem extends Illuminate\Database\Eloqu
 public function completedBy(): Illuminate\Database\Eloquent\Relations\MorphTo
 @return MorphTo<Model, $this>
 resolved @return Illuminate\Database\Eloquent\Relations\MorphTo<Illuminate\Database\Eloquent\Model, $this>
-public function delete(): ?bool
+public function delete(): mixed
+@return ($this is Pivot ? (bool | int | null) : (bool | null))
+resolved @return ($this is Illuminate\Database\Eloquent\Relations\Pivot ? (bool | int | null) : (bool | null))
 public function fresh(mixed $with=[]): ?static
 @param (array<array-key, mixed> | string) $with
 public function getConnectionName(): ?string
@@ -558,7 +564,9 @@ final class Nvl\Tasks\Models\TaskDependency extends Illuminate\Database\Eloquent
 public function blocker(): Illuminate\Database\Eloquent\Relations\BelongsTo
 @return BelongsTo<Task, $this>
 resolved @return Illuminate\Database\Eloquent\Relations\BelongsTo<Nvl\Tasks\Models\Task, $this>
-public function delete(): ?bool
+public function delete(): mixed
+@return ($this is Pivot ? (bool | int | null) : (bool | null))
+resolved @return ($this is Illuminate\Database\Eloquent\Relations\Pivot ? (bool | int | null) : (bool | null))
 public function fresh(mixed $with=[]): ?static
 @param (array<array-key, mixed> | string) $with
 public function getConnectionName(): ?string
@@ -596,7 +604,9 @@ final class Nvl\Tasks\Models\TaskRelationship extends Illuminate\Database\Eloque
 public function child(): Illuminate\Database\Eloquent\Relations\BelongsTo
 @return BelongsTo<Task, $this>
 resolved @return Illuminate\Database\Eloquent\Relations\BelongsTo<Nvl\Tasks\Models\Task, $this>
-public function delete(): ?bool
+public function delete(): mixed
+@return ($this is Pivot ? (bool | int | null) : (bool | null))
+resolved @return ($this is Illuminate\Database\Eloquent\Relations\Pivot ? (bool | int | null) : (bool | null))
 public function fresh(mixed $with=[]): ?static
 @param (array<array-key, mixed> | string) $with
 public function getConnectionName(): ?string
@@ -631,7 +641,9 @@ resolved @property Illuminate\Support\Carbon $updated_at
 
 ```text
 final class Nvl\Tasks\Models\TaskTag extends Illuminate\Database\Eloquent\Model implements Nvl\Support\Ownership\Contracts\Ownable
-public function delete(): ?bool
+public function delete(): mixed
+@return ($this is Pivot ? (bool | int | null) : (bool | null))
+resolved @return ($this is Illuminate\Database\Eloquent\Relations\Pivot ? (bool | int | null) : (bool | null))
 public function fresh(mixed $with=[]): ?static
 @param (array<array-key, mixed> | string) $with
 public function getConnectionName(): ?string
@@ -664,7 +676,9 @@ resolved @property Illuminate\Support\Carbon $updated_at
 
 ```text
 final class Nvl\Tasks\Models\TaskTimeEntry extends Illuminate\Database\Eloquent\Model implements Nvl\Support\Ownership\Contracts\Ownable
-public function delete(): ?bool
+public function delete(): mixed
+@return ($this is Pivot ? (bool | int | null) : (bool | null))
+resolved @return ($this is Illuminate\Database\Eloquent\Relations\Pivot ? (bool | int | null) : (bool | null))
 public function fresh(mixed $with=[]): ?static
 @param (array<array-key, mixed> | string) $with
 public function getConnectionName(): ?string

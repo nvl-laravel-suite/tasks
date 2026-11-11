@@ -13,6 +13,7 @@ use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskAssignment;
+use Nvl\Tasks\Support\TaskIdentifier;
 use Nvl\Tasks\Support\TasksConfiguration;
 
 /**
@@ -29,7 +30,7 @@ final readonly class TaskAssignments
     public function assign(Task|string $task, Model&Authenticatable $assignee, Authenticatable|SystemActor $actor): TaskAssignment
     {
         $actor = $this->principals->actor($actor);
-        $id = $task instanceof Task ? $task->getKey() : $task;
+        $id = TaskIdentifier::of($task, Task::class);
 
         $assignment = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $assignee, $id): TaskAssignment {
             $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
@@ -67,7 +68,7 @@ final readonly class TaskAssignments
     public function unassign(Task|string $task, Model&Authenticatable $assignee, Authenticatable|SystemActor $actor): bool
     {
         $actor = $this->principals->actor($actor);
-        $id = $task instanceof Task ? $task->getKey() : $task;
+        $id = TaskIdentifier::of($task, Task::class);
 
         $changed = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $assignee, $id): ?Task {
             $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)

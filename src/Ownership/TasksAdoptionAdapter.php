@@ -57,10 +57,8 @@ final readonly class TasksAdoptionAdapter implements OwnershipAdoptionAdapter
         $this->restoreNativeParents();
     }
 
-    /** Restore the concrete native FK when a legacy adapter replaced it with a tenant composite.
-     * @param  list<array{string,string}>  $extraEdges
-     */
-    private function restoreNativeParents(array $extraEdges = []): void
+    /** Restore the concrete native FK when a legacy adapter replaced it with a tenant composite. */
+    private function restoreNativeParents(): void
     {
         foreach ($this->resources() as $key) {
             $definition = $this->resources->get($key);
@@ -78,10 +76,6 @@ final readonly class TasksAdoptionAdapter implements OwnershipAdoptionAdapter
             }
             $parent = new ($this->resources->get($definition->parents()[0])->model);
             $this->restoreNativeForeign($model, $relation->getForeignKeyName(), $parent);
-        }
-        foreach ($extraEdges as [$resource, $column]) {
-            $model = new ($this->resources->get($resource)->model);
-            $this->restoreNativeForeign($model, $column, $model);
         }
     }
 

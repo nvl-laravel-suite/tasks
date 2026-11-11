@@ -36,6 +36,8 @@ use Throwable;
 /** Stages and delivers canonical Activity envelopes for active Tasks integration. */
 final class ActivityTaskPublisher implements TaskActivityPublisher
 {
+    private const string OMITTED = '[OMITTED]';
+
     /** Construct the task activity staging boundary. */
     public function __construct(
         private readonly OwnershipBoundary $boundary,
@@ -69,6 +71,8 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
             }
             $old = $old === null ? null : array_intersect_key($old, $attributes);
         }
+        $attributes = $attributes === null ? null : $this->bounded($attributes);
+        $old = $old === null ? null : $this->bounded($old);
         $taskConnection = $task->getConnection();
 
         if ($taskConnection->transactionLevel() < 1) {
@@ -135,5 +139,33 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
                 ], 'normal');
             }
         });
+    }
+
+    /**
+     * Elide the largest values of a change set that exceeds Activity's 65,536-byte record bound.
+     *
+     * Task descriptions and metadata may each approach that bound; an audit fact must not reject a valid task write.
+     *
+     * @param  array<string, mixed>  $changes
+     * @return array<string, mixed>
+     */
+    private function bounded(array $changes): array
+    {
+        while (strlen(json_encode($changes, JSON_THROW_ON_ERROR)) > 65536) {
+            $largest = null;
+            $size = strlen(self::OMITTED);
+            foreach ($changes as $key => $value) {
+                if (is_string($value) && strlen($value) > $size) {
+                    $largest = $key;
+                    $size = strlen($value);
+                }
+            }
+            if ($largest === null) {
+                break;
+            }
+            $changes[$largest] = self::OMITTED;
+        }
+
+        return $changes;
     }
 }

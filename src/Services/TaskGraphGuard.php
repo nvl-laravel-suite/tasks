@@ -16,6 +16,7 @@ use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskDependency;
 use Nvl\Tasks\Models\TaskRelationship;
+use Nvl\Tasks\Support\TaskIdentifier;
 use Nvl\Tasks\Support\TasksConfiguration;
 
 /**
@@ -25,6 +26,9 @@ use Nvl\Tasks\Support\TasksConfiguration;
  */
 final readonly class TaskGraphGuard
 {
+    /** The single serialization row seeded by the graph-lock migration. */
+    public const string LOCK_ID = '00000000-0000-4000-8000-000000000001';
+
     /** Construct the task graph boundary. */
     public function __construct(
         private TaskAuthorization $authorization,
@@ -43,13 +47,8 @@ final readonly class TaskGraphGuard
         int $expectedSecondRevision,
         Authenticatable|SystemActor $actor,
     ): array {
-        $firstId = $first instanceof Task ? $first->getKey() : $first;
-        $secondId = $second instanceof Task ? $second->getKey() : $second;
-
-        if (! is_string($firstId) || $firstId === ''
-            || ! is_string($secondId) || $secondId === '') {
-            throw new InvalidArgumentException('Task links require string task IDs.');
-        }
+        $firstId = TaskIdentifier::of($first, Task::class);
+        $secondId = TaskIdentifier::of($second, Task::class);
 
         if ($firstId === $secondId) {
             throw new InvalidArgumentException('A task cannot link to itself.');
@@ -58,14 +57,14 @@ final readonly class TaskGraphGuard
         $connection = DB::connection(TasksConfiguration::connection());
         $lock = $connection
             ->table(TasksTables::get(TasksTables::GraphLock))
-            ->where('id', '00000000-0000-4000-8000-000000000001')
+            ->where('id', self::LOCK_ID)
             ->lockForUpdate()->first();
         if ($lock === null) {
             throw new \LogicException('Tasks graph lock is missing; apply the Tasks graph-lock migration before graph mutations.');
         }
         $connection->table(TasksTables::get(TasksTables::GraphLock))
-            ->where('id', '00000000-0000-4000-8000-000000000001')
-            ->update(['id' => '00000000-0000-4000-8000-000000000001']);
+            ->where('id', self::LOCK_ID)
+            ->update(['id' => self::LOCK_ID]);
 
         $ids = [$firstId, $secondId];
         sort($ids, SORT_STRING);

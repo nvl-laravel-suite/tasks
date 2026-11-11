@@ -16,6 +16,7 @@ use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskTag;
+use Nvl\Tasks\Support\TaskIdentifier;
 use Nvl\Tasks\Support\TasksConfiguration;
 
 /**
@@ -32,7 +33,7 @@ final readonly class TaskTags
     public function add(Task|string $task, string $tag, int $expectedRevision, Authenticatable|SystemActor $actor): TaskTag
     {
         $actor = $this->principals->actor($actor);
-        $id = $task instanceof Task ? $task->getKey() : $task;
+        $id = TaskIdentifier::of($task, Task::class);
 
         $record = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $tag, $expectedRevision, $id): TaskTag {
             $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
@@ -72,7 +73,7 @@ final readonly class TaskTags
     public function remove(Task|string $task, string $tag, int $expectedRevision, Authenticatable|SystemActor $actor): bool
     {
         $actor = $this->principals->actor($actor);
-        $id = $task instanceof Task ? $task->getKey() : $task;
+        $id = TaskIdentifier::of($task, Task::class);
 
         $changedTask = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $tag, $expectedRevision, $id): ?Task {
             $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
@@ -101,6 +102,7 @@ final readonly class TaskTags
     /** Normalize the bounded task label vocabulary. */
     private function normalize(string $tag): string
     {
+        TaskMutationValues::text($tag, 'tag');
         $tag = Str::lower(Str::squish($tag));
         Validator::make(['tag' => $tag], ['tag' => ['required', 'string', 'max:64']])->validate();
 

@@ -160,3 +160,33 @@ it('keeps time entries bound to their canonical task and performer', function ()
         ->and($first->fresh()?->revision)->toBe(2)
         ->and($second->fresh()?->revision)->toBe(1);
 });
+
+it('rejects manual intervals outside portable timestamp storage before writing', function (string $startedAt, string $endedAt): void {
+    allowTaskTimeUpdates();
+    $actor = timeTrackingActor();
+    $task = app(TaskLifecycle::class)->create(['title' => 'Review draft'], $actor);
+
+    expect(fn () => app(TaskTimeTracking::class)->add($task, ['started_at' => $startedAt, 'ended_at' => $endedAt], 1, $actor))
+        ->toThrow(ValidationException::class);
+
+    expect(TaskTimeEntry::query()->count())->toBe(0)
+        ->and($task->fresh()?->revision)->toBe(1);
+})->with([
+    'before the epoch' => ['1969-12-31T22:00:00Z', '1969-12-31T23:00:00Z'],
+    'inside the epoch year' => ['1970-06-01T00:00:00Z', '1970-06-01T01:00:00Z'],
+    'inside the horizon year' => ['2038-01-01T03:00:00Z', '2038-01-01T04:00:00Z'],
+    'ending in the horizon year' => ['2037-12-31T23:30:00Z', '2038-01-01T00:30:00Z'],
+    'beyond four-digit years' => ['+010000-01-01T00:00:00Z', '+010000-01-01T01:00:00Z'],
+]);
+
+it('accepts manual intervals at the edges of portable timestamp storage', function (): void {
+    allowTaskTimeUpdates();
+    $actor = timeTrackingActor();
+    $task = app(TaskLifecycle::class)->create(['title' => 'Review draft'], $actor);
+
+    $first = app(TaskTimeTracking::class)->add($task, ['started_at' => '1971-01-01T00:00:00Z', 'ended_at' => '1971-01-01T00:00:01Z'], 1, $actor);
+    $last = app(TaskTimeTracking::class)->add($task, ['started_at' => '2037-12-31T23:59:58Z', 'ended_at' => '2037-12-31T23:59:59Z'], 2, $actor);
+
+    expect($first->started_at->format('Y-m-d H:i:s'))->toBe('1971-01-01 00:00:00')
+        ->and($last->stopped_at?->format('Y-m-d H:i:s'))->toBe('2037-12-31 23:59:59');
+});

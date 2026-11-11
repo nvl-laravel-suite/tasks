@@ -29,6 +29,7 @@ final readonly class TaskChecklist
     {
         $actor = $this->principals->actor($actor);
         $title = trim($title);
+        TaskMutationValues::text($title, 'title');
         Validator::make(
             ['title' => $title, 'expected_revision' => $expectedRevision],
             ['title' => ['required', 'string', 'max:255'], 'expected_revision' => ['required', 'integer', 'min:1']],
@@ -56,7 +57,7 @@ final readonly class TaskChecklist
         return $item;
     }
 
-    /** Replace a validated item title and advance the task revision. */
+    /** Replace a validated item title and advance the task revision when it changes. */
     public function update(
         Task|string $task,
         TaskChecklistItem|string $item,
@@ -65,6 +66,7 @@ final readonly class TaskChecklist
     ): TaskChecklistItem {
         $actor = $this->principals->actor($actor);
         $title = trim($title);
+        TaskMutationValues::text($title, 'title');
         Validator::make(
             ['title' => $title, 'expected_revision' => $expectedRevision],
             ['title' => ['required', 'string', 'max:255'], 'expected_revision' => ['required', 'integer', 'min:1']],
@@ -74,9 +76,9 @@ final readonly class TaskChecklist
             $current = $this->guard->lock($task, $expectedRevision, $actor);
             $checklistItem = $this->guard->item($current, $item);
             $checklistItem->forceFill(['title' => $title])->save();
-            $this->guard->increment($current);
 
             if ($checklistItem->wasChanged('title')) {
+                $this->guard->increment($current);
                 $this->activity->checklistItemUpdated($current, $checklistItem->id, $actor);
             }
 
@@ -120,7 +122,7 @@ final readonly class TaskChecklist
         return $updated->refresh();
     }
 
-    /** Reorder exactly the task's existing items and advance its revision.
+    /** Reorder exactly the task's existing items and advance its revision when the order changes.
      * @param  list<string>  $itemIds
      */
     public function reorder(Task|string $task, array $itemIds, int $expectedRevision, Authenticatable|SystemActor $actor): Task
@@ -159,9 +161,8 @@ final readonly class TaskChecklist
                 $item->forceFill(['position' => $index + 1])->save();
             }
 
-            $this->guard->increment($current);
-
             if ($changed) {
+                $this->guard->increment($current);
                 $this->activity->checklistReordered($current, $actor);
             }
 

@@ -12,6 +12,7 @@ use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskChecklistItem;
+use Nvl\Tasks\Support\TaskIdentifier;
 
 /**
  * Resolves canonical task ownership and revision for checklist writes.
@@ -29,7 +30,7 @@ final readonly class TaskChecklistMutationGuard
     /** Lock the active ownership scope's task and require update permission and revision. */
     public function lock(Task|string $task, int $expectedRevision, Authenticatable|SystemActor $actor): Task
     {
-        $id = $task instanceof Task ? $task->getKey() : $task;
+        $id = TaskIdentifier::of($task, Task::class);
         $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
             ->whereKey($id)->lockForUpdate()->firstOrFail();
 
@@ -45,7 +46,7 @@ final readonly class TaskChecklistMutationGuard
     /** Resolve one item owned by the locked task and its canonical owner. */
     public function item(Task $task, TaskChecklistItem|string $item): TaskChecklistItem
     {
-        $id = $item instanceof TaskChecklistItem ? $item->getKey() : $item;
+        $id = TaskIdentifier::of($item, TaskChecklistItem::class);
 
         return TaskChecklistItem::query()
             ->where('task_id', $task->id)

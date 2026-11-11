@@ -122,6 +122,7 @@ final readonly class TaskReader
         }
 
         if ($tag !== null) {
+            TaskMutationValues::text($tag, 'tag');
             $normalizedTag = Str::lower(Str::squish($tag));
 
             if ($normalizedTag === '' || Str::length($normalizedTag) > 64) {

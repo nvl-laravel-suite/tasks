@@ -50,6 +50,14 @@ final class TaskMutationValues
         }
     }
 
+    /** Reject text no supported driver can store or compare as UTF-8. */
+    public static function text(string $value, string $field): void
+    {
+        if (! mb_check_encoding($value, 'UTF-8')) {
+            throw ValidationException::withMessages([$field => 'Expected valid UTF-8 text.']);
+        }
+    }
+
     /** Parse a real instant, reject impossible dates, and store its UTC representation. */
     public static function date(mixed $value, string $field): ?CarbonImmutable
     {
@@ -75,6 +83,20 @@ final class TaskMutationValues
         }
     }
 
+    /** Order object members so an equal JSON document compares identically after any driver's storage. */
+    private static function canonical(mixed $value): mixed
+    {
+        if (! is_array($value)) {
+            return $value;
+        }
+        $value = array_map(self::canonical(...), $value);
+        if (! array_is_list($value)) {
+            ksort($value, SORT_STRING);
+        }
+
+        return $value;
+    }
+
     /** @param array<string, mixed> $values
      * @return array<string, mixed>
      */
@@ -91,6 +113,9 @@ final class TaskMutationValues
             if (! is_string($values[$field]) && ! ($field === 'description' && $values[$field] === null)) {
                 throw ValidationException::withMessages([$field => 'Expected a string.']);
             }
+            if (is_string($values[$field])) {
+                self::text($values[$field], $field);
+            }
         }
         if (isset($values['title']) && is_string($values['title'])) {
             $values['title'] = trim($values['title']);
@@ -106,6 +131,9 @@ final class TaskMutationValues
             }
             if (strlen($encoded) > 65536) {
                 throw ValidationException::withMessages(['metadata' => 'Task metadata must be at most 64 KiB.']);
+            }
+            if (is_array($current?->metadata) && self::canonical($values['metadata']) === self::canonical($current->metadata)) {
+                unset($values['metadata']);
             }
         }
         if (isset($values['estimated_seconds']) && ! is_int($values['estimated_seconds'])) {

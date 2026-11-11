@@ -17,6 +17,7 @@ use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Models\TaskTimeEntry;
+use Nvl\Tasks\Support\TaskIdentifier;
 use Nvl\Tasks\Support\TasksConfiguration;
 
 /**
@@ -39,7 +40,7 @@ final readonly class TaskTimeTracking
             throw new InvalidArgumentException('Time entries require a performer identity.');
         }
 
-        $id = $task instanceof Task ? $task->getKey() : $task;
+        $id = TaskIdentifier::of($task, Task::class);
 
         $entry = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $attributes, $expectedRevision, $id): TaskTimeEntry {
             $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
@@ -69,14 +70,14 @@ final readonly class TaskTimeTracking
         return $entry;
     }
 
-    /** Update one manual entry and advance the exact task revision.
+    /** Update one manual entry and advance the exact task revision when the entry changes.
      * @param  array{started_at: \DateTimeInterface|string, ended_at: \DateTimeInterface|string, description?: string|null}  $attributes
      */
     public function update(Task|string $task, TaskTimeEntry|string $entry, array $attributes, int $expectedRevision, Authenticatable|SystemActor $actor): TaskTimeEntry
     {
         $actor = $this->principals->actor($actor);
-        $taskId = $task instanceof Task ? $task->getKey() : $task;
-        $entryId = $entry instanceof TaskTimeEntry ? $entry->getKey() : $entry;
+        $taskId = TaskIdentifier::of($task, Task::class);
+        $entryId = TaskIdentifier::of($entry, TaskTimeEntry::class);
 
         $updated = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $attributes, $expectedRevision, $entryId, $taskId): TaskTimeEntry {
             $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
@@ -94,9 +95,9 @@ final readonly class TaskTimeTracking
                 ->whereNotNull('stopped_at')
                 ->firstOrFail();
             $timeEntry->forceFill($this->interval($attributes))->save();
-            $current->forceFill(['revision' => $current->revision + 1])->save();
 
             if ($timeEntry->wasChanged(['started_at', 'stopped_at', 'duration_seconds', 'description'])) {
+                $current->forceFill(['revision' => $current->revision + 1])->save();
                 $durationSeconds = $timeEntry->duration_seconds
                     ?? throw new LogicException('A manual time entry must have a duration.');
                 $this->activity->timeEntryUpdated($current, $timeEntry->id, $durationSeconds, $actor);
@@ -112,8 +113,8 @@ final readonly class TaskTimeTracking
     public function delete(Task|string $task, TaskTimeEntry|string $entry, int $expectedRevision, Authenticatable|SystemActor $actor): bool
     {
         $actor = $this->principals->actor($actor);
-        $taskId = $task instanceof Task ? $task->getKey() : $task;
-        $entryId = $entry instanceof TaskTimeEntry ? $entry->id : $entry;
+        $taskId = TaskIdentifier::of($task, Task::class);
+        $entryId = TaskIdentifier::of($entry, TaskTimeEntry::class);
 
         $changedTask = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $entryId, $expectedRevision, $taskId): ?Task {
             $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
@@ -150,7 +151,7 @@ final readonly class TaskTimeTracking
             throw new InvalidArgumentException('Timers require a performer identity.');
         }
 
-        $id = $task instanceof Task ? $task->getKey() : $task;
+        $id = TaskIdentifier::of($task, Task::class);
 
         $entry = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $expectedRevision, $id): TaskTimeEntry {
             $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
@@ -190,8 +191,8 @@ final readonly class TaskTimeTracking
     public function stopTimer(Task|string $task, TaskTimeEntry|string $entry, int $expectedRevision, Authenticatable|SystemActor $actor): TaskTimeEntry
     {
         $actor = $this->principals->actor($actor);
-        $taskId = $task instanceof Task ? $task->getKey() : $task;
-        $entryId = $entry instanceof TaskTimeEntry ? $entry->getKey() : $entry;
+        $taskId = TaskIdentifier::of($task, Task::class);
+        $entryId = TaskIdentifier::of($entry, TaskTimeEntry::class);
 
         $stopped = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $entryId, $expectedRevision, $taskId): TaskTimeEntry {
             $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
@@ -231,7 +232,7 @@ final readonly class TaskTimeTracking
         return $stopped;
     }
 
-    /** Validate a complete manual interval and compute exact elapsed seconds.
+    /** Validate a complete manual interval inside portable TIMESTAMP storage and compute exact elapsed seconds.
      * @param  array<string, mixed>  $attributes
      * @return array{started_at: CarbonImmutable, stopped_at: CarbonImmutable, duration_seconds: int, description: string|null}
      */
@@ -243,9 +244,17 @@ final readonly class TaskTimeTracking
         if ($started === null || $ended === null) {
             throw ValidationException::withMessages(['started_at' => 'Both interval endpoints are required.']);
         }
+        foreach (['started_at' => $started, 'ended_at' => $ended] as $field => $instant) {
+            if ($instant->year < 1971 || $instant->year > 2037) {
+                throw ValidationException::withMessages([$field => 'Time entries must fall between years 1971 and 2037 in UTC.']);
+            }
+        }
         $description = $attributes['description'] ?? null;
         if ($description !== null && (! is_string($description) || mb_strlen($description) > 2000)) {
             throw ValidationException::withMessages(['description' => 'Expected a string of at most 2000 characters.']);
+        }
+        if ($description !== null) {
+            TaskMutationValues::text($description, 'description');
         }
         $seconds = $ended->getTimestamp() - $started->getTimestamp();
         if ($seconds < 1 || $seconds > 604800) {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nvl\Tasks\Services;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 use Nvl\Activity\Providers\ActivityServiceProvider;
@@ -109,6 +110,11 @@ final class TasksDoctor
             if ($checks["{$name}.table"]) {
                 $checks["{$name}.columns"] = $schema->hasColumns(TasksConfiguration::table($table), $columns);
             }
+        }
+
+        if ($checks['graph_lock.table']) {
+            $checks['graph_lock.row'] = DB::connection(TasksConfiguration::connection())
+                ->table(TasksTables::get(TasksTables::GraphLock))->where('id', TaskGraphGuard::LOCK_ID)->exists();
         }
 
         if ($checks['activity_outbox.table']) {

@@ -92,45 +92,45 @@ it('manages checklist, tags, manual time and timers through revision-checked rou
     ])->assertOk()->assertJsonPath('data.completedById', (string) $owner->getKey());
     $this->putJson("/nvl/api/v1/tasks/{$task}/checklist-items/order", [
         'itemIds' => [$item], 'expected_revision' => 4,
-    ])->assertOk()->assertJsonPath('data.revision', 5);
+    ])->assertOk()->assertJsonPath('data.revision', 4);
     $this->getJson("/nvl/api/v1/tasks/{$task}/detail")->assertOk()
         ->assertJsonPath('data.checklist.0.title', 'Check all links');
     $this->deleteJson("/nvl/api/v1/tasks/{$task}/checklist-items/{$item}", [
-        'expected_revision' => 5,
+        'expected_revision' => 4,
     ])->assertNoContent();
 
     $this->postJson("/nvl/api/v1/tasks/{$task}/tags", [
-        'tag' => ' Release ', 'expected_revision' => 6,
+        'tag' => ' Release ', 'expected_revision' => 5,
     ])->assertCreated()->assertJsonPath('data.tag', 'release');
     $this->getJson("/nvl/api/v1/tasks/{$task}/detail")->assertOk()
         ->assertJsonPath('data.tags.0', 'release');
     $this->deleteJson("/nvl/api/v1/tasks/{$task}/tags/release", [
-        'expected_revision' => 7,
+        'expected_revision' => 6,
     ])->assertNoContent();
 
     $entry = $this->postJson("/nvl/api/v1/tasks/{$task}/time-entries", [
         'startedAt' => '2026-09-28T10:00:00+00:00',
         'endedAt' => '2026-09-28T10:30:00+00:00',
-        'expected_revision' => 8,
+        'expected_revision' => 7,
     ])->assertCreated()->assertJsonPath('data.durationSeconds', 1800)->json('data.id');
     $this->putJson("/nvl/api/v1/tasks/{$task}/time-entries/{$entry}", [
         'startedAt' => '2026-09-28T10:00:00+00:00',
         'endedAt' => '2026-09-28T11:00:00+00:00',
-        'expected_revision' => 9,
+        'expected_revision' => 8,
     ])->assertOk()->assertJsonPath('data.durationSeconds', 3600);
     $this->deleteJson("/nvl/api/v1/tasks/{$task}/time-entries/{$entry}", [
-        'expected_revision' => 10,
+        'expected_revision' => 9,
     ])->assertNoContent();
 
     $start = CarbonImmutable::now();
     CarbonImmutable::setTestNow($start);
 
     try {
-        $timer = $this->postJson("/nvl/api/v1/tasks/{$task}/timer", ['expected_revision' => 11])
+        $timer = $this->postJson("/nvl/api/v1/tasks/{$task}/timer", ['expected_revision' => 10])
             ->assertCreated()->json('data.id');
         CarbonImmutable::setTestNow($start->addSeconds(2));
         $this->postJson("/nvl/api/v1/tasks/{$task}/timer/{$timer}/stop", [
-            'expected_revision' => 12,
+            'expected_revision' => 11,
         ])->assertOk()->assertJsonPath('data.durationSeconds', 2);
     } finally {
         CarbonImmutable::setTestNow();

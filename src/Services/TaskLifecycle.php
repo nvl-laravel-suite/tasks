@@ -12,6 +12,7 @@ use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Exceptions\TaskRevisionConflict;
 use Nvl\Tasks\Models\Task;
+use Nvl\Tasks\Support\TaskIdentifier;
 use Nvl\Tasks\Support\TasksConfiguration;
 
 /**
@@ -53,7 +54,7 @@ final readonly class TaskLifecycle
     public function update(Task|string $task, array $changes, int $expectedRevision, Authenticatable|SystemActor $actor): Task
     {
         $actor = $this->principals->actor($actor);
-        $id = $task instanceof Task ? $task->getKey() : $task;
+        $id = TaskIdentifier::of($task, Task::class);
 
         $updated = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $changes, $expectedRevision, $id): Task {
             $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
@@ -82,7 +83,7 @@ final readonly class TaskLifecycle
     public function delete(Task|string $task, Authenticatable|SystemActor $actor): bool
     {
         $actor = $this->principals->actor($actor);
-        $id = $task instanceof Task ? $task->getKey() : $task;
+        $id = TaskIdentifier::of($task, Task::class);
 
         $deleted = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $id): ?Task {
             $current = $this->boundary->query(TaskModelRegistry::query(), Task::TENANT_RESOURCE)
@@ -105,7 +106,7 @@ final readonly class TaskLifecycle
     public function restore(Task|string $task, int $expectedRevision, Authenticatable|SystemActor $actor): Task
     {
         $actor = $this->principals->actor($actor);
-        $id = $task instanceof Task ? $task->getKey() : $task;
+        $id = TaskIdentifier::of($task, Task::class);
 
         $restored = DB::connection(TasksConfiguration::connection())->transaction(function () use ($actor, $expectedRevision, $id): Task {
             $current = $this->boundary->query(TaskModelRegistry::query()->withTrashed(), Task::TENANT_RESOURCE)

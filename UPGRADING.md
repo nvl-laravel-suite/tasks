@@ -1,6 +1,6 @@
 # Upgrading to NVL Light
 
-This is a breaking application API conversion. Internal family version 6 remains until the coordinated release; there are no compatibility aliases.
+This is a breaking application API conversion, released as family 7 (`nvl/tasks:^7.0`); there are no compatibility aliases.
 
 Replace the 28 operation Actions/interfaces with the seven service families documented in README. Inject services directly and replace mutation DTOs with validated native arrays/scalars. Pass the persisted actor explicitly; replace system actor wrappers with a deliberately authorized `SystemActor`. Move DTOs, frontend types, controllers, requests, routes and projections into the application. `GetTaskDetailAction` becomes `TaskReader::get` plus a consumer projection. The package registers no HTTP routes.
 

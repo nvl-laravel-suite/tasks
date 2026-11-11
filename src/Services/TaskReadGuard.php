@@ -11,6 +11,7 @@ use Nvl\Support\Ownership\Contracts\OwnershipBoundary;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
+use Nvl\Tasks\Support\TaskIdentifier;
 
 /**
  * Applies ownership and actor visibility before protected reads and aggregates.
@@ -38,7 +39,7 @@ final readonly class TaskReadGuard
     /** Return one canonical task only after both visibility and View authorization. */
     public function resolve(Task|string $task, Authenticatable|SystemActor $actor): Task
     {
-        $id = $task instanceof Task ? $task->getKey() : $task;
+        $id = TaskIdentifier::of($task, Task::class);
         $current = $this->query($actor)->withCount('assignments')->whereKey($id)->firstOrFail();
         $this->authorization->authorize(TaskAbility::View, $actor, $current);
 

@@ -5,6 +5,16 @@ All notable changes to `nvl/tasks` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Report a malformed (non-UUID) task, checklist-item or time-entry ID as `ModelNotFoundException` on every driver; PostgreSQL previously raised SQLSTATE 22P02.
+- Preserve the task revision when a checklist title, checklist order or manual time entry is saved unchanged, as documented for no-op writes.
+- Treat resent task metadata with the same members as a no-op regardless of key order; MySQL's JSON normalization previously advanced the revision and recorded an empty update.
+- Reject manual time intervals outside UTC years 1971–2037 with a validation error instead of a MySQL-family TIMESTAMP storage failure.
+- Keep a valid task update when its changed description or metadata exceeds Activity's 65,536-byte record bound; the largest audit values are recorded as `[OMITTED]`.
+- Reject titles, descriptions, tags, checklist titles and time-entry descriptions that are not valid UTF-8 with a validation error instead of a PostgreSQL or MySQL storage failure.
+- Report a graph-lock table without its serialization row as `graph_lock.row` in Doctor.
+
 ## [7.0.1] - 2026-11-09
 
 ### Changed

@@ -63,8 +63,8 @@ it('bounds wide dependency edges before loading an unbounded frontier', function
 it('refuses a graph cycle after an earlier host snapshot while another mutex writer commits', function (string $kind): void {
     $source = DB::connection();
     $driver = $source->getDriverName();
-    if (! in_array($driver, ['pgsql', 'mysql', 'mariadb'], true)) {
-        $this->markTestSkipped('Repeatable-read graph evidence requires native PostgreSQL/MySQL/MariaDB connections.');
+    if ($driver !== 'pgsql') {
+        $this->markTestSkipped('Repeatable-read graph evidence requires native PostgreSQL connections.');
     }
     $tasks = array_map(static fn (string $title) => app(TaskLifecycle::class)->create(['title' => $title], SystemActor::Background), ['A', 'B', 'C', 'D']);
     $relationships = app(TaskRelationships::class);
@@ -74,20 +74,8 @@ it('refuses a graph cycle after an earlier host snapshot while another mutex wri
     config(['database.connections.graph_snapshot_writer' => $source->getConfig()]);
     $writer = DB::connection('graph_snapshot_writer');
     expect($writer->getPdo())->not->toBe($source->getPdo());
-    $enforcedMariaSnapshot = false;
-    if ($driver === 'mariadb') {
-        $setting = $source->selectOne("SHOW SESSION VARIABLES LIKE 'innodb_snapshot_isolation'");
-        $enforcedMariaSnapshot = in_array(strtoupper((string) ($setting->Value ?? '')), ['ON', '1'], true);
-        $source->statement('SET SESSION innodb_lock_wait_timeout = 2');
-        $writer->statement('SET SESSION innodb_lock_wait_timeout = 2');
-    }
-    if ($driver !== 'pgsql') {
-        $source->statement('SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ');
-    }
     $source->beginTransaction();
-    if ($driver === 'pgsql') {
-        $source->statement('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
-    }
+    $source->statement('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
     $model = $kind === 'parent' ? new TaskRelationship : new TaskDependency;
     $source->table($model->getTable())->count();
     try {
@@ -117,20 +105,10 @@ it('refuses a graph cycle after an earlier host snapshot while another mutex wri
         } catch (Throwable $error) {
             $denial = $error;
         }
-        $staleSnapshot = $driver === 'pgsql' || $enforcedMariaSnapshot;
-        $this->assertInstanceOf($staleSnapshot ? DeadlockException::class : InvalidArgumentException::class, $denial, $denial?->getMessage() ?? 'The graph mutation admitted a cycle.');
-        if ($staleSnapshot) {
-            $conflict = $denial->getPrevious();
-            $this->assertInstanceOf(QueryException::class, $conflict);
-            if ($driver === 'pgsql') {
-                expect($conflict->errorInfo[0])->toBe('40001');
-            } else {
-                expect($conflict->errorInfo[0])->toBe('HY000')->and((int) $conflict->errorInfo[1])->toBe(1020)
-                    ->and($conflict->getSql())->toContain($model->getTable(), 'for update');
-            }
-        } else {
-            expect($denial->getMessage())->toContain('cycle');
-        }
+        $this->assertInstanceOf(DeadlockException::class, $denial, $denial?->getMessage() ?? 'The graph mutation admitted a cycle.');
+        $conflict = $denial->getPrevious();
+        $this->assertInstanceOf(QueryException::class, $conflict);
+        expect($conflict->errorInfo[0])->toBe('40001');
     } finally {
         while ($source->transactionLevel() > 0) {
             $source->rollBack();

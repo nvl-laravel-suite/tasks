@@ -66,7 +66,11 @@ final readonly class TaskPrincipalGuard
             || $principal->getConnection() !== $model->getConnection()) {
             throw new InvalidArgumentException('Task assignees require an unchanged persisted canonical identity.');
         }
-        $fresh = $model->newQuery()->useWritePdo()->whereKey($key)->lockForUpdate()->firstOrFail();
+        $query = $model->newQuery()->useWritePdo()->whereKey($key);
+        if ($model->getConnection()->transactionLevel() > 0) {
+            $query->lockForUpdate();
+        }
+        $fresh = $query->firstOrFail();
         if (! $fresh instanceof Authenticatable) {
             throw new InvalidArgumentException('Task assignees must remain authenticatable principals.');
         }

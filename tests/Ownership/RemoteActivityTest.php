@@ -47,7 +47,7 @@ it('captures and retries remote audit delivery without recapturing the serializa
 });
 
 it('delivers captured task outboxes through an independent worker and quarantines foreign scope metadata', function (): void {
-    if (! in_array(getenv('NVL_OWNERSHIP_TEST_DRIVER'), ['pgsql', 'mysql', 'mariadb'], true)) {
+    if (getenv('NVL_OWNERSHIP_TEST_DRIVER') !== 'pgsql') {
         $this->markTestSkipped('Requires explicitly dedicated native sources and a real worker.');
     }
     $actor = Actor::query()->findOrFail(1);

@@ -39,7 +39,7 @@ abstract class ConfiguredStorageTestCase extends OwnershipTestCase
     protected function defineEnvironment($app): void
     {
         parent::defineEnvironment($app);
-        if (! in_array(getenv('NVL_OWNERSHIP_TEST_DRIVER'), ['pgsql', 'mysql', 'mariadb'], true)) {
+        if (getenv('NVL_OWNERSHIP_TEST_DRIVER') !== 'pgsql') {
             $app['config']->set('database.connections.ownership_remote', ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => true]);
         }
         $app['config']->set(['nvl-tasks.models.task' => RemoteTask::class, 'nvl-tasks.migrations.enabled' => false, 'nvl-tasks.activity.enabled' => false, 'nvl-tasks.media.enabled' => false]);

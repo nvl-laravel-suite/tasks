@@ -9,8 +9,8 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use LogicException;
-use Nvl\Activity\Models\ActivityLog as ActivityLogModel;
 use Nvl\Activity\Ownership\ActivityOwnershipGuard;
+use Nvl\Activity\Services\ActivityModelRegistry;
 use Nvl\Activity\Services\ActivityRecorder;
 use Nvl\Activity\Support\ActivityCauserReference;
 use Nvl\Activity\Support\ActivityRecordEnvelope;
@@ -121,7 +121,7 @@ final class ActivityTaskPublisher implements TaskActivityPublisher
             'available_at' => CarbonImmutable::now(),
         ])->save();
 
-        if ($taskConnection === (new ActivityLogModel)->getConnection()) {
+        if ($taskConnection === ActivityModelRegistry::newInstance()->getConnection()) {
             $this->recorder->recordEnvelope($envelope);
             $outbox->forceFill(['delivered_at' => CarbonImmutable::now()])->save();
 

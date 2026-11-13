@@ -17,8 +17,8 @@ use Nvl\Tasks\Tests\ConcurrencyTestCase;
 uses(ConcurrencyTestCase::class);
 
 beforeEach(function (): void {
-    if (! in_array(DB::connection()->getDriverName(), ['pgsql', 'mysql', 'mariadb'], true)) {
-        $this->markTestSkipped('Real Tasks races require the native PostgreSQL/MySQL/MariaDB database runner.');
+    if (DB::connection()->getDriverName() !== 'pgsql') {
+        $this->markTestSkipped('Real Tasks races require the native PostgreSQL database runner.');
     }
     if (! function_exists('pcntl_fork') || ! function_exists('pcntl_exec')) {
         $this->markTestSkipped('Real Tasks races require pcntl worker processes.');

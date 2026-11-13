@@ -10,6 +10,7 @@ use Nvl\Ownership\Contracts\OwnerSystemAccess;
 use Nvl\Ownership\Services\OwnershipRunner;
 use Nvl\Ownership\Tests\Fixtures\Actor;
 use Nvl\Ownership\Tests\Fixtures\Company;
+use Nvl\Ownership\Tests\Fixtures\OptsIntoAdoptedSchemaReuse;
 use Nvl\Support\Enums\SystemActor;
 use Nvl\Support\Ownership\Contracts\OwnershipContext;
 use Nvl\Support\Ownership\Contracts\OwnershipQueueContext;
@@ -25,7 +26,7 @@ use Nvl\Tasks\Services\TasksActivityDrainDispatcher;
 use Nvl\Tasks\Services\TasksActivityRetention;
 use Nvl\Tasks\Tests\ActivityOwnerScopeTestCase;
 
-uses(ActivityOwnerScopeTestCase::class);
+uses(ActivityOwnerScopeTestCase::class, OptsIntoAdoptedSchemaReuse::class);
 
 it('prunes delivered facts only inside the explicitly admitted owner while retaining Activity evidence', function (): void {
     config(['nvl-tasks.activity.retention.enabled' => true, 'nvl-tasks.activity.retention.days' => 30]);
@@ -133,4 +134,32 @@ it('recovers durable activity one authorized native owner at a time without a te
         });
     }
     expect(app(OwnershipContext::class)->snapshot()->owner)->toBeNull();
+});
+
+it('compares outbox available_at in UTC even when the host application timezone is behind UTC', function (): void {
+    $previousTimezone = date_default_timezone_get();
+    config(['app.timezone' => 'America/New_York']);
+    date_default_timezone_set('America/New_York');
+
+    try {
+        $actor = Actor::query()->findOrFail(1);
+        app(OwnershipRunner::class)->run(Company::query()->findOrFail(7), $actor, function (): void {
+            app(TaskLifecycle::class)->create(['title' => 'Timezone Recovery'], SystemActor::Background);
+            TaskActivityOutbox::query()->sole()->forceFill([
+                'delivered_at' => null,
+                'available_at' => now('UTC')->subMinute(),
+            ])->save();
+        });
+
+        config(['nvl-ownership.system_operations' => ['tasks.activity-drain']]);
+        app()->bind(OwnerSystemAccess::class, fn () => new class implements OwnerSystemAccess
+        {
+            public function assertCanRun(string $operation, Model $owner): void {}
+        });
+
+        expect(app(TasksActivityDrainDispatcher::class)->drain(10))->toBe(1);
+    } finally {
+        date_default_timezone_set($previousTimezone);
+        config(['app.timezone' => $previousTimezone]);
+    }
 });

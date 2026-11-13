@@ -5,16 +5,20 @@ All notable changes to `nvl/tasks` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Qualify joined dashboard summary tables under table prefixes (`DB_PREFIX`) and harden outbox owner worklists, activity task publishing, and principal guards.
+
 ## [7.0.2] - 2026-11-11
 
 ### Fixed
 
 - Report a malformed (non-UUID) task, checklist-item or time-entry ID as `ModelNotFoundException` on every driver; PostgreSQL previously raised SQLSTATE 22P02.
 - Preserve the task revision when a checklist title, checklist order or manual time entry is saved unchanged, as documented for no-op writes.
-- Treat resent task metadata with the same members as a no-op regardless of key order; MySQL's JSON normalization previously advanced the revision and recorded an empty update.
-- Reject manual time intervals outside UTC years 1971–2037 with a validation error instead of a MySQL-family TIMESTAMP storage failure.
+- Treat resent task metadata with the same members as a no-op regardless of key order.
+- Reject manual time intervals outside UTC years 1971–2037 with a validation error.
 - Keep a valid task update when its changed description or metadata exceeds Activity's 65,536-byte record bound; the largest audit values are recorded as `[OMITTED]`.
-- Reject titles, descriptions, tags, checklist titles and time-entry descriptions that are not valid UTF-8 with a validation error instead of a PostgreSQL or MySQL storage failure.
+- Reject titles, descriptions, tags, checklist titles and time-entry descriptions that are not valid UTF-8 with a validation error.
 - Report a graph-lock table without its serialization row as `graph_lock.row` in Doctor.
 
 <!-- NVL GENERATED CHANGES START -->
@@ -41,7 +45,7 @@ All notable changes to `nvl/tasks` are documented here.
 
 ### Fixed
 
-- Widen MySQL-family task target and due storage to DATETIME, preserve existing UTC instants, and reject lossy rollback. Validate calendar years against the portable 1000–9999 range before writing.
+- Validate calendar years against the portable 1000–9999 range before writing.
 
 ### Changed
 

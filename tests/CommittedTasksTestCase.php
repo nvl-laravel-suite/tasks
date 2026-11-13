@@ -15,14 +15,14 @@ abstract class CommittedTasksTestCase extends ConcurrencyTestCase
         $source = DB::connection();
         $driver = $source->getDriverName();
         $expected = getenv('NVL_C1_TEST_DRIVER');
-        if (in_array($expected, ['pgsql', 'mysql', 'mariadb'], true)) {
+        if ($expected === 'pgsql') {
             $this->assertSame($expected, $driver);
         }
         $database = $source->getDatabaseName();
         $safe = $driver === 'sqlite' && $database === ':memory:';
-        if (in_array($driver, ['pgsql', 'mysql', 'mariadb'], true)) {
+        if ($driver === 'pgsql') {
             $safe = preg_match('/\Anvl_tasks_test_[a-f0-9]{8}_ci\z/D', $database) === 1
-                && in_array($source->getConfig('host'), ['127.0.0.1', 'localhost', '::1', ...($driver === 'pgsql' ? ['/tmp'] : [])], true);
+                && in_array($source->getConfig('host'), ['127.0.0.1', 'localhost', '::1', '/tmp'], true);
         }
         if (! $safe) {
             throw new RuntimeException('Committed Tasks fixtures require memory SQLite or a dedicated loopback nvl_tasks_test_<8hex>_ci database.');

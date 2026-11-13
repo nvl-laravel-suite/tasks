@@ -57,7 +57,7 @@ Reload after child mutations before supplying another expected parent revision. 
 Graph traversal counts the proposed edge and both endpoints. Defaults are 1000
 vertices and 5000 edges, configured under `limits.maximum_graph_vertices` and
 `limits.maximum_graph_edges`; overflow denies before domain changes. Keep the
-database mutex and locking reads. PostgreSQL or enforced MariaDB stale repeatable-read snapshots
+database mutex and locking reads. Stale PostgreSQL repeatable-read snapshots
 escalate to the host's whole-transaction retry boundary.
 
 ## Bounded reads and time windows

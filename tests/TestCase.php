@@ -54,7 +54,7 @@ abstract class TestCase extends Orchestra
             ...(class_exists(TranslatableServiceProvider::class) ? [TranslatableServiceProvider::class] : []),
             ...(class_exists(FilterableServiceProvider::class) ? [FilterableServiceProvider::class] : []),
             ...(class_exists(ActivityServiceProvider::class) ? [ActivityServiceProvider::class] : []),
-            MediaServiceProvider::class,
+            ...(class_exists(MediaServiceProvider::class) ? [MediaServiceProvider::class] : []),
             TasksServiceProvider::class,
         ];
     }

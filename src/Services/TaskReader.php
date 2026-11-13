@@ -321,19 +321,26 @@ final readonly class TaskReader
         CarbonImmutable $now,
         CarbonImmutable $soonEnd,
     ): array {
+        $grammar = $query->getModel()->getConnection()->getQueryGrammar();
+        $taskTable = $grammar->wrapTable($query->getModel()->getTable());
+        $assignedTable = $grammar->wrapTable('assigned_task_ids');
+        $this->assertSafeWrappedTable($taskTable);
+        $this->assertSafeWrappedTable($assignedTable);
+        $summarySql = 'COUNT(*) AS total, '
+            ."COALESCE(SUM(CASE WHEN {$taskTable}.status = ? THEN 1 ELSE 0 END), 0) AS open_count, "
+            ."COALESCE(SUM(CASE WHEN {$taskTable}.status = ? THEN 1 ELSE 0 END), 0) AS in_progress_count, "
+            ."COALESCE(SUM(CASE WHEN {$taskTable}.status = ? THEN 1 ELSE 0 END), 0) AS blocked_count, "
+            ."COALESCE(SUM(CASE WHEN {$taskTable}.status = ? THEN 1 ELSE 0 END), 0) AS completed_count, "
+            ."COALESCE(SUM(CASE WHEN {$taskTable}.due_at < ? AND {$taskTable}.status NOT IN (?, ?) THEN 1 ELSE 0 END), 0) AS overdue_count, "
+            ."COALESCE(SUM(CASE WHEN {$taskTable}.due_at >= ? AND {$taskTable}.due_at <= ? AND {$taskTable}.status NOT IN (?, ?) THEN 1 ELSE 0 END), 0) AS due_soon_count, "
+            ."COALESCE(SUM(CASE WHEN {$assignedTable}.task_id IS NULL THEN 1 ELSE 0 END), 0) AS unassigned_count, "
+            ."COALESCE(SUM({$taskTable}.estimated_seconds), 0) AS estimated_seconds";
+        $this->assertSafeSummarySql($summarySql);
         $assignmentIds = TaskAssignment::query()->select('task_id')->distinct();
         $builder = $query->toBase()
             ->leftJoinSub($assignmentIds, 'assigned_task_ids', 'assigned_task_ids.task_id', '=', $query->getModel()->getTable().'.id')
             ->selectRaw(
-                'COUNT(*) AS total, '
-                .'COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) AS open_count, '
-                .'COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) AS in_progress_count, '
-                .'COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) AS blocked_count, '
-                .'COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) AS completed_count, '
-                .'COALESCE(SUM(CASE WHEN due_at < ? AND status NOT IN (?, ?) THEN 1 ELSE 0 END), 0) AS overdue_count, '
-                .'COALESCE(SUM(CASE WHEN due_at >= ? AND due_at <= ? AND status NOT IN (?, ?) THEN 1 ELSE 0 END), 0) AS due_soon_count, '
-                .'COALESCE(SUM(CASE WHEN assigned_task_ids.task_id IS NULL THEN 1 ELSE 0 END), 0) AS unassigned_count, '
-                .'COALESCE(SUM(estimated_seconds), 0) AS estimated_seconds',
+                $summarySql,
                 [
                     $open,
                     $inProgress,
@@ -418,6 +425,23 @@ final readonly class TaskReader
         }
         if (($criteria['assignee'] ?? null) !== null && ! $criteria['assignee'] instanceof Authenticatable) {
             throw ValidationException::withMessages(['assignee' => 'Expected a persisted principal.']);
+        }
+    }
+
+    private function assertSafeWrappedTable(string $table): void
+    {
+        if (preg_match('/^[A-Za-z0-9_."`\[\]]+$/D', $table) !== 1) {
+            throw new UnexpectedValueException('Task dashboard summary received an unsafe table identifier.');
+        }
+    }
+
+    /**
+     * @phpstan-assert literal-string $sql
+     */
+    private function assertSafeSummarySql(string $sql): void
+    {
+        if (preg_match('/^[A-Za-z0-9_."`\[\](),=<>?*+\s]+$/D', $sql) !== 1) {
+            throw new UnexpectedValueException('Task dashboard summary produced unsafe SQL.');
         }
     }
 }

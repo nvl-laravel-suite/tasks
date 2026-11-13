@@ -158,3 +158,30 @@ it('returns zero aggregates when no tasks are visible', function (): void {
         ->and($dashboard['estimated_seconds'])->toBe(0)
         ->and($dashboard['logged_seconds'])->toBe(0);
 });
+
+it('qualifies dashboard columns when the host task scope joins another table containing overlapping columns', function (): void {
+    $owner = nativeTaskUser('JoinedOwner');
+    $task = new Task;
+    $task->forceFill(['title' => 'Scoped Join', 'creator_type' => TaskPrincipalGuard::type($owner), 'creator_id' => $owner->id, 'estimated_seconds' => 300])->save();
+
+    app()->bind(TaskAuthorization::class, static fn () => new class implements TaskAuthorization, TaskQueryScope
+    {
+        public function authorize(TaskAbility $ability, Authenticatable|SystemActor $actor, ?Task $task = null, ?Model $subject = null): void {}
+
+        public function scopeTasks(Builder $query, Authenticatable|SystemActor $actor): void
+        {
+            $taskTable = $query->getModel()->getTable();
+            $subquery = DB::query()->selectRaw('? as linked_task_id, ? as status, 0 as estimated_seconds', ['keep', 'shadow']);
+            $query->leftJoinSub($subquery, 'joined_scope_meta', function ($join) use ($taskTable): void {
+                $join->on($taskTable.'.status', '!=', 'joined_scope_meta.status');
+            });
+        }
+    });
+
+    $dashboard = app(TaskReader::class)->dashboard($owner);
+
+    expect($dashboard['total'])->toBe(1)
+        ->and($dashboard['open'])->toBe(1)
+        ->and($dashboard['unassigned'])->toBe(1)
+        ->and($dashboard['estimated_seconds'])->toBe(300);
+});

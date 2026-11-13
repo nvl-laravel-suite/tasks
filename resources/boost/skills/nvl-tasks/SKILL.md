@@ -52,7 +52,7 @@ Graph operations check both endpoints and the connection-wide graph mutex.
 Keep the vertex/edge budgets (defaults 1000/5000, counting the proposed edge and
 both endpoints), current locking edge reads and
 mutex version write; overflow denies atomically. Retry the entire host transaction
-after a PostgreSQL serialization failure or MariaDB enforced-snapshot conflict.
+after a PostgreSQL serialization failure.
 Install its additive migration before serving graph changes.
 Timers enforce a human performer, interval validity and overlap exclusion.
 

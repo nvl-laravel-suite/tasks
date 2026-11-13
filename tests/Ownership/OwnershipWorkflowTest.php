@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Nvl\Ownership\Services\OwnershipRunner;
 use Nvl\Ownership\Tests\Fixtures\Actor;
 use Nvl\Ownership\Tests\Fixtures\Company;
+use Nvl\Ownership\Tests\Fixtures\OptsIntoAdoptedSchemaReuse;
 use Nvl\Support\Enums\SystemActor;
 use Nvl\Support\Ownership\Exceptions\OwnershipException;
 use Nvl\Tasks\Enums\TaskChangeOperation;
@@ -21,7 +22,7 @@ use Nvl\Tasks\Services\TaskRelationships;
 use Nvl\Tasks\Tests\Fixtures\OwnedTask;
 use Nvl\Tasks\Tests\OwnerScopeTestCase;
 
-uses(OwnerScopeTestCase::class);
+uses(OwnerScopeTestCase::class, OptsIntoAdoptedSchemaReuse::class);
 
 it('creates and resolves the configured task only in its admitted native owner', function (): void {
     $actor = Actor::query()->findOrFail(1);

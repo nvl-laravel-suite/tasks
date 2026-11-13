@@ -27,7 +27,7 @@ final readonly class TaskOutboxOwnerWorklist
         $model = new TaskActivityOutbox;
         $seen = [];
         $rows = $model->getConnection()->table($model->getTable())->useWritePdo()
-            ->whereNull('delivered_at')->where('available_at', '<=', CarbonImmutable::now())
+            ->whereNull('delivered_at')->where('available_at', '<=', CarbonImmutable::now('UTC'))
             ->select(['id', 'owner_scope_key', 'owner_reference'])->orderBy('id')->lazyById(100);
         foreach ($rows as $row) {
             if (! is_string($row->owner_reference) || ! is_string($row->owner_scope_key)) {

@@ -16,6 +16,7 @@ use Nvl\Ownership\Tests\OwnershipTestCase;
 use Nvl\Ownership\ValueObjects\OwnershipOperation;
 use Nvl\Support\Enums\SystemActor;
 use Nvl\Tasks\Contracts\TaskAuthorization;
+use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Enums\TaskAbility;
 use Nvl\Tasks\Models\Task;
 use Nvl\Tasks\Providers\TasksServiceProvider;
@@ -71,16 +72,9 @@ abstract class OwnerScopeTestCase extends OwnershipTestCase
     {
         $this->originalMorphMap = Relation::morphMap();
         parent::setUp();
-        foreach (glob(__DIR__.'/../database/migrations/*.php') ?: [] as $path) {
-            (require $path)->up();
+        if (! $this->hasRetainedOwnershipSchema()) {
+            $this->installSchema();
         }
-        $connection = (new Task)->getConnection();
-        $connection->getSchemaBuilder()->table((new Task)->getTable(), static function (Blueprint $table): void {
-            $table->unsignedBigInteger('company_id')->nullable();
-        });
-        $connection->getSchemaBuilder()->table((new Task)->getTable(), static fn (Blueprint $table) => $table->foreign('company_id')->references('id')->on('ownership_test_companies'));
-        $this->createIntegrationSchema();
-        (require __DIR__.'/../../ownership/database/migrations/ownership/2026_10_18_000001_nvl_ownership_create_adoption_tables.php')->up();
         $this->app->bind(TaskAuthorization::class, static fn () => new class implements TaskAuthorization
         {
             public function authorize(TaskAbility $ability, Authenticatable|SystemActor $actor, ?Task $task = null, ?Model $subject = null): void {}
@@ -96,14 +90,36 @@ abstract class OwnerScopeTestCase extends OwnershipTestCase
         if (! $this->activateOwnership()) {
             return;
         }
+        if (! $this->hasRetainedOwnershipSchema()) {
+            $this->adoptSchema();
+        }
+        $this->app->make(MaintenanceMode::class)->deactivate();
+        $this->allowOwners();
+        $this->retainAdoptedOwnershipSchema([TasksTables::get(TasksTables::GraphLock)]);
+    }
+
+    private function installSchema(): void
+    {
+        foreach (glob(__DIR__.'/../database/migrations/*.php') ?: [] as $path) {
+            (require $path)->up();
+        }
+        $connection = (new Task)->getConnection();
+        $connection->getSchemaBuilder()->table((new Task)->getTable(), static function (Blueprint $table): void {
+            $table->unsignedBigInteger('company_id')->nullable();
+        });
+        $connection->getSchemaBuilder()->table((new Task)->getTable(), static fn (Blueprint $table) => $table->foreign('company_id')->references('id')->on('ownership_test_companies'));
+        $this->createIntegrationSchema();
+        (require __DIR__.'/../../ownership/database/migrations/ownership/2026_10_18_000001_nvl_ownership_create_adoption_tables.php')->up();
+    }
+
+    private function adoptSchema(): void
+    {
         $coordinator = $this->app->make(OwnershipAdoptionCoordinator::class);
         $operation = new OwnershipOperation('tasks-adopt', 'operator', '1');
         $plan = $coordinator->prepare($this->adoptionPackages(), [], $operation);
         while (! $coordinator->backfill($plan, 100, $operation)) {
         }
         $coordinator->activate($plan, $operation);
-        $this->app->make(MaintenanceMode::class)->deactivate();
-        $this->allowOwners();
     }
 
     /** Allow adoption fixtures to inspect historical rows before activation. */

@@ -50,11 +50,14 @@ final class TaskMutationValues
         }
     }
 
-    /** Reject text no supported driver can store or compare as UTF-8. */
+    /** Reject text no supported driver can store or compare intact: invalid UTF-8, or NUL bytes PostgreSQL truncates. */
     public static function text(string $value, string $field): void
     {
         if (! mb_check_encoding($value, 'UTF-8')) {
             throw ValidationException::withMessages([$field => 'Expected valid UTF-8 text.']);
+        }
+        if (str_contains($value, "\0")) {
+            throw ValidationException::withMessages([$field => 'Text must not contain NUL bytes.']);
         }
     }
 

@@ -15,6 +15,7 @@ use Nvl\Ownership\Services\OwnershipAdoptionCoordinator;
 use Nvl\Ownership\Tests\OwnershipTestCase;
 use Nvl\Ownership\ValueObjects\OwnershipOperation;
 use Nvl\Support\Enums\SystemActor;
+use Nvl\Support\Testing\TestServiceHosts;
 use Nvl\Tasks\Contracts\TaskAuthorization;
 use Nvl\Tasks\Definitions\Tables\TasksTables;
 use Nvl\Tasks\Enums\TaskAbility;
@@ -49,8 +50,8 @@ abstract class OwnerScopeTestCase extends OwnershipTestCase
         if (getenv('NVL_OWNERSHIP_TEST_DRIVER') === 'pgsql' && getenv('NVL_OWNERSHIP_TEST_HOST') !== false) {
             $host = getenv('NVL_OWNERSHIP_TEST_HOST');
             $port = getenv('NVL_OWNERSHIP_TEST_PORT');
-            if (! in_array($host, ['127.0.0.1', 'localhost', '::1'], true) || ! is_string($port) || ! ctype_digit($port) || (int) $port < 1 || (int) $port > 65535) {
-                throw new \RuntimeException('Tasks PostgreSQL workers require an explicit loopback host and valid port.');
+            if (! TestServiceHosts::admitsDatabaseHost($host) || ! is_string($port) || ! ctype_digit($port) || (int) $port < 1 || (int) $port > 65535) {
+                throw new \RuntimeException('Tasks PostgreSQL workers require an admitted test database host and valid port.');
             }
             foreach (['sqlite', 'ownership_remote'] as $connection) {
                 $app['config']->set("database.connections.{$connection}.host", $host);

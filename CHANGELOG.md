@@ -5,6 +5,10 @@ All notable changes to `nvl/tasks` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- Reject NUL bytes in task titles and descriptions, checklist titles, time-entry descriptions, tag writes and tag filters with a `ValidationException` before any write, revision bump or `TaskChanged` event. PostgreSQL previously truncated such text silently at the NUL byte.
+
 ## [7.1.0] - 2026-11-17
 
 ### Changed

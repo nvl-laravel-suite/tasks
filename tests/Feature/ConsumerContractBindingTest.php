@@ -36,7 +36,7 @@ test('published workflow contracts retain native signatures attributes and gener
             $operation = $reflection->getMethod($method);
             expect($operation->isPublic())->toBeTrue()->and($operation->getReturnType())->not->toBeNull();
             foreach ($operation->getParameters() as $parameter) {
-                expect((string) $parameter->getType())->not->toContain('Data', 'Request');
+                expect((string) $parameter->getType())->not->toContain('\\Data\\')->not->toContain('Request');
                 if ($parameter->getName() === 'actor') {
                     expect((string) $parameter->getType())->toContain('Authenticatable', 'SystemActor');
                 }

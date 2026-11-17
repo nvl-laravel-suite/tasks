@@ -63,7 +63,7 @@ it('publishes all 23 semantic task operations before the optional activity adapt
     expect(array_map(fn (TaskChanged $event) => $event->operation, $published))->toBe(TaskChangeOperation::cases())
         ->and($published[4]->context)->toBe(['assignee_type' => $assignee->getMorphClass(), 'assignee_id' => $assignee->id]);
     foreach ($published as $event) {
-        expect(serialize($event))->not->toContain('private-description', 'private-updated-description', 'private-tag')
+        expect(serialize($event))->not->toContain('private-description')->not->toContain('private-updated-description')->not->toContain('private-tag')
             ->and($event->ownershipJobEnvelope()->context()->mode)->toBe(OwnershipContextMode::Disabled);
     }
 });
